@@ -14,7 +14,6 @@ import ShopPage from '../Mark/Shop/ShopPage';
 
 const IMAGE_WIDTH = 1500;
 const IMAGE_HEIGHT = 1123;
-
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 const minScale = Math.min(screenWidth / IMAGE_WIDTH, screenHeight / IMAGE_HEIGHT);
 
@@ -35,12 +34,7 @@ export default function Homepage() {
   };
 
   return (
-    <View style={styles.container} onLayout={() => {
-      if (!layoutReady) {
-        setLayoutReady(true);
-        setTimeout(centerImage, 100);
-      }
-    }}>
+    <View style={styles.container}>
       <ImageZoom
         ref={imageZoomRef}
         cropWidth={screenWidth}
@@ -53,6 +47,12 @@ export default function Homepage() {
         minScale={minScale}
         maxScale={3}
         useNativeDriver={true}
+        onLayout={() => {
+          if (!layoutReady) {
+            setLayoutReady(true);
+            setTimeout(centerImage, 100);
+          }
+        }}
       >
         <Image
           source={require('../../assets/images/HomeBackgroundImages/Backgroundex2.png')}
@@ -61,7 +61,6 @@ export default function Homepage() {
         />
       </ImageZoom>
 
-      {/* 상단 탭 */}
       <View style={styles.topTabs}>
         <TouchableOpacity style={styles.activeTab}>
           <Text style={styles.activeTabText}>프로필정보</Text>
@@ -71,7 +70,6 @@ export default function Homepage() {
         </TouchableOpacity>
       </View>
 
-      {/* 수정 버튼 */}
       <View style={styles.rightCircleWrapper}>
         <TouchableOpacity
           style={styles.topRightCircle}
@@ -79,10 +77,8 @@ export default function Homepage() {
         />
       </View>
 
-      {/* 상점 / 퀘스트 아이콘 */}
       <View style={styles.indicatorContainer}>
         <View style={styles.indicatorDot} />
-
         <TouchableOpacity onPress={() => setShowShop(true)}>
           <View style={styles.shopDot}>
             <Image
@@ -92,7 +88,6 @@ export default function Homepage() {
             />
           </View>
         </TouchableOpacity>
-
         <TouchableOpacity onPress={() => setShowQuest(true)}>
           <View style={styles.questDot}>
             <Image
@@ -104,7 +99,6 @@ export default function Homepage() {
         </TouchableOpacity>
       </View>
 
-      {/* 하단 메뉴바 */}
       <View style={styles.bottomBar}>
         <TouchableOpacity onPress={() => router.push('/Travel/TravelListPage')}>
           <Text style={styles.bottomText}>탐험</Text>
@@ -117,27 +111,27 @@ export default function Homepage() {
         </TouchableOpacity>
       </View>
 
-      {/* 퀘스트 오버레이 */}
       {showQuest && (
-        <View style={styles.overlay}>
-          <View style={styles.questBox}>
-            <TouchableOpacity style={styles.closeButton} onPress={() => setShowQuest(false)}>
+        <View style={styles.overlayPartial}>
+          <View style={styles.questHeader}>
+            <Text style={styles.overlayTitle}>퀘스트</Text>
+            <TouchableOpacity style={styles.closeButtonTop} onPress={() => setShowQuest(false)}>
               <Text style={styles.closeText}>닫기</Text>
             </TouchableOpacity>
-            <QuestPage />
           </View>
+          <QuestPage />
         </View>
       )}
 
-      {/* 상점 오버레이 */}
       {showShop && (
-        <View style={styles.overlay}>
-          <View style={styles.shopBox}>
-            <TouchableOpacity style={styles.closeButton} onPress={() => setShowShop(false)}>
+        <View style={styles.overlayPartial}>
+          <View style={styles.questHeader}>
+            <Text style={styles.overlayTitle}>상점</Text>
+            <TouchableOpacity style={styles.closeButtonTop} onPress={() => setShowShop(false)}>
               <Text style={styles.closeText}>닫기</Text>
             </TouchableOpacity>
-            <ShopPage />
           </View>
+          <ShopPage />
         </View>
       )}
     </View>
@@ -246,36 +240,33 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 14,
   },
-  overlay: {
+  overlayPartial: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
-    height: '94%',
-    backgroundColor: '#FFFDF6',
+    height: '88%',
+    backgroundColor: '#FFFFFFEE',
     zIndex: 100,
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
+    paddingTop: 60,
   },
-  questBox: {
-    flex: 1,
+  questHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 24,
+    marginBottom: 10,
   },
-  shopBox: {
-    flex: 1,
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 24,
+  overlayTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#3F5C45',
   },
-  closeButton: {
-    alignSelf: 'flex-end',
+  closeButtonTop: {
     backgroundColor: '#3F5C45',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 8,
-    marginBottom: 8,
   },
   closeText: {
     color: 'white',
