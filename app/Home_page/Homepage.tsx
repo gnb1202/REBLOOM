@@ -11,6 +11,7 @@ import {
 import ImageZoom from 'react-native-image-pan-zoom';
 import QuestPage from '../Mark/Quest/QuestPage';
 import ShopPage from '../Mark/Shop/ShopPage';
+import DiaryCheckPage from '../Mark/Check/DiaryCheckPage';
 
 const IMAGE_WIDTH = 1500;
 const IMAGE_HEIGHT = 1123;
@@ -23,6 +24,7 @@ export default function Homepage() {
   const [layoutReady, setLayoutReady] = useState(false);
   const [showQuest, setShowQuest] = useState(false);
   const [showShop, setShowShop] = useState(false);
+  const [showDiary, setShowDiary] = useState(false);
 
   const centerImage = () => {
     imageZoomRef.current?.centerOn({
@@ -78,7 +80,9 @@ export default function Homepage() {
       </View>
 
       <View style={styles.indicatorContainer}>
-        <View style={styles.indicatorDot} />
+        <TouchableOpacity onPress={() => setShowDiary(true)}>
+          <View style={styles.indicatorDot} />
+        </TouchableOpacity>
         <TouchableOpacity onPress={() => setShowShop(true)}>
           <View style={styles.shopDot}>
             <Image
@@ -113,25 +117,31 @@ export default function Homepage() {
 
       {showQuest && (
         <View style={styles.overlayPartial}>
-          <View style={styles.questHeader}>
-            <Text style={styles.overlayTitle}>퀘스트</Text>
-            <TouchableOpacity style={styles.closeButtonTop} onPress={() => setShowQuest(false)}>
-              <Text style={styles.closeText}>닫기</Text>
-            </TouchableOpacity>
-          </View>
           <QuestPage />
+          <TouchableOpacity style={styles.closeButtonBottom} onPress={() => setShowQuest(false)}>
+            <Text style={styles.closeText}>닫기</Text>
+          </TouchableOpacity>
         </View>
       )}
 
       {showShop && (
         <View style={styles.overlayPartial}>
-          <View style={styles.questHeader}>
+          <View style={styles.questHeaderCentered}>
             <Text style={styles.overlayTitle}>상점</Text>
-            <TouchableOpacity style={styles.closeButtonTop} onPress={() => setShowShop(false)}>
-              <Text style={styles.closeText}>닫기</Text>
-            </TouchableOpacity>
           </View>
           <ShopPage />
+          <TouchableOpacity style={styles.closeButtonBottom} onPress={() => setShowShop(false)}>
+            <Text style={styles.closeText}>닫기</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {showDiary && (
+        <View style={styles.overlayPartial}>
+          <DiaryCheckPage />
+          <TouchableOpacity style={styles.closeButtonBottom} onPress={() => setShowDiary(false)}>
+            <Text style={styles.closeText}>닫기</Text>
+          </TouchableOpacity>
         </View>
       )}
     </View>
@@ -245,16 +255,13 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
-    height: '88%',
+    height: '94%',
     backgroundColor: '#FFFFFFEE',
     zIndex: 100,
     paddingTop: 60,
   },
-  questHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  questHeaderCentered: {
     alignItems: 'center',
-    paddingHorizontal: 20,
     marginBottom: 10,
   },
   overlayTitle: {
@@ -262,7 +269,9 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#3F5C45',
   },
-  closeButtonTop: {
+  closeButtonBottom: {
+    alignSelf: 'center',
+    marginTop: 12,
     backgroundColor: '#3F5C45',
     paddingHorizontal: 12,
     paddingVertical: 6,
