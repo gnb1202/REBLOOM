@@ -4,6 +4,7 @@ import {
   Text,
   TouchableOpacity,
   FlatList,
+  StyleSheet,
 } from 'react-native';
 
 export default function QuestPage() {
@@ -29,25 +30,33 @@ export default function QuestPage() {
     <View style={styles.container}>
       <Text style={styles.title}>퀘스트</Text>
 
-      <View style={styles.tabs}>
-        {['일간', '주간', '월간'].map((tab) => (
-          <TouchableOpacity
-            key={tab}
-            style={[styles.tabBtn, selectedTab === tab && styles.tabBtnActive]}
-            onPress={() => setSelectedTab(tab)}
-          >
-            <Text
+      {/* 탭 UI */}
+      <View style={styles.tabWrapper}>
+        {['일간', '주간', '월간'].map((tab, index, array) => {
+          const isActive = selectedTab === tab;
+          const isFirst = index === 0;
+          const isLast = index === array.length - 1;
+
+          return (
+            <TouchableOpacity
+              key={tab}
+              onPress={() => setSelectedTab(tab)}
               style={[
-                styles.tabText,
-                selectedTab === tab && styles.tabTextActive,
+                styles.tab,
+                isFirst && styles.firstTab,
+                isLast && styles.lastTab,
+                isActive && styles.activeTab,
               ]}
             >
-              {tab}
-            </Text>
-          </TouchableOpacity>
-        ))}
+              <Text style={[styles.tabText, isActive && styles.activeTabText]}>
+                {tab}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
       </View>
 
+      {/* 퀘스트 목록 */}
       <FlatList
         data={filtered}
         keyExtractor={(item) => item.id}
@@ -82,7 +91,7 @@ export default function QuestPage() {
   );
 }
 
-const styles = {
+const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#FFFDF6',
@@ -96,33 +105,38 @@ const styles = {
     color: '#2F4034',
     marginBottom: 20,
   },
-  tabs: {
+  tabWrapper: {
     flexDirection: 'row',
-    justifyContent: 'center',
-    backgroundColor: '#F2EDE4',
-    borderRadius: 12,
-    padding: 4,
-    marginBottom: 20,
+    marginBottom: 16,
+    borderBottomWidth: 2,
+    borderBottomColor: '#3F5C45',
   },
-  tabBtn: {
+  tab: {
     flex: 1,
-    paddingVertical: 8,
+    paddingVertical: 10,
     alignItems: 'center',
-    borderRadius: 8,
+    backgroundColor: '#F8F5EF',
+    borderTopLeftRadius: 10,
+    borderTopRightRadius: 10,
   },
-  tabBtnActive: {
-    backgroundColor: '#FFF',
-    borderWidth: 1,
-    borderColor: '#90A18C',
+  firstTab: {
+    borderTopLeftRadius: 12,
+  },
+  lastTab: {
+    borderTopRightRadius: 12,
+  },
+  activeTab: {
+    backgroundColor: '#3F5C45',
+    borderBottomWidth: 2,
+    borderBottomColor: '#3F5C45',
   },
   tabText: {
+    color: '#3F5C45',
+    fontWeight: 'bold',
     fontSize: 14,
-    color: '#777',
-    fontWeight: '500',
   },
-  tabTextActive: {
-    color: '#2F4034',
-    fontWeight: '700',
+  activeTabText: {
+    color: '#fff',
   },
   list: {
     paddingBottom: 20,
@@ -169,4 +183,4 @@ const styles = {
     fontSize: 12,
     fontWeight: 'bold',
   },
-};
+});
