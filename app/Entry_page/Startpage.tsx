@@ -1,11 +1,103 @@
-import { View, Text, TouchableOpacity, StyleSheet, StatusBar } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  StatusBar,
+  Alert,
+  ActivityIndicator,
+  Platform,
+  Linking,
+  ImageBackground,
+} from 'react-native';
 import { useRouter } from 'expo-router';
+import * as MediaLibrary from 'expo-media-library';
+import { Camera } from 'expo-camera';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+import doorImage from '../../assets/images/StartImages/Startimage.png';
 
 export default function Startpage() {
   const router = useRouter();
+  const [permissionsGranted, setPermissionsGranted] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    const checkPermissionsOnce = async () => {
+      const alreadyLaunched = await AsyncStorage.getItem('alreadyLaunched');
+
+      // ✅ 웹에서는 권한 요청 생략
+      if (Platform.OS === 'web') {
+        setPermissionsGranted(true);
+        return;
+      }
+
+      if (alreadyLaunched === 'true') {
+        setPermissionsGranted(true);
+        return;
+      }
+
+      try {
+        const { status: cameraStatus } = await Camera.requestCameraPermissionsAsync();
+        const { status: mediaStatus } = await MediaLibrary.requestPermissionsAsync();
+
+        if (cameraStatus === 'granted' && mediaStatus === 'granted') {
+          await AsyncStorage.setItem('alreadyLaunched', 'true');
+          setPermissionsGranted(true);
+        } else {
+          Alert.alert(
+            '권한 필요',
+            '앱을 사용하려면 카메라와 갤러리 권한이 필요합니다.',
+            [
+              {
+                text: '설정으로 이동',
+                onPress: () => {
+                  if (Platform.OS === 'ios') {
+                    Linking.openURL('app-settings:');
+                  } else {
+                    Linking.openSettings();
+                  }
+                },
+              },
+              {
+                text: '취소',
+                style: 'cancel',
+                onPress: () => setPermissionsGranted(false),
+              },
+            ]
+          );
+        }
+      } catch (err) {
+        console.error('권한 요청 중 오류 발생:', err);
+        setPermissionsGranted(false);
+      }
+    };
+
+    checkPermissionsOnce();
+  }, []);
+
+  if (permissionsGranted === null) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#5C7BEE" />
+        <Text style={{ marginTop: 12 }}>권한을 확인하는 중입니다...</Text>
+      </View>
+    );
+  }
+
+  if (!permissionsGranted) {
+    return (
+      <View style={styles.loadingContainer}>
+        <Text style={{ color: '#000', textAlign: 'center' }}>
+          권한이 거부되어 앱을 실행할 수 없습니다.
+          {'\n'}설정에서 권한을 허용해주세요.
+        </Text>
+      </View>
+    );
+  }
 
   return (
-    <View style={styles.container}>
+    <ImageBackground source={doorImage} style={styles.background} resizeMode="contain">
       <StatusBar barStyle="dark-content" backgroundColor="#fff" />
       <Text style={styles.title}>Re:Bloom</Text>
 
@@ -26,23 +118,32 @@ export default function Startpage() {
           <Text style={styles.menuText}>ID/PW 찾기</Text>
         </TouchableOpacity>
       </View>
-    </View>
+    </ImageBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  background: {
     flex: 1,
-    backgroundColor: '#fff',
-    justifyContent: 'center',
+    width: '100%',
+    height: '100%',
+    justifyContent: 'flex-end',
     alignItems: 'center',
     paddingBottom: 100,
   },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    padding: 32,
+  },
   title: {
+    position: 'absolute',
+    top: 40, // 문 위로 더 올림
     fontSize: 36,
     fontWeight: 'bold',
-    marginBottom: 200,
-    color: '#000',
+    color: '#4A4A4A',
   },
   menuContainer: {
     flexDirection: 'row',
