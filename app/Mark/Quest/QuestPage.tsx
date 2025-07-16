@@ -95,7 +95,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#FFFDF6',
-    paddingTop: 60,
     paddingHorizontal: 20,
   },
   title: {
