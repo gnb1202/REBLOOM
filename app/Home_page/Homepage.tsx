@@ -9,6 +9,7 @@ import {
   Image,
 } from 'react-native';
 import ImageZoom from 'react-native-image-pan-zoom';
+import QuestPage from '../Mark/Quest/QuestPage'; // ← 실제 경로 확인하세요
 
 const IMAGE_WIDTH = 1500;
 const IMAGE_HEIGHT = 1123;
@@ -20,6 +21,7 @@ export default function Homepage() {
   const router = useRouter();
   const imageZoomRef = useRef(null);
   const [layoutReady, setLayoutReady] = useState(false);
+  const [showQuest, setShowQuest] = useState(false);
 
   const centerImage = () => {
     imageZoomRef.current?.centerOn({
@@ -31,15 +33,12 @@ export default function Homepage() {
   };
 
   return (
-    <View
-      style={styles.container}
-      onLayout={() => {
-        if (!layoutReady) {
-          setLayoutReady(true);
-          setTimeout(centerImage, 100);
-        }
-      }}
-    >
+    <View style={styles.container} onLayout={() => {
+      if (!layoutReady) {
+        setLayoutReady(true);
+        setTimeout(centerImage, 100);
+      }
+    }}>
       <ImageZoom
         ref={imageZoomRef}
         cropWidth={screenWidth}
@@ -54,12 +53,13 @@ export default function Homepage() {
         useNativeDriver={true}
       >
         <Image
-          source={require('../../assets/images/HomeBackgroundImages/Backgroundimage.png')}
+          source={require('../../assets/images/HomeBackgroundImages/Backgroundex2.png')}
           style={styles.image}
           resizeMode="cover"
         />
       </ImageZoom>
 
+      {/* 상단 탭 */}
       <View style={styles.topTabs}>
         <TouchableOpacity style={styles.activeTab}>
           <Text style={styles.activeTabText}>프로필정보</Text>
@@ -69,6 +69,7 @@ export default function Homepage() {
         </TouchableOpacity>
       </View>
 
+      {/* 수정 버튼 */}
       <View style={styles.rightCircleWrapper}>
         <TouchableOpacity
           style={styles.topRightCircle}
@@ -76,20 +77,21 @@ export default function Homepage() {
         />
       </View>
 
-      {/* ✅ 퀘스트 + 상점 아이콘들 */}
+      {/* 상점 / 퀘스트 아이콘 */}
       <View style={styles.indicatorContainer}>
         <View style={styles.indicatorDot} />
-        <TouchableOpacity onPress={() => router.push('/Mark/Shop/ShopPage')}>
-                  <View style={styles.shopDot}>
-                    <Image
-                      source={require('../../assets/images/Shop/Shopmark.png')}
-                      style={styles.shopIcon}
-                      resizeMode="contain"
-                    />
-                  </View>
-                </TouchableOpacity>
 
-        <TouchableOpacity onPress={() => router.push('/Mark/Quest/QuestPage')}>
+        <TouchableOpacity onPress={() => router.push('/Mark/Shop/ShopPage')}>
+          <View style={styles.shopDot}>
+            <Image
+              source={require('../../assets/images/Shop/Shopmark.png')}
+              style={styles.shopIcon}
+              resizeMode="contain"
+            />
+          </View>
+        </TouchableOpacity>
+
+        <TouchableOpacity onPress={() => setShowQuest(true)}>
           <View style={styles.questDot}>
             <Image
               source={require('../../assets/images/Quest/Questmark.png')}
@@ -98,10 +100,9 @@ export default function Homepage() {
             />
           </View>
         </TouchableOpacity>
-
-
       </View>
 
+      {/* 하단 메뉴바 */}
       <View style={styles.bottomBar}>
         <TouchableOpacity onPress={() => router.push('/Travel/TravelListPage')}>
           <Text style={styles.bottomText}>탐험</Text>
@@ -113,6 +114,20 @@ export default function Homepage() {
           <Text style={styles.bottomText}>운동하기</Text>
         </TouchableOpacity>
       </View>
+
+      {/* 퀘스트 오버레이 */}
+      {showQuest && (
+        <View style={styles.overlay}>
+          <View style={styles.questRow}>
+            <View style={styles.questContent}>
+              <QuestPage />
+            </View>
+            <TouchableOpacity style={styles.closeButton} onPress={() => setShowQuest(false)}>
+              <Text style={styles.closeText}>닫기</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
     </View>
   );
 }
@@ -218,5 +233,41 @@ const styles = StyleSheet.create({
   bottomText: {
     color: '#fff',
     fontSize: 14,
+  },
+
+  overlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: '94%',
+    backgroundColor: '#FFFFFFEE',
+    zIndex: 100,
+    paddingTop: 0,
+  },
+  questRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    paddingTop: 40,
+    paddingHorizontal: 20,
+  },
+  questContent: {
+    flex: 1,
+  },
+  closeButton: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    backgroundColor: '#3F5C45',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+    zIndex: 10,
+  },
+
+  closeText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 13,
   },
 });
