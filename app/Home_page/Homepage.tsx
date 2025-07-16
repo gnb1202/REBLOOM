@@ -9,7 +9,8 @@ import {
   Image,
 } from 'react-native';
 import ImageZoom from 'react-native-image-pan-zoom';
-import QuestPage from '../Mark/Quest/QuestPage'; // ← 실제 경로 확인하세요
+import QuestPage from '../Mark/Quest/QuestPage';
+import ShopPage from '../Mark/Shop/ShopPage';
 
 const IMAGE_WIDTH = 1500;
 const IMAGE_HEIGHT = 1123;
@@ -22,6 +23,7 @@ export default function Homepage() {
   const imageZoomRef = useRef(null);
   const [layoutReady, setLayoutReady] = useState(false);
   const [showQuest, setShowQuest] = useState(false);
+  const [showShop, setShowShop] = useState(false);
 
   const centerImage = () => {
     imageZoomRef.current?.centerOn({
@@ -81,7 +83,7 @@ export default function Homepage() {
       <View style={styles.indicatorContainer}>
         <View style={styles.indicatorDot} />
 
-        <TouchableOpacity onPress={() => router.push('/Mark/Shop/ShopPage')}>
+        <TouchableOpacity onPress={() => setShowShop(true)}>
           <View style={styles.shopDot}>
             <Image
               source={require('../../assets/images/Shop/Shopmark.png')}
@@ -118,13 +120,23 @@ export default function Homepage() {
       {/* 퀘스트 오버레이 */}
       {showQuest && (
         <View style={styles.overlay}>
-          <View style={styles.questRow}>
-            <View style={styles.questContent}>
-              <QuestPage />
-            </View>
+          <View style={styles.questBox}>
             <TouchableOpacity style={styles.closeButton} onPress={() => setShowQuest(false)}>
               <Text style={styles.closeText}>닫기</Text>
             </TouchableOpacity>
+            <QuestPage />
+          </View>
+        </View>
+      )}
+
+      {/* 상점 오버레이 */}
+      {showShop && (
+        <View style={styles.overlay}>
+          <View style={styles.shopBox}>
+            <TouchableOpacity style={styles.closeButton} onPress={() => setShowShop(false)}>
+              <Text style={styles.closeText}>닫기</Text>
+            </TouchableOpacity>
+            <ShopPage />
           </View>
         </View>
       )}
@@ -234,37 +246,37 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 14,
   },
-
   overlay: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
     height: '94%',
-    backgroundColor: '#FFFFFFEE',
+    backgroundColor: '#FFFDF6',
     zIndex: 100,
-    paddingTop: 0,
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
   },
-  questRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    paddingTop: 40,
-    paddingHorizontal: 20,
-  },
-  questContent: {
+  questBox: {
     flex: 1,
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 24,
+  },
+  shopBox: {
+    flex: 1,
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 24,
   },
   closeButton: {
-    position: 'absolute',
-    top: 12,
-    right: 12,
+    alignSelf: 'flex-end',
     backgroundColor: '#3F5C45',
-    paddingHorizontal: 10,
+    paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 8,
-    zIndex: 10,
+    marginBottom: 8,
   },
-
   closeText: {
     color: 'white',
     fontWeight: 'bold',
