@@ -105,27 +105,27 @@ const styles = StyleSheet.create({
     paddingTop: 60,
     alignItems: 'center',
   },
-  header: {
-    position: 'absolute',
-    top: 40,
-    left: 16,
-    right: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderBottomWidth: 1,
-    borderBottomColor: '#000',
-    paddingBottom: 10,
-  },
-  back: {
-    position: 'absolute',
-    left: 0,
-    fontSize: 20,
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      width: '100%',
+      paddingHorizontal: 16,
+      paddingBottom: 10,
+      borderBottomWidth: 1,
+      borderBottomColor: '#000',
+    },
+    back: {
+      fontSize: 20,
+    },
+    title: {
+      flex: 1,
+      textAlign: 'center',
+      fontSize: 18,
+      fontWeight: 'bold',
+      marginRight: 36,
+    },
+
   profileBox: {
     flexDirection: 'row',
     borderWidth: 1,

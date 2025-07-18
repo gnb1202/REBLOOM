@@ -8,6 +8,12 @@ export default function Mainmenu() {
   return (
     <View style={styles.container}>
       <Text style={styles.header}>메인메뉴</Text>
+        <TouchableOpacity
+          style={[styles.menuButton, { borderColor: '#FFA500' }]}
+          onPress={() => router.push('/Menu/profilemodified')}
+        >
+          <Text>개인정보 확인/수정</Text>
+         </TouchableOpacity>
 
       <TouchableOpacity
         style={[styles.menuButton, { borderColor: '#FFA500' }]}
