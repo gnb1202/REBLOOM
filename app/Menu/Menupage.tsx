@@ -15,6 +15,13 @@ export default function Mainmenu() {
           <Text>개인정보 확인/수정</Text>
          </TouchableOpacity>
 
+      <TouchableOpacity
+        style={[styles.menuButton, { borderColor: '#FFA500' }]}
+        onPress={() => router.push('/Menu/profilemodified')}
+      >
+         <Text>프로필 수정</Text>
+      </TouchableOpacity>
+
       <TouchableOpacity style={[styles.menuButton, { borderColor: '#32CD32' }]}>
         <Text>건강 리포트</Text>
       </TouchableOpacity>
@@ -30,7 +37,7 @@ export default function Mainmenu() {
         style={[styles.menuButton, { borderColor: '#00CED1' }]}
         onPress={() => router.push('/Menu/Collection')}
       >
-        <Text>수집 도감</Text>
+        <Text>수집 요소 확인</Text>
       </TouchableOpacity>
 
 
