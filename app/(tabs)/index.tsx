@@ -10,6 +10,7 @@ import {
   Platform,
   Linking,
   ImageBackground,
+  Dimensions,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as MediaLibrary from 'expo-media-library';
@@ -17,6 +18,8 @@ import { Camera } from 'expo-camera';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import doorImage from '../../assets/images/StartImages/Startimage.png';
+
+const { width, height } = Dimensions.get('window');
 
 export default function Startpage() {
   const router = useRouter();
@@ -26,7 +29,6 @@ export default function Startpage() {
     const checkPermissionsOnce = async () => {
       const alreadyLaunched = await AsyncStorage.getItem('alreadyLaunched');
 
-      // ✅ 웹에서는 권한 요청 생략
       if (Platform.OS === 'web') {
         setPermissionsGranted(true);
         return;
@@ -97,50 +99,60 @@ export default function Startpage() {
   }
 
   return (
-    <ImageBackground source={doorImage} style={styles.background} resizeMode="contain">
+    <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#fff" />
-      <Text style={styles.title}>Re:Bloom</Text>
+      <ImageBackground
+        source={doorImage}
+        style={styles.backgroundImage}
+        resizeMode={Platform.OS === 'web' ? 'contain' : 'cover'}
+      />
 
-      <View style={styles.menuContainer}>
-        <TouchableOpacity onPress={() => router.push('/Entry_page/Loginpage')}>
-          <Text style={styles.menuText}>로그인</Text>
-        </TouchableOpacity>
+      <View style={styles.overlayContent}>
+        <Text style={styles.title}>Re:Bloom</Text>
 
-        <Text style={styles.menuDivider}>|</Text>
+        <View style={styles.menuContainer}>
+          <TouchableOpacity onPress={() => router.push('/Entry_page/Loginpage')}>
+            <Text style={styles.menuText}>로그인</Text>
+          </TouchableOpacity>
 
-        <TouchableOpacity onPress={() => router.push('/Entry_page/Signuppage')}>
-          <Text style={styles.menuText}>회원가입</Text>
-        </TouchableOpacity>
+          <Text style={styles.menuDivider}>|</Text>
 
-        <Text style={styles.menuDivider}>|</Text>
+          <TouchableOpacity onPress={() => router.push('/Entry_page/Signuppage')}>
+            <Text style={styles.menuText}>회원가입</Text>
+          </TouchableOpacity>
 
-        <TouchableOpacity onPress={() => alert('ID/PW 찾기 페이지로 이동 예정')}>
-          <Text style={styles.menuText}>ID/PW 찾기</Text>
-        </TouchableOpacity>
+          <Text style={styles.menuDivider}>|</Text>
+
+          <TouchableOpacity onPress={() => alert('ID/PW 찾기 페이지로 이동 예정')}>
+            <Text style={styles.menuText}>ID/PW 찾기</Text>
+          </TouchableOpacity>
+        </View>
       </View>
-    </ImageBackground>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  background: {
+  container: {
     flex: 1,
+    backgroundColor: '#fff',
+  },
+  backgroundImage: {
+    position: 'absolute',
     width: '100%',
-    height: '100%',
+    height: Platform.OS === 'web' ? '100%' : '100%',
+    top: 0,
+    ...(Platform.OS === 'web' && { objectFit: 'contain' }),
+  },
+  overlayContent: {
+    flex: 1,
     justifyContent: 'flex-end',
     alignItems: 'center',
     paddingBottom: 100,
   },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-    padding: 32,
-  },
   title: {
     position: 'absolute',
-    top: 40, // 문 위로 더 올림
+    top: 40,
     fontSize: 36,
     fontWeight: 'bold',
     color: '#4A4A4A',
@@ -158,5 +170,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#999',
     marginHorizontal: 4,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    padding: 32,
   },
 });

@@ -26,7 +26,6 @@ export default function Startpage() {
     const checkPermissionsOnce = async () => {
       const alreadyLaunched = await AsyncStorage.getItem('alreadyLaunched');
 
-      // ✅ 웹에서는 권한 요청 생략
       if (Platform.OS === 'web') {
         setPermissionsGranted(true);
         return;
@@ -97,7 +96,11 @@ export default function Startpage() {
   }
 
   return (
-    <ImageBackground source={doorImage} style={styles.background} resizeMode="contain">
+    <ImageBackground
+      source={doorImage}
+      style={styles.background}
+      resizeMode={Platform.OS === 'web' ? 'contain' : 'cover'}
+    >
       <StatusBar barStyle="dark-content" backgroundColor="#fff" />
       <Text style={styles.title}>Re:Bloom</Text>
 
@@ -140,7 +143,7 @@ const styles = StyleSheet.create({
   },
   title: {
     position: 'absolute',
-    top: 40, // 문 위로 더 올림
+    top: 40,
     fontSize: 36,
     fontWeight: 'bold',
     color: '#4A4A4A',
