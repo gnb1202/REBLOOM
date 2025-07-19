@@ -73,10 +73,11 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
         imageWidth={imageScaledWidth}
         imageHeight={imageScaledHeight}
         panToMove={true}
-        pinchToZoom={true}
+        pinchToZoom={false}
+        doubleClickZoom={false}
         enableCenterFocus={false}
         minScale={minScale}
-        maxScale={3}
+        maxScale={minScale}
         useNativeDriver={true}
         onLayout={() => {
           if (!layoutReady) {
@@ -86,6 +87,7 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
         }}
         style={{ zIndex: 0 }}
       >
+
         <Image
           source={backgroundImages[bgIndex]}
           style={{ width: imageScaledWidth, height: imageScaledHeight }}
