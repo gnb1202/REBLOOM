@@ -15,12 +15,6 @@ export default function Mainmenu() {
           <Text>개인정보 확인/수정</Text>
          </TouchableOpacity>
 
-      <TouchableOpacity
-        style={[styles.menuButton, { borderColor: '#FFA500' }]}
-        onPress={() => router.push('/Menu/profilemodified')}
-      >
-         <Text>프로필 수정</Text>
-      </TouchableOpacity>
 
       <TouchableOpacity style={[styles.menuButton, { borderColor: '#32CD32' }]}>
         <Text>건강 리포트</Text>
