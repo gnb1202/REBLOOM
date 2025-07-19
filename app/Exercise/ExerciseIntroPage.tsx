@@ -7,6 +7,7 @@ export default function ExerciseIntroPage() {
 
   return (
     <TouchableOpacity
+      activeOpacty={1}
       style={styles.container}
       onPress={() => router.push('/Exercise/ExerciseVideoPage')}
     >
