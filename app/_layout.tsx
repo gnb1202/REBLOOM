@@ -3,9 +3,10 @@ import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
-import { View, Text } from 'react-native'; // 추가
+import { View, Text } from 'react-native';
 
 import { useColorScheme } from '@/hooks/useColorScheme';
+import { ProgressProvider } from '../context/ProgressContext'; // ✅ 추가
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
@@ -14,7 +15,6 @@ export default function RootLayout() {
   });
 
   if (!loaded) {
-    // 로딩 중에 임시 화면 보여주기
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'white' }}>
         <Text style={{ fontSize: 16 }}>Loading fonts...</Text>
@@ -23,16 +23,18 @@ export default function RootLayout() {
   }
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="+not-found" />
-        <Stack.Screen
-          name="Exercise/ExerciseIntroPage"
-          options={{ animation: 'none' }}
-        />
-      </Stack>
-      <StatusBar style="auto" />
-    </ThemeProvider>
+    <ProgressProvider>
+      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+        <Stack>
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="+not-found" />
+          <Stack.Screen
+            name="Exercise/ExerciseIntroPage"
+            options={{ animation: 'none' }}
+          />
+        </Stack>
+        <StatusBar style="auto" />
+      </ThemeProvider>
+    </ProgressProvider>
   );
 }
