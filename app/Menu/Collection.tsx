@@ -11,10 +11,8 @@ import {
 import { useRouter } from 'expo-router';
 import { useProgress } from '../../context/ProgressContext';
 
-// ✅ 공통 실루엣 이미지
 const silhouetteImage = require('../../assets/images/flowers/silhouette.png');
 
-// ✅ 꽃 목록 (silhouette 항목 제거)
 const flowerList = [
   {
     id: 'daisy',
@@ -69,13 +67,20 @@ const flowerList = [
 export default function Collection() {
   const router = useRouter();
   const { obtainedFlowers } = useProgress();
-  const [selectedFlower, setSelectedFlower] = useState(null);
+
+  const [selectedFlower, setSelectedFlower] = useState<{
+    flower: typeof flowerList[0];
+    isCollected: boolean;
+  } | null>(null);
 
   const handlePress = (flower) => {
-    if (obtainedFlowers.includes(flower.id)) {
-      setSelectedFlower(flower);
-    }
+    const isCollected = obtainedFlowers.includes(flower.id);
+    setSelectedFlower({ flower, isCollected });
   };
+
+  // 줄 정렬 보정
+  const remainder = flowerList.length % 3;
+  const dummyCount = remainder === 0 ? 0 : 3 - remainder;
 
   return (
     <View style={styles.container}>
@@ -106,11 +111,11 @@ export default function Collection() {
             </TouchableOpacity>
           );
         })}
-        {obtainedFlowers.length === 0 && (
-          <Text style={{ marginTop: 40, fontSize: 14, color: '#888' }}>
-            아직 수집한 꽃이 없습니다.
-          </Text>
-        )}
+
+        {/* 정렬 보정용 투명 아이템 */}
+        {Array.from({ length: dummyCount }).map((_, idx) => (
+          <View key={`dummy-${idx}`} style={styles.item} />
+        ))}
       </ScrollView>
 
       {/* 꽃 상세 팝업 */}
@@ -123,13 +128,22 @@ export default function Collection() {
         <View style={styles.modalContainer}>
           <View style={styles.modalBox}>
             <Image
-              source={selectedFlower?.image}
+              source={
+                selectedFlower?.isCollected
+                  ? selectedFlower.flower.image
+                  : silhouetteImage
+              }
               style={{ width: 100, height: 100, marginBottom: 10 }}
               resizeMode="contain"
             />
-            <Text style={styles.modalTitle}>{selectedFlower?.name}</Text>
-            <Text style={styles.modalDesc}>{selectedFlower?.desc}</Text>
-            <TouchableOpacity onPress={() => setSelectedFlower(null)} style={styles.modalClose}>
+            {selectedFlower?.isCollected && (
+              <Text style={styles.modalTitle}>{selectedFlower.flower.name}</Text>
+            )}
+            <Text style={styles.modalDesc}>{selectedFlower?.flower.desc}</Text>
+            <TouchableOpacity
+              onPress={() => setSelectedFlower(null)}
+              style={styles.modalClose}
+            >
               <Text style={styles.modalCloseText}>닫기</Text>
             </TouchableOpacity>
           </View>
@@ -138,9 +152,13 @@ export default function Collection() {
 
       {/* 탭 바 */}
       <View style={styles.tabBar}>
-        <Text style={styles.tab}>배경</Text>
+        <TouchableOpacity onPress={() => router.push('/Menu/BackgroundCollection')}>
+          <Text style={styles.tab}>배경</Text>
+        </TouchableOpacity>
         <Text style={[styles.tab, styles.activeTab]}>꽃</Text>
-        <Text style={styles.tab}>가구</Text>
+        <TouchableOpacity onPress={() => router.push('/Menu/FurnitureCollection')}>
+          <Text style={styles.tab}>가구</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -168,13 +186,18 @@ const styles = StyleSheet.create({
   },
   item: {
     width: '30%',
+    aspectRatio: 1,
     alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: 24,
   },
   image: {
-    width: 80,
-    height: 80,
+    width: '100%',
+    height: '100%',
+    maxWidth: 80,
+    maxHeight: 80,
     marginBottom: 6,
+    resizeMode: 'contain',
   },
   silhouette: {
     opacity: 0.3,
