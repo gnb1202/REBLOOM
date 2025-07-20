@@ -7,20 +7,26 @@ import {
   FlatList,
   Image,
 } from 'react-native';
+import { useRouter } from 'expo-router';
 
 import mysteryIcon from '../../../assets/images/Shop/Item.png';
+
+// ✅ '꽃' 항목 제거된 카테고리
+const categories = ['방', '가구'];
 
 const dummyItems = Array.from({ length: 9 }).map((_, i) => ({
   id: i.toString(),
 }));
 
-const categories = ['방', '꽃', '가구'];
-
 export default function ShopPage() {
+  const router = useRouter();
   const [selectedCategory, setSelectedCategory] = useState('방');
 
   return (
     <View style={styles.container}>
+      {/* ✅ 상단 제목 */}
+      <Text style={styles.title}>상점</Text>
+
       {/* 탭 */}
       <View style={styles.tabContainer}>
         {categories.map((cat) => (
@@ -53,10 +59,22 @@ export default function ShopPage() {
         contentContainerStyle={styles.grid}
         renderItem={({ item }) => (
           <View style={styles.itemBox}>
-            <Image source={mysteryIcon} style={styles.itemImage} resizeMode="contain" />
+            <Image
+              source={mysteryIcon}
+              style={styles.itemImage}
+              resizeMode="contain"
+            />
           </View>
         )}
       />
+
+      {/* ✅ 닫기 버튼 */}
+      <TouchableOpacity
+        style={styles.closeButton}
+        onPress={() => router.push('/Home_page/Homepage')}
+      >
+        <Text style={styles.closeButtonText}>닫기</Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -66,6 +84,13 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FFFDF6',
     paddingHorizontal: 20,
+  },
+  title: {
+    fontSize: 22,
+    fontWeight: '700',
+    textAlign: 'center',
+    color: '#2F4034',
+    marginBottom: 20,
   },
   tabContainer: {
     flexDirection: 'row',
@@ -96,6 +121,7 @@ const styles = StyleSheet.create({
   },
   grid: {
     gap: 12,
+    paddingBottom: 80,
   },
   itemBox: {
     width: '30%',
@@ -109,5 +135,19 @@ const styles = StyleSheet.create({
   itemImage: {
     width: '80%',
     height: '80%',
+  },
+  closeButton: {
+    position: 'absolute',
+    bottom: 20,
+    alignSelf: 'center',
+    backgroundColor: '#3F5C45',
+    paddingVertical: 10,
+    paddingHorizontal: 24,
+    borderRadius: 10,
+  },
+  closeButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 14,
   },
 });

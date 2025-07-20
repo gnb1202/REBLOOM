@@ -167,30 +167,18 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
           {showQuest && (
             <View style={styles.overlayPartial}>
               <QuestPage />
-              <TouchableOpacity style={styles.closeButtonBottom} onPress={() => setShowQuest(false)}>
-                <Text style={styles.closeText}>닫기</Text>
-              </TouchableOpacity>
             </View>
           )}
 
           {showShop && (
             <View style={styles.overlayPartial}>
-              <View style={styles.questHeaderCentered}>
-                <Text style={styles.overlayTitle}>상점</Text>
-              </View>
               <ShopPage />
-              <TouchableOpacity style={styles.closeButtonBottom} onPress={() => setShowShop(false)}>
-                <Text style={styles.closeText}>닫기</Text>
-              </TouchableOpacity>
             </View>
           )}
 
           {showDiary && (
             <View style={styles.overlayPartial}>
               <DiaryCheckPage />
-              <TouchableOpacity style={styles.closeButtonBottom} onPress={() => setShowDiary(false)}>
-                <Text style={styles.closeText}>닫기</Text>
-              </TouchableOpacity>
             </View>
           )}
         </>
@@ -234,13 +222,6 @@ const styles = StyleSheet.create({
     position: 'absolute', top: 0, left: 0, right: 0, height: '94%',
     backgroundColor: '#FFFFFFEE', zIndex: 100, paddingTop: 60,
   },
-  questHeaderCentered: { alignItems: 'center', marginBottom: 10 },
-  overlayTitle: { fontSize: 18, fontWeight: 'bold', color: '#3F5C45' },
-  closeButtonBottom: {
-    alignSelf: 'center', marginTop: 12, backgroundColor: '#3F5C45',
-    paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8,
-  },
-  closeText: { color: 'white', fontWeight: 'bold', fontSize: 13 },
   saveButtonWrapper: {
     position: 'absolute', bottom: 30, alignSelf: 'center', zIndex: 10,
   },

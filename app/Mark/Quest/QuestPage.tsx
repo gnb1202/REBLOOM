@@ -5,34 +5,84 @@ import {
   TouchableOpacity,
   FlatList,
   StyleSheet,
+  Dimensions,
 } from 'react-native';
+import { useRouter } from 'expo-router';
+
+const { height } = Dimensions.get('window');
 
 export default function QuestPage() {
+  const router = useRouter();
+
   const [selectedTab, setSelectedTab] = useState('일간');
   const [completedIds, setCompletedIds] = useState<string[]>([]);
+
+  const [flowerStepIndex, setFlowerStepIndex] = useState(0);
+  const [exerciseStepIndex, setExerciseStepIndex] = useState(0);
+  const [attendanceStepIndex, setAttendanceStepIndex] = useState(0);
+
+  const flowerChallengeSteps = [
+    { id: 'flower-1', emoji: '🌸', text: '꽃을 1개 완전히 키우기' },
+    { id: 'flower-3', emoji: '🌸', text: '꽃을 3개 완전히 키우기' },
+    { id: 'flower-5', emoji: '🌸', text: '꽃을 5개 완전히 키우기' },
+  ];
+  const exerciseSteps = [
+    { id: 'time-100', emoji: '⏱️', text: '총 운동 시간 100분 달성하기' },
+    { id: 'time-300', emoji: '⏱️', text: '총 운동 시간 300분 달성하기' },
+    { id: 'time-500', emoji: '⏱️', text: '총 운동 시간 500분 달성하기' },
+  ];
+  const attendanceSteps = [
+    { id: 'attend-3', emoji: '📅', text: '3일 연속 출석하기' },
+    { id: 'attend-7', emoji: '📅', text: '7일 연속 출석하기' },
+    { id: 'attend-14', emoji: '📅', text: '14일 연속 출석하기' },
+  ];
+
+  const challengeQuests = [
+    flowerChallengeSteps[flowerStepIndex],
+    exerciseSteps[exerciseStepIndex],
+    attendanceSteps[attendanceStepIndex],
+  ];
 
   const allQuests = [
     { id: '1', emoji: '☕️', text: '차를 한 잔 내리기', type: '일간' },
     { id: '2', emoji: '🌱', text: '식물을 세 번 쓰다듬기', type: '일간' },
     { id: '3', emoji: '❓', text: '퀴즈 정답 맞히기', type: '주간' },
     { id: '4', emoji: '💰', text: '600 달러 벌기', type: '월간' },
+    ...challengeQuests.map((q) => ({ ...q, type: '도전과제' })),
   ];
 
   const filtered = allQuests.filter((q) => q.type === selectedTab);
 
   const toggleComplete = (id: string) => {
-    setCompletedIds((prev) =>
-      prev.includes(id) ? prev.filter((v) => v !== id) : [...prev, id]
-    );
+    setCompletedIds((prev) => {
+      const isAlready = prev.includes(id);
+      let updated = isAlready ? prev.filter((v) => v !== id) : [...prev, id];
+
+      if (!isAlready) {
+        if (id.startsWith('flower-') && flowerStepIndex < flowerChallengeSteps.length - 1) {
+          setFlowerStepIndex((i) => i + 1);
+          updated = updated.filter((v) => !v.startsWith('flower-'));
+        }
+        if (id.startsWith('time-') && exerciseStepIndex < exerciseSteps.length - 1) {
+          setExerciseStepIndex((i) => i + 1);
+          updated = updated.filter((v) => !v.startsWith('time-'));
+        }
+        if (id.startsWith('attend-') && attendanceStepIndex < attendanceSteps.length - 1) {
+          setAttendanceStepIndex((i) => i + 1);
+          updated = updated.filter((v) => !v.startsWith('attend-'));
+        }
+      }
+
+      return updated;
+    });
   };
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>퀘스트</Text>
 
-      {/* 탭 UI */}
       <View style={styles.tabWrapper}>
-        {['일간', '주간', '월간'].map((tab, index, array) => {
+        {['일간', '주간', '월간', '도전과제'].map((tab, index, array) => {
           const isActive = selectedTab === tab;
           const isFirst = index === 0;
           const isLast = index === array.length - 1;
@@ -56,7 +106,6 @@ export default function QuestPage() {
         })}
       </View>
 
-      {/* 퀘스트 목록 */}
       <FlatList
         data={filtered}
         keyExtractor={(item) => item.id}
@@ -66,15 +115,9 @@ export default function QuestPage() {
           return (
             <View style={[styles.questCard, done && styles.questCardDone]}>
               <Text style={styles.emoji}>{item.emoji}</Text>
-              <Text
-                style={[
-                  styles.questText,
-                  done && styles.questTextDone,
-                ]}
-              >
+              <Text style={[styles.questText, done && styles.questTextDone]}>
                 {item.text}
               </Text>
-
               <TouchableOpacity
                 style={[styles.completeBtn, done && styles.completeBtnDone]}
                 onPress={() => toggleComplete(item.id)}
@@ -87,6 +130,14 @@ export default function QuestPage() {
           );
         }}
       />
+
+      {/* ✅ 닫기 버튼 */}
+      <TouchableOpacity
+        style={styles.closeButton}
+        onPress={() => router.push('/Home_page/Homepage')}
+      >
+        <Text style={{ color: 'white', fontWeight: 'bold' }}>닫기</Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -138,7 +189,7 @@ const styles = StyleSheet.create({
     color: '#fff',
   },
   list: {
-    paddingBottom: 20,
+    paddingBottom: 100,
   },
   questCard: {
     flexDirection: 'row',
@@ -181,5 +232,14 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 12,
     fontWeight: 'bold',
+  },
+  closeButton: {
+    position: 'absolute',
+    bottom: 20,
+    alignSelf: 'center',
+    backgroundColor: '#3F5C45',
+    paddingVertical: 10,
+    paddingHorizontal: 24,
+    borderRadius: 10,
   },
 });
