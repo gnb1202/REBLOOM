@@ -13,39 +13,28 @@ import {
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 
-// 📦 배경 이미지 (Homepage.tsx와 동일하게)
-import MorningImage from '../../../assets/images/HomeBackgroundImages/Backgroundmorningimage.png';
-import AfternoonImage from '../../../assets/images/HomeBackgroundImages/Backgroundafternoonimage.png';
-import EveningImage from '../../../assets/images/HomeBackgroundImages/Backgroundeveningimage.png';
-import NightImage from '../../../assets/images/HomeBackgroundImages/Backgroundnightimage2.png';
-
-// 📦 버튼 이미지
+// ✅ 고정된 배경 이미지
+import BaseBackground from '../../../assets/images/HomeBackgroundImages/BaseBackground.png';
 import ModifiedButton from '../../../assets/images/Modifiy/modifiedbutton.png';
 
 const ORIGINAL_WIDTH = 2300;
 const ORIGINAL_HEIGHT = 1518;
 const screenHeight = Dimensions.get('window').height;
-
 const minScale = screenHeight / ORIGINAL_HEIGHT;
 const scaledWidth = ORIGINAL_WIDTH * minScale;
 const scaledHeight = ORIGINAL_HEIGHT * minScale;
-
-const backgroundImages = [MorningImage, AfternoonImage, EveningImage, NightImage];
 
 export default function RoomModified() {
   const router = useRouter();
   const { isRoomOnly } = useLocalSearchParams();
 
   const [selectedTab, setSelectedTab] = useState<'배경' | '꽃' | '가구'>('배경');
-  const [backgroundIndex, setBackgroundIndex] = useState(0);
   const [flowers, setFlowers] = useState<{ x: number; y: number }[]>([]);
   const [furniture, setFurniture] = useState<{ x: number; y: number }[]>([]);
   const [selectedFlowerReady, setSelectedFlowerReady] = useState(false);
 
   const handleSelectItem = (index: number) => {
-    if (selectedTab === '배경') {
-      setBackgroundIndex(index % backgroundImages.length);
-    } else if (selectedTab === '가구') {
+    if (selectedTab === '가구') {
       setFurniture([...furniture, { x: 60 + index * 50, y: 400 }]);
     } else if (selectedTab === '꽃') {
       setSelectedFlowerReady(true);
@@ -71,7 +60,7 @@ export default function RoomModified() {
   return (
     <View style={styles.fullScreen}>
       <ImageBackground
-        source={backgroundImages[backgroundIndex]}
+        source={BaseBackground}
         style={styles.backgroundImage}
         imageStyle={{
           width: scaledWidth,
@@ -96,23 +85,20 @@ export default function RoomModified() {
         </Pressable>
       </ImageBackground>
 
-      {/* 🔁 홈으로 가기 버튼 (이미지 버튼으로 대체) */}
-      <View style={styles.topButtonRight}>
+      <View style={styles.topButtonRightAlignedWithHomepage}>
         <TouchableOpacity onPress={handleReturn}>
           <Image source={ModifiedButton} style={styles.modifiedImageButton} resizeMode="contain" />
         </TouchableOpacity>
       </View>
 
-      {/* 💾 저장하기 버튼 (텍스트 버튼) */}
       {isRoomOnly === 'true' && (
-        <View style={styles.saveButtonFixed}>
+        <View style={styles.saveButtonFixedAlignedWithHomepage}>
           <TouchableOpacity onPress={handleSave} style={styles.saveButton}>
             <Text style={styles.saveButtonText}>저장하기</Text>
           </TouchableOpacity>
         </View>
       )}
 
-      {/* ⬇ 하단 탭 오버레이 */}
       <View style={styles.overlay}>
         <View style={styles.tabContainer}>
           {['배경', '꽃', '가구'].map((tab) => (
@@ -148,7 +134,7 @@ const styles = StyleSheet.create({
   backgroundImage: {
     flex: 1,
     alignItems: 'center',
-     justifyContent: 'center',
+    justifyContent: 'center',
   },
   objectBox: {
     position: 'absolute',
@@ -212,21 +198,21 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     backgroundColor: '#4A90E2',
   },
-  topButtonRight: {
+  topButtonRightAlignedWithHomepage: {
     position: 'absolute',
-    top: 80,
     right: 20,
+    top: 100,
+    zIndex: 10,
+  },
+  saveButtonFixedAlignedWithHomepage: {
+    position: 'absolute',
+    left: 20,
+    top: 100,
     zIndex: 10,
   },
   modifiedImageButton: {
     width: 40,
     height: 40,
-  },
-  saveButtonFixed: {
-    position: 'absolute',
-    top: 80,
-    left: 20,
-    zIndex: 10,
   },
   saveButton: {
     backgroundColor: '#5C7BEE',
