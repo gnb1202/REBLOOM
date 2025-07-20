@@ -13,15 +13,10 @@ import QuestPage from '../Mark/Quest/QuestPage';
 import ShopPage from '../Mark/Shop/ShopPage';
 import DiaryCheckPage from '../Mark/Check/DiaryCheckPage';
 
-import MorningImage from '../../assets/images/HomeBackgroundImages/Backgroundmorningimage.png';
-import AfternoonImage from '../../assets/images/HomeBackgroundImages/Backgroundafternoonimage.png';
-import EveningImage from '../../assets/images/HomeBackgroundImages/Backgroundeveningimage.png';
-import NightImage from '../../assets/images/HomeBackgroundImages/Backgroundnightimage2.png';
+import BaseBackground from '../../assets/images/HomeBackgroundImages/BaseBackground.png'; // ✅ 고정된 배경
 
 const ORIGINAL_WIDTH = 2300;
 const ORIGINAL_HEIGHT = 1518;
-
-const backgroundImages = [MorningImage, AfternoonImage, EveningImage, NightImage];
 
 export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean }) {
   const router = useRouter();
@@ -30,19 +25,11 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
   const [showQuest, setShowQuest] = useState(false);
   const [showShop, setShowShop] = useState(false);
   const [showDiary, setShowDiary] = useState(false);
-  const [bgIndex, setBgIndex] = useState(0);
   const [dimensions, setDimensions] = useState(Dimensions.get('window'));
 
   const minScale = dimensions.height / ORIGINAL_HEIGHT;
   const imageScaledWidth = ORIGINAL_WIDTH * minScale;
   const imageScaledHeight = ORIGINAL_HEIGHT * minScale;
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setBgIndex((prev) => (prev + 1) % backgroundImages.length);
-    }, 10 * 60 * 1000);
-    return () => clearInterval(interval);
-  }, []);
 
   useEffect(() => {
     const subscription = Dimensions.addEventListener('change', ({ window }) => {
@@ -87,9 +74,9 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
         }}
         style={{ zIndex: 0 }}
       >
-
+        {/* ✅ 고정된 배경 이미지 */}
         <Image
-          source={backgroundImages[bgIndex]}
+          source={BaseBackground}
           style={{ width: imageScaledWidth, height: imageScaledHeight }}
           resizeMode="cover"
         />
@@ -111,7 +98,6 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
           />
         </TouchableOpacity>
       </View>
-
 
       {/* 저장하기 버튼 */}
       {isRoomOnly && (
@@ -148,12 +134,20 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
             </TouchableOpacity>
             <TouchableOpacity onPress={() => setShowShop(true)}>
               <View style={styles.shopDot}>
-                <Image source={require('../../assets/images/Shop/Shopmark.png')} style={styles.shopIcon} resizeMode="contain" />
+                <Image
+                  source={require('../../assets/images/Shop/Shopmark.png')}
+                  style={styles.shopIcon}
+                  resizeMode="contain"
+                />
               </View>
             </TouchableOpacity>
             <TouchableOpacity onPress={() => setShowQuest(true)}>
               <View style={styles.questDot}>
-                <Image source={require('../../assets/images/Quest/Questmark.png')} style={styles.questIcon} resizeMode="contain" />
+                <Image
+                  source={require('../../assets/images/Quest/Questmark.png')}
+                  style={styles.questIcon}
+                  resizeMode="contain"
+                />
               </View>
             </TouchableOpacity>
           </View>
@@ -218,7 +212,6 @@ const styles = StyleSheet.create({
   activeTabText: { color: '#fff', fontWeight: 'bold', fontSize: 14 },
   inactiveTabText: { color: '#000', fontSize: 14 },
   rightCircleWrapper: { position: 'absolute', right: 20, top: 100, zIndex: 10 },
-  topRightCircle: { width: 40, height: 40, backgroundColor: '#ccc', borderRadius: 20 },
   indicatorContainer: {
     position: 'absolute', bottom: 60, left: 20, flexDirection: 'row', gap: 16,
     zIndex: 20, alignItems: 'center',
