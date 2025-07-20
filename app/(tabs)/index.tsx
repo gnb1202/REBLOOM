@@ -17,7 +17,7 @@ import * as MediaLibrary from 'expo-media-library';
 import { Camera } from 'expo-camera';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import doorImage from '../../assets/images/StartImages/Startimage.png';
+import doorImage from '../../assets/images/StartImages/Startimage2.png';
 
 const { width, height } = Dimensions.get('window');
 
@@ -111,9 +111,10 @@ export default function Startpage() {
         <Text style={styles.title}>Re:Bloom</Text>
 
         <View style={styles.menuContainer}>
-          <TouchableOpacity onPress={() => router.push('/Entry_page/Loginpage')}>
+          <TouchableOpacity onPress={() => router.push('/Entry_page/LoadingPage')}>
             <Text style={styles.menuText}>로그인</Text>
           </TouchableOpacity>
+
 
           <Text style={styles.menuDivider}>|</Text>
 
