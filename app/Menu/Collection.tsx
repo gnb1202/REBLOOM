@@ -1,10 +1,55 @@
-// Collection.tsx
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useProgress } from '../../context/ProgressContext'; // ✅ 전역 상태에서 obtainedFlowers 가져오기
+
+// ✅ 수집 가능한 꽃 리스트
+const flowerList = [
+  {
+    id: 'daisy',
+    name: '데이지',
+    image: require('../../assets/images/flowers/daisy/daisystep3.png'),
+  },
+  {
+    id: 'hydrangea',
+    name: '수국',
+    image: require('../../assets/images/flowers/hydrangea/hydrangeastep2.png'),
+  },
+  {
+    id: 'lavender',
+    name: '라벤더',
+    image: require('../../assets/images/flowers/lavender/lavenderstep3.png'),
+  },
+  {
+    id: 'lily',
+    name: '백합',
+    image: require('../../assets/images/flowers/lily/lilystep3.png'),
+  },
+  {
+    id: 'rose',
+    name: '장미',
+    image: require('../../assets/images/flowers/rose/rosestep3.png'),
+  },
+  {
+    id: 'sunflower',
+    name: '해바라기',
+    image: require('../../assets/images/flowers/sunflower/sunflowerstep2.png'),
+  },
+  {
+    id: 'trumpetcreeper',
+    name: '능소화',
+    image: require('../../assets/images/flowers/trumpetcreeper/trumpetcreeperstep2.png'),
+  },
+  {
+    id: 'tulip',
+    name: '튤립',
+    image: require('../../assets/images/flowers/tulip/tulipstep2.png'),
+  },
+];
 
 export default function Collection() {
   const router = useRouter();
+  const { obtainedFlowers } = useProgress(); // ✅ 획득한 꽃 ID 배열
 
   return (
     <View style={styles.container}>
@@ -16,25 +61,21 @@ export default function Collection() {
         <Text style={styles.title}>수집 도감</Text>
       </View>
 
-      {/* 꽃 목록 */}
+      {/* 수집된 꽃만 표시 */}
       <ScrollView contentContainerStyle={styles.grid}>
-        {/*
-          {[
-            ['튤립', require('../assets/tulip.png')],
-            ['해바라기', require('../assets/sunflower.png')],
-            ['양귀비', require('../assets/poppy.png')],
-            ['데이지', require('../assets/daisy.png')],
-            ['벚꽃', require('../assets/cherryblossom.png')],
-            ['장미', require('../assets/rose.png')],
-            ['무궁화', require('../assets/hibiscus.png')],
-            ['수레국화', require('../assets/cornflower.png')],
-          ].map(([label, image], index) => (
+        {flowerList
+          .filter(flower => obtainedFlowers.includes(flower.id)) // ✅ 획득한 꽃만 표시
+          .map((flower, index) => (
             <View key={index} style={styles.item}>
-              <Image source={image} style={styles.image} resizeMode="contain" />
-              <Text style={styles.label}>{label}</Text>
+              <Image source={flower.image} style={styles.image} resizeMode="contain" />
+              <Text style={styles.label}>{flower.name}</Text>
             </View>
           ))}
-        */}
+        {obtainedFlowers.length === 0 && (
+          <Text style={{ marginTop: 40, fontSize: 14, color: '#888' }}>
+            아직 수집한 꽃이 없습니다.
+          </Text>
+        )}
       </ScrollView>
 
       {/* 하단 탭 */}
@@ -71,20 +112,23 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     justifyContent: 'space-around',
     paddingVertical: 20,
+    paddingBottom: 80,
   },
-  item: {
-    width: '25%',
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  image: {
-    width: 50,
-    height: 50,
-    marginBottom: 6,
-  },
-  label: {
-    fontSize: 12,
-  },
+    item: {
+      width: '33%',
+      alignItems: 'center',
+      marginBottom: 32,
+    },
+    image: {
+      width: 80,
+      height: 80,
+      marginBottom: 8,
+    },
+    label: {
+      fontSize: 14,
+      fontWeight: '500',
+    },
+
   tabBar: {
     flexDirection: 'row',
     justifyContent: 'space-around',

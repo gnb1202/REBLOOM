@@ -48,10 +48,11 @@ const flowerImages = {
 
 export default function PlantRewardPage() {
   const router = useRouter();
-  const { currentFlowerId, progress, updateProgress } = useProgress(); // 전역 진행도 접근
-  const [localProgress, setLocalProgress] = useState(0); // 시각적 애니메이션용
 
-  // 실제 이미지 결정
+  // ✅ updateProgress → setProgress 으로 수정
+  const { currentFlowerId, progress, setProgress } = useProgress();
+  const [localProgress, setLocalProgress] = useState(0); // 애니메이션용
+
   const imageKey = getStepImageName(currentFlowerId, progress);
   const image = flowerImages[imageKey];
 
@@ -67,7 +68,8 @@ export default function PlantRewardPage() {
 
     // 2. 실제 진행도 반영 및 이동
     const timeout = setTimeout(() => {
-      updateProgress(Math.min(progress + 10, 100)); // ✅ 전역 상태에 +10%
+      const newProgress = Math.min(progress + 10, 100);
+      setProgress(newProgress); // ✅ 오류 수정: updateProgress → setProgress
       router.push('/Exercise/CoinRewardPage');
     }, 2000);
 
@@ -81,7 +83,7 @@ export default function PlantRewardPage() {
     <View style={styles.container}>
       <View style={styles.box}>
         <Image
-          source={image} // 현재 꽃의 진행도에 맞는 이미지
+          source={image}
           style={styles.image}
           resizeMode="contain"
         />

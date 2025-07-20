@@ -1,9 +1,8 @@
-import React from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, Image, TouchableOpacity, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useProgress } from '../../context/ProgressContext'; // 경로 확인
+import { useProgress } from '../../context/ProgressContext';
 
-// 꽃 이름 및 설명
 const flowerData = {
   daisy: { name: '데이지', desc: '순수함과 밝은 에너지' },
   hydrangea: { name: '수국', desc: '진심, 감사' },
@@ -15,7 +14,6 @@ const flowerData = {
   tulip: { name: '튤립', desc: '사랑의 고백' },
 };
 
-// 단계별 이미지
 const flowerImages = {
   daisy_step1: require('../../assets/images/flowers/daisy/daisystep1.png'),
   daisy_step2: require('../../assets/images/flowers/daisy/daisystep2.png'),
@@ -46,7 +44,17 @@ const flowerImages = {
   tulip_step2: require('../../assets/images/flowers/tulip/tulipstep2.png'),
 };
 
-// 진행률에 따라 이미지 단계 결정
+const flowerSequence = [
+  'daisy',
+  'hydrangea',
+  'lavender',
+  'lily',
+  'rose',
+  'sunflower',
+  'trumpetcreeper',
+  'tulip',
+];
+
 function getStepImageName(flowerId: string, progress: number): string {
   const twoStep = ['hydrangea', 'sunflower', 'trumpetcreeper', 'tulip'];
   if (twoStep.includes(flowerId)) {
@@ -58,7 +66,6 @@ function getStepImageName(flowerId: string, progress: number): string {
   }
 }
 
-// 진행률에 따른 멘트
 function getFlowerMessage(progress: number): string {
   if (progress >= 100) return '🌼 예쁘게 피었습니다!';
   if (progress >= 80) return '🌸 거의 다 피었어요!';
@@ -68,11 +75,47 @@ function getFlowerMessage(progress: number): string {
 
 export default function Flowermanage() {
   const router = useRouter();
-  const { currentFlowerId, progress } = useProgress();
+  const {
+    currentFlowerId,
+    progress,
+    setProgress,
+    setCurrentFlowerId,
+    addObtainedFlower,
+  } = useProgress();
+  const [hasAwarded, setHasAwarded] = useState(false);
 
   const flower = flowerData[currentFlowerId];
   const imageKey = getStepImageName(currentFlowerId, progress);
   const image = flowerImages[imageKey];
+
+  useEffect(() => {
+    if (progress >= 100 && !hasAwarded) {
+      Alert.alert('🎉 꽃을 획득했어요!', '꽃이 만개했습니다!');
+
+      // 수집에 추가
+      addObtainedFlower(currentFlowerId);
+
+      // 다음 꽃으로 이동
+      const currentIndex = flowerSequence.indexOf(currentFlowerId);
+      const nextFlower = flowerSequence[currentIndex + 1] || '';
+
+      setCurrentFlowerId(nextFlower);
+      setProgress(0);
+      setHasAwarded(true);
+    }
+
+    if (progress < 100 && hasAwarded) {
+      setHasAwarded(false); // 상태 복구
+    }
+  }, [progress]);
+
+  if (!flower) {
+    return (
+      <View style={styles.container}>
+        <Text style={{ marginTop: 100 }}>🌸 현재 관리 중인 꽃이 없습니다.</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
