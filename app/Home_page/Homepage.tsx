@@ -44,8 +44,8 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
     const offsetY = (imageScaledHeight - dimensions.height) / 2;
 
     imageZoomRef.current?.centerOn({
-      x: offsetX,
-      y: offsetY,
+      x: -offsetX,
+      y: -offsetY,
       scale: minScale,
       duration: 0,
     });
