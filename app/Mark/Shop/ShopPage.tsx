@@ -10,10 +10,9 @@ import {
 import { useRouter } from 'expo-router';
 
 import mysteryIcon from '../../../assets/images/Shop/Item.png';
+import { useCoin } from '../../../context/CoinContext'; // ← ✅ 추가
 
-// ✅ '꽃' 항목 제거된 카테고리
 const categories = ['방', '가구'];
-
 const dummyItems = Array.from({ length: 9 }).map((_, i) => ({
   id: i.toString(),
 }));
@@ -21,11 +20,15 @@ const dummyItems = Array.from({ length: 9 }).map((_, i) => ({
 export default function ShopPage() {
   const router = useRouter();
   const [selectedCategory, setSelectedCategory] = useState('방');
+  const { coins } = useCoin(); // ← ✅ 보유 코인 불러오기
 
   return (
     <View style={styles.container}>
-      {/* ✅ 상단 제목 */}
-      <Text style={styles.title}>상점</Text>
+      {/* ✅ 상단 타이틀 + 코인 표시 */}
+      <View style={styles.header}>
+        <Text style={styles.title}>상점</Text>
+        <Text style={styles.coinText}>보유 코인: {coins}개</Text>
+      </View>
 
       {/* 탭 */}
       <View style={styles.tabContainer}>
@@ -85,12 +88,22 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFDF6',
     paddingHorizontal: 20,
   },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+    marginTop: 20,
+  },
   title: {
     fontSize: 22,
     fontWeight: '700',
-    textAlign: 'center',
     color: '#2F4034',
-    marginBottom: 20,
+  },
+  coinText: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#3F5C45',
   },
   tabContainer: {
     flexDirection: 'row',
