@@ -6,7 +6,8 @@ import 'react-native-reanimated';
 import { View, Text } from 'react-native';
 
 import { useColorScheme } from '@/hooks/useColorScheme';
-import { ProgressProvider } from '../context/ProgressContext'; // ✅ 추가
+import { ProgressProvider } from '../context/ProgressContext';
+import { CoinProvider } from '../context/CoinContext';
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
@@ -23,18 +24,20 @@ export default function RootLayout() {
   }
 
   return (
-    <ProgressProvider>
-      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-        <Stack>
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="+not-found" />
-          <Stack.Screen
-            name="Exercise/ExerciseIntroPage"
-            options={{ animation: 'none' }}
-          />
-        </Stack>
-        <StatusBar style="auto" />
-      </ThemeProvider>
-    </ProgressProvider>
+    <CoinProvider>
+      <ProgressProvider>
+        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+          <Stack>
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen name="+not-found" />
+            <Stack.Screen
+              name="Exercise/ExerciseIntroPage"
+              options={{ animation: 'none' }}
+            />
+          </Stack>
+          <StatusBar style="auto" />
+        </ThemeProvider>
+      </ProgressProvider>
+    </CoinProvider>
   );
 }

@@ -1,11 +1,14 @@
 import React, { useEffect } from 'react';
 import { View, Image, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useCoin } from '../../context/CoinContext';
 
 export default function CoinRewardPage() {
   const router = useRouter();
+  const { addCoins } = useCoin();
 
   useEffect(() => {
+    addCoins(5); // 운동 완료 후 5코인 추가
     const timeout = setTimeout(() => {
       router.push('/Exercise/ExerciseFeedbackPage');
     }, 2000);
