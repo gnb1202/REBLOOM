@@ -89,7 +89,7 @@ export default function Collection() {
         <TouchableOpacity onPress={() => router.back()}>
           <Text style={styles.back}>{'←'}</Text>
         </TouchableOpacity>
-        <Text style={styles.title}>수집 도감</Text>
+        <Text style={styles.title}>꽃 도감</Text>
       </View>
 
       {/* 꽃 그리드 */}
