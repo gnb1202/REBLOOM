@@ -10,8 +10,17 @@ export default function Loginpage() {
       <Text style={styles.title}>로그인</Text>
 
       {/* 입력창 */}
-      <TextInput placeholder="아이디를 입력해주세요" style={styles.input} />
-      <TextInput placeholder="비밀번호를 입력해주세요" secureTextEntry style={styles.input} />
+      <TextInput
+        placeholder="아이디를 입력해주세요"
+        placeholderTextColor="#999"
+        style={styles.input}
+      />
+      <TextInput
+        placeholder="비밀번호를 입력해주세요"
+        placeholderTextColor="#999"
+        secureTextEntry
+        style={styles.input}
+      />
 
       {/* 로그인 버튼 */}
       <TouchableOpacity
