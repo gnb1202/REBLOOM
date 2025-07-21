@@ -1,26 +1,27 @@
-import React, { useRef } from 'react';
-import { View, StyleSheet, Dimensions } from 'react-native';
+import React, { useEffect } from 'react';
+import { View, StyleSheet, Dimensions, Platform, Image } from 'react-native';
 import { useRouter } from 'expo-router';
-import LottieView from 'lottie-react-native';
 
-// ✅ 정확한 경로로 애니메이션 파일 import
-import loadingAnimation from '../../assets/lottie/loading_animation.json';
+// ✅ GIF 이미지 import (경로는 실제 파일에 맞게 조정)
+import loadingGif from '../../assets/images/animations/loading_animation.gif';
 
 export default function LoadingPage() {
   const router = useRouter();
-  const animationRef = useRef<LottieView>(null);
+
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      router.replace('/Entry_page/Loginpage');
+    }, 2000); // 애니메이션 시간에 맞게 조정
+
+    return () => clearTimeout(timeout);
+  }, []);
 
   return (
     <View style={styles.container}>
-      <LottieView
-        ref={animationRef}
-        source={loadingAnimation}
-        autoPlay
-        loop={false}
-        onAnimationFinish={() => {
-          router.replace('/Entry_page/Loginpage');
-        }}
-        style={styles.lottie}
+      <Image
+        source={loadingGif}
+        style={styles.image}
+        resizeMode="contain"
       />
     </View>
   );
@@ -33,7 +34,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#fff',
   },
-  lottie: {
+  image: {
     width: Dimensions.get('window').width * 0.8,
     height: Dimensions.get('window').width * 0.8,
   },
