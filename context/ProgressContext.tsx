@@ -10,6 +10,12 @@ type ProgressContextType = {
   addObtainedFlower: (id: string) => void;
   obtainedFurniture: string[];
   addObtainedFurniture: (id: string) => void;
+  hasChair: boolean;
+  setHasChair: (value: boolean) => void;
+  hasStand: boolean;
+  setHasStand: (value: boolean) => void;
+  coins: number;
+  spendCoins: (amount: number) => Promise<boolean>;
 };
 
 const ProgressContext = createContext<ProgressContextType>({
@@ -21,6 +27,12 @@ const ProgressContext = createContext<ProgressContextType>({
   addObtainedFlower: () => {},
   obtainedFurniture: [],
   addObtainedFurniture: () => {},
+  hasChair: false,
+  setHasChair: () => {},
+  hasStand: false,
+  setHasStand: () => {},
+  coins: 0,
+  spendCoins: async () => false,
 });
 
 const flowerOrder = [
@@ -39,6 +51,9 @@ export const ProgressProvider = ({ children }: { children: React.ReactNode }) =>
   const [currentFlowerId, setCurrentFlowerIdState] = useState('');
   const [obtainedFlowersState, setObtainedFlowersState] = useState<string[]>([]);
   const [obtainedFurnitureState, setObtainedFurnitureState] = useState<string[]>([]);
+  const [hasChair, setHasChairState] = useState(false);
+  const [hasStand, setHasStandState] = useState(false);
+  const [coins, setCoins] = useState(1000); // 초기 코인 설정 (원하는 값으로 조정)
 
   useEffect(() => {
     const loadData = async () => {
@@ -47,10 +62,16 @@ export const ProgressProvider = ({ children }: { children: React.ReactNode }) =>
         const savedFlowerId = await AsyncStorage.getItem('@currentFlowerId');
         const savedObtained = await AsyncStorage.getItem('@obtainedFlowers');
         const savedFurniture = await AsyncStorage.getItem('@obtainedFurniture');
+        const savedHasChair = await AsyncStorage.getItem('@hasChair');
+        const savedHasStand = await AsyncStorage.getItem('@hasStand');
+        const savedCoins = await AsyncStorage.getItem('@coins');
 
         if (savedProgress !== null) setProgressState(JSON.parse(savedProgress));
         if (savedObtained !== null) setObtainedFlowersState(JSON.parse(savedObtained));
         if (savedFurniture !== null) setObtainedFurnitureState(JSON.parse(savedFurniture));
+        if (savedHasChair !== null) setHasChairState(JSON.parse(savedHasChair));
+        if (savedHasStand !== null) setHasStandState(JSON.parse(savedHasStand));
+        if (savedCoins !== null) setCoins(JSON.parse(savedCoins));
 
         if (savedFlowerId !== null) {
           setCurrentFlowerIdState(savedFlowerId);
@@ -123,6 +144,35 @@ export const ProgressProvider = ({ children }: { children: React.ReactNode }) =>
     }
   };
 
+  const setHasChair = async (value: boolean) => {
+    try {
+      setHasChairState(value);
+      await AsyncStorage.setItem('@hasChair', JSON.stringify(value));
+    } catch (e) {
+      console.error('의자 상태 저장 실패:', e);
+    }
+  };
+
+  const setHasStand = async (value: boolean) => {
+    try {
+      setHasStandState(value);
+      await AsyncStorage.setItem('@hasStand', JSON.stringify(value));
+    } catch (e) {
+      console.error('스탠드 상태 저장 실패:', e);
+    }
+  };
+
+  const spendCoins = async (amount: number) => {
+    if (coins >= amount) {
+      const updated = coins - amount;
+      setCoins(updated);
+      await AsyncStorage.setItem('@coins', JSON.stringify(updated));
+      return true;
+    } else {
+      return false;
+    }
+  };
+
   return (
     <ProgressContext.Provider
       value={{
@@ -134,6 +184,12 @@ export const ProgressProvider = ({ children }: { children: React.ReactNode }) =>
         addObtainedFlower,
         obtainedFurniture: obtainedFurnitureState,
         addObtainedFurniture,
+        hasChair,
+        setHasChair,
+        hasStand,
+        setHasStand,
+        coins,
+        spendCoins,
       }}
     >
       {children}

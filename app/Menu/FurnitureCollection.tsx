@@ -4,37 +4,43 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  Image,
   ScrollView,
   Modal,
+  Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useProgress } from '../../context/ProgressContext';
 
-import Table1 from '../../assets/images/furnitures/table.png';
-import Chair1 from '../../assets/images/furnitures/chair.png';
+import chair1 from '../../assets/images/furnitures/whiteroundchair.png';
+import stand1 from '../../assets/images/furnitures/yellowstand.png';
 
 const furnitureList = [
   {
-    id: 'table1',
+    id: 'whiteroundchair',
+    name: '테이블',
     desc: '심플하고 튼튼한 테이블',
-    image: Table1,
+    image: chair1,
   },
   {
-    id: 'chair1',
+    id: 'yellowstand',
+    name: '의자',
     desc: '편안한 디자인의 의자',
-    image: Chair1,
+    image: stand1,
   },
 ];
 
 export default function FurnitureCollection() {
   const router = useRouter();
+  const { obtainedFurniture } = useProgress();
   const [selectedFurniture, setSelectedFurniture] = useState(null);
 
-  const remainder = furnitureList.length % 3;
-  const dummyCount = remainder === 0 ? 0 : 3 - remainder;
+  const ownedItems = furnitureList.filter((item) =>
+    obtainedFurniture.includes(item.id)
+  );
 
   return (
     <View style={styles.container}>
+      {/* 헤더 */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
           <Text style={styles.back}>{'\u2190'}</Text>
@@ -42,8 +48,9 @@ export default function FurnitureCollection() {
         <Text style={styles.title}>가구 도감</Text>
       </View>
 
+      {/* 획득한 가구 목록만 표시 */}
       <ScrollView contentContainerStyle={styles.grid}>
-        {furnitureList.map((item, idx) => (
+        {ownedItems.map((item, idx) => (
           <TouchableOpacity
             key={idx}
             style={styles.item}
@@ -54,13 +61,12 @@ export default function FurnitureCollection() {
               style={styles.image}
               resizeMode="contain"
             />
+            <Text style={styles.label}>{item.name}</Text>
           </TouchableOpacity>
-        ))}
-        {Array.from({ length: dummyCount }).map((_, i) => (
-          <View key={`dummy-${i}`} style={styles.item} />
         ))}
       </ScrollView>
 
+      {/* 상세 모달 */}
       <Modal
         visible={!!selectedFurniture}
         transparent
@@ -74,6 +80,7 @@ export default function FurnitureCollection() {
               style={{ width: 100, height: 100, marginBottom: 10 }}
               resizeMode="contain"
             />
+            <Text style={styles.modalTitle}>{selectedFurniture?.name}</Text>
             <Text style={styles.modalDesc}>{selectedFurniture?.desc}</Text>
             <TouchableOpacity
               onPress={() => setSelectedFurniture(null)}
@@ -85,6 +92,7 @@ export default function FurnitureCollection() {
         </View>
       </Modal>
 
+      {/* 탭 바 */}
       <View style={styles.tabBar}>
         <TouchableOpacity onPress={() => router.push('/Menu/BackgroundCollection')}>
           <Text style={styles.tab}>배경</Text>
@@ -132,6 +140,7 @@ const styles = StyleSheet.create({
     maxHeight: 80,
     marginBottom: 6,
   },
+  label: { fontSize: 12 },
   tabBar: {
     flexDirection: 'row',
     justifyContent: 'space-around',
@@ -161,6 +170,11 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: 'center',
     width: '70%',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 8,
   },
   modalDesc: {
     fontSize: 14,

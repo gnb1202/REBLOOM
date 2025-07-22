@@ -13,7 +13,10 @@ import QuestPage from '../Mark/Quest/QuestPage';
 import ShopPage from '../Mark/Shop/ShopPage';
 import DiaryCheckPage from '../Mark/Check/DiaryCheckPage';
 
-import BaseBackground from '../../assets/images/HomeBackgroundImages/BaseBackground.png'; // ✅ 고정된 배경
+import BaseBackground from '../../assets/images/HomeBackgroundImages/FirstBaseBackground.png';
+import AddChair from '../../assets/images/Roommodifiedimages/Addchair.png';
+import AddStand from '../../assets/images/Roommodifiedimages/Addstand.png';
+import { useProgress } from '../../context/ProgressContext';
 
 const ORIGINAL_WIDTH = 2300;
 const ORIGINAL_HEIGHT = 1518;
@@ -26,6 +29,8 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
   const [showShop, setShowShop] = useState(false);
   const [showDiary, setShowDiary] = useState(false);
   const [dimensions, setDimensions] = useState(Dimensions.get('window'));
+
+  const { hasChair, hasStand } = useProgress();
 
   const minScale = dimensions.height / ORIGINAL_HEIGHT;
   const imageScaledWidth = ORIGINAL_WIDTH * minScale;
@@ -51,6 +56,12 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
     });
   };
 
+  const openOnlyOneOverlay = (target: 'quest' | 'shop' | 'diary') => {
+    setShowQuest(target === 'quest');
+    setShowShop(target === 'shop');
+    setShowDiary(target === 'diary');
+  };
+
   return (
     <View style={styles.container}>
       <ImageZoom
@@ -72,17 +83,30 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
             setTimeout(centerImage, 100);
           }
         }}
-        style={{ zIndex: 0 }}
       >
-        {/* ✅ 고정된 배경 이미지 */}
         <Image
           source={BaseBackground}
           style={{ width: imageScaledWidth, height: imageScaledHeight }}
           resizeMode="cover"
         />
+
+        {hasChair && (
+          <Image
+            source={AddChair}
+            style={[styles.addChairImage, { left: 900, top: 1050 }]}
+            resizeMode="contain"
+          />
+        )}
+
+        {hasStand && (
+          <Image
+            source={AddStand}
+            style={[styles.addStandImage, { left: 1200, top: 950 }]}
+            resizeMode="contain"
+          />
+        )}
       </ImageZoom>
 
-      {/* 상단 진입/복귀 버튼 */}
       <View style={styles.rightCircleWrapper}>
         <TouchableOpacity
           onPress={() =>
@@ -99,15 +123,11 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
         </TouchableOpacity>
       </View>
 
-      {/* 저장하기 버튼 */}
       {isRoomOnly && (
         <View style={styles.saveButtonWrapper}>
           <TouchableOpacity
             style={styles.saveButton}
-            onPress={() => {
-              console.log('저장되었습니다.');
-              alert('저장되었습니다!');
-            }}
+            onPress={() => alert('저장되었습니다!')}
           >
             <Text style={styles.saveButtonText}>저장하기</Text>
           </TouchableOpacity>
@@ -129,10 +149,10 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
           </View>
 
           <View style={styles.indicatorContainer}>
-            <TouchableOpacity onPress={() => setShowDiary(true)}>
+            <TouchableOpacity onPress={() => openOnlyOneOverlay('diary')}>
               <View style={styles.indicatorDot} />
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => setShowShop(true)}>
+            <TouchableOpacity onPress={() => openOnlyOneOverlay('shop')}>
               <View style={styles.shopDot}>
                 <Image
                   source={require('../../assets/images/Shop/Shopmark.png')}
@@ -141,7 +161,7 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
                 />
               </View>
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => setShowQuest(true)}>
+            <TouchableOpacity onPress={() => openOnlyOneOverlay('quest')}>
               <View style={styles.questDot}>
                 <Image
                   source={require('../../assets/images/Quest/Questmark.png')}
@@ -164,23 +184,9 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
             </TouchableOpacity>
           </View>
 
-          {showQuest && (
-            <View style={styles.overlayPartial}>
-              <QuestPage />
-            </View>
-          )}
-
-          {showShop && (
-            <View style={styles.overlayPartial}>
-              <ShopPage />
-            </View>
-          )}
-
-          {showDiary && (
-            <View style={styles.overlayPartial}>
-              <DiaryCheckPage />
-            </View>
-          )}
+          {showQuest && <View style={styles.overlayPartial}><QuestPage /></View>}
+          {showShop && <View style={styles.overlayPartial}><ShopPage /></View>}
+          {showDiary && <View style={styles.overlayPartial}><DiaryCheckPage /></View>}
         </>
       )}
     </View>
@@ -234,5 +240,15 @@ const styles = StyleSheet.create({
   modifiedImageButton: {
     width: 40,
     height: 40,
+  },
+  addChairImage: {
+    position: 'absolute',
+    width: 150,
+    height: 150,
+  },
+  addStandImage: {
+    position: 'absolute',
+    width: 150,
+    height: 150,
   },
 });

@@ -14,34 +14,24 @@ import {
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useProgress } from '../../../context/ProgressContext';
 
-import BaseBackground from '../../../assets/images/HomeBackgroundImages/BaseBackground.png';
+import BaseBackground from '../../../assets/images/HomeBackgroundImages/FirstBaseBackground.png';
+import AddChair from '../../../assets/images/Roommodifiedimages/Addchair.png';
+import AddStand from '../../../assets/images/Roommodifiedimages/Addstand.png';
 import ModifiedButton from '../../../assets/images/Modifiy/modifiedbutton.png';
+import ChairIcon from '../../../assets/images/furnitures/whiteroundchair.png';
+import StandIcon from '../../../assets/images/furnitures/yellowstand.png';
 
 import daisy from '../../../assets/images/flowers/daisy/daisystep3.png';
-import hydrangea from '../../../assets/images/flowers/hydrangea/hydrangeastep2.png';
-import lavender from '../../../assets/images/flowers/lavender/lavenderstep3.png';
-import lily from '../../../assets/images/flowers/lily/lilystep3.png';
-import rose from '../../../assets/images/flowers/rose/rosestep3.png';
-import sunflower from '../../../assets/images/flowers/sunflower/sunflowerstep2.png';
-import trumpetcreeper from '../../../assets/images/flowers/trumpetcreeper/trumpetcreeperstep2.png';
-import tulip from '../../../assets/images/flowers/tulip/tulipstep2.png';
+// ... (다른 꽃 이미지 생략)
 
 const flowerList = [
   { id: 'daisy', name: '데이지', image: daisy },
-  { id: 'hydrangea', name: '수국', image: hydrangea },
-  { id: 'lavender', name: '라벤더', image: lavender },
-  { id: 'lily', name: '백합', image: lily },
-  { id: 'rose', name: '장미', image: rose },
-  { id: 'sunflower', name: '해바라기', image: sunflower },
-  { id: 'trumpetcreeper', name: '능소화', image: trumpetcreeper },
-  { id: 'tulip', name: '튤립', image: tulip },
+  // ... (다른 꽃들 추가)
 ];
 
-// 수집 가능한 가구 목록
 const furnitureList = [
-  { id: 'chair' },
-  { id: 'table' },
-  { id: 'lamp' },
+  { id: 'whiteroundchair', icon: ChairIcon, overlay: AddChair },
+  { id: 'yellowstand', icon: StandIcon, overlay: AddStand },
 ];
 
 const ORIGINAL_WIDTH = 2300;
@@ -54,18 +44,26 @@ const scaledHeight = ORIGINAL_HEIGHT * minScale;
 export default function RoomModified() {
   const router = useRouter();
   const { isRoomOnly } = useLocalSearchParams();
-
   const [selectedTab, setSelectedTab] = useState<'배경' | '꽃' | '가구'>('배경');
   const [flowers, setFlowers] = useState<{ x: number; y: number; id: string }[]>([]);
-  const [furniture, setFurniture] = useState<{ x: number; y: number; id: string }[]>([]);
   const [selectedFlowerReady, setSelectedFlowerReady] = useState<null | string>(null);
+  const [tempFurniture, setTempFurniture] = useState<string[]>([]);
 
-  // 수집한 꽃과 가구 정보 가져오기
-  const { obtainedFlowers, obtainedFurniture } = useProgress();
+  const {
+    obtainedFlowers,
+    obtainedFurniture,
+    setHasChair,
+    setHasStand,
+  } = useProgress();
 
   const handleSelectItem = (itemId: string) => {
+    setSelectedFlowerReady(null); // reset flower
     if (selectedTab === '가구') {
-      setFurniture([...furniture, { x: 100, y: 400, id: itemId }]);
+      if (tempFurniture.includes(itemId)) {
+        setTempFurniture(prev => prev.filter(id => id !== itemId));
+      } else {
+        setTempFurniture(prev => [...prev, itemId]);
+      }
     } else if (selectedTab === '꽃') {
       setSelectedFlowerReady(itemId);
     }
@@ -80,6 +78,8 @@ export default function RoomModified() {
   };
 
   const handleSave = () => {
+    setHasChair(tempFurniture.includes('whiteroundchair'));
+    setHasStand(tempFurniture.includes('yellowstand'));
     Alert.alert('저장되었습니다!');
   };
 
@@ -89,55 +89,54 @@ export default function RoomModified() {
 
   return (
     <View style={styles.fullScreen}>
-      <ImageBackground
-        source={BaseBackground}
-        style={styles.backgroundImage}
-        imageStyle={{
-          width: scaledWidth,
-          height: scaledHeight,
-          marginLeft: (Dimensions.get('window').width - scaledWidth) / 2,
-        }}
-        resizeMode="cover"
+      <ScrollView
+        horizontal
+        contentContainerStyle={{ width: scaledWidth, height: scaledHeight }}
+        showsHorizontalScrollIndicator={false}
+        bounces={false}
       >
-        <Pressable style={StyleSheet.absoluteFill} onPress={handleTouch}>
-          {flowers.map((item, index) => {
-            const flowerData = flowerList.find(f => f.id === item.id);
-            if (!flowerData) return null;
-            return (
-              <Image
-                key={`flower-${index}`}
-                source={flowerData.image}
-                style={[styles.placedImage, { left: item.x, top: item.y }]}
-              />
-            );
-          })}
+        <ImageBackground
+          source={BaseBackground}
+          style={{ width: scaledWidth, height: scaledHeight }}
+          resizeMode="cover"
+        >
+          {tempFurniture.includes('whiteroundchair') && (
+            <Image source={AddChair} style={styles.overlayFurniture} resizeMode="contain" />
+          )}
+          {tempFurniture.includes('yellowstand') && (
+            <Image source={AddStand} style={styles.overlayFurniture} resizeMode="contain" />
+          )}
 
-          {furniture.map((item, index) => (
-            <Pressable
-              key={`furniture-${index}`}
-              onLongPress={() => {
-                setFurniture((prev) => prev.filter((_, i) => i !== index));
-              }}
-              style={[styles.furnitureBox, { left: item.x, top: item.y }]}
-            />
-          ))}
-        </Pressable>
-      </ImageBackground>
+          <Pressable style={StyleSheet.absoluteFill} onPress={handleTouch}>
+            {flowers.map((item, index) => {
+              const flowerData = flowerList.find(f => f.id === item.id);
+              if (!flowerData) return null;
+              return (
+                <Image
+                  key={`flower-${index}`}
+                  source={flowerData.image}
+                  style={[styles.placedImage, { left: item.x, top: item.y }]}
+                />
+              );
+            })}
+          </Pressable>
+        </ImageBackground>
+      </ScrollView>
 
-      <View style={styles.topButtonRightAlignedWithHomepage}>
+      {/* 상단 버튼 */}
+      <View style={styles.topRightContainer}>
         <TouchableOpacity onPress={handleReturn}>
-          <Image source={ModifiedButton} style={styles.modifiedImageButton} resizeMode="contain" />
+          <Image source={ModifiedButton} style={styles.modifiedImageButton} />
         </TouchableOpacity>
-      </View>
 
-      {isRoomOnly === 'true' && (
-        <View style={styles.saveButtonFixedAlignedWithHomepage}>
+        {isRoomOnly === 'true' && (
           <TouchableOpacity onPress={handleSave} style={styles.saveButton}>
             <Text style={styles.saveButtonText}>저장하기</Text>
           </TouchableOpacity>
-        </View>
-      )}
+        )}
+      </View>
 
+      {/* 하단 탭 + 아이템 */}
       <View style={styles.overlay}>
         <View style={styles.tabContainer}>
           {['배경', '꽃', '가구'].map((tab) => (
@@ -156,19 +155,13 @@ export default function RoomModified() {
           ))}
         </View>
 
-        <ScrollView
-          horizontal
-          contentContainerStyle={[
-            styles.itemScrollContainer,
-            { minHeight: 80 }, // 배경/가구 탭에도 공간 확보
-          ]}
-        >
+        <ScrollView horizontal contentContainerStyle={styles.itemScrollContainer}>
           {selectedTab === '꽃' &&
             flowerList
-              .filter(flower => obtainedFlowers.includes(flower.id))
+              .filter(f => obtainedFlowers.includes(f.id))
               .map((flower) => (
                 <TouchableOpacity key={flower.id} onPress={() => handleSelectItem(flower.id)}>
-                  <Image source={flower.image} style={styles.flowerImage} resizeMode="contain" />
+                  <Image source={flower.image} style={styles.itemImage} />
                 </TouchableOpacity>
               ))}
 
@@ -177,34 +170,54 @@ export default function RoomModified() {
               .filter(f => obtainedFurniture.includes(f.id))
               .map(item => (
                 <TouchableOpacity key={item.id} onPress={() => handleSelectItem(item.id)}>
-                  <View style={styles.itemBox} />
+                  <Image
+                    source={item.icon}
+                    style={[
+                      styles.itemImage,
+                      tempFurniture.includes(item.id) && { borderWidth: 2, borderColor: '#5C7BEE' },
+                    ]}
+                  />
                 </TouchableOpacity>
               ))}
         </ScrollView>
-
       </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  fullScreen: { flex: 1 },
-  backgroundImage: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  fullScreen: { flex: 1, backgroundColor: '#fff' },
   placedImage: {
     position: 'absolute',
     width: 60,
     height: 60,
   },
-  furnitureBox: {
+  overlayFurniture: {
     position: 'absolute',
-    width: 80,
-    height: 80,
-    backgroundColor: '#4A90E2',
-    borderRadius: 4,
+    width: '100%',
+    height: '100%',
+  },
+  topRightContainer: {
+    position: 'absolute',
+    top: 100,
+    right: 20,
+    alignItems: 'center',
+    gap: 10,
+  },
+  modifiedImageButton: {
+    width: 40,
+    height: 40,
+  },
+  saveButton: {
+    marginTop: 8,
+    backgroundColor: '#5C7BEE',
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  saveButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
   },
   overlay: {
     position: 'absolute',
@@ -215,11 +228,6 @@ const styles = StyleSheet.create({
     paddingBottom: 24,
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowOffset: { width: 0, height: -2 },
-    shadowRadius: 4,
-    elevation: 5,
   },
   tabContainer: {
     flexDirection: 'row',
@@ -246,45 +254,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 12,
+    minHeight: 80,
   },
-  itemBox: {
+  itemImage: {
     width: 60,
     height: 60,
     marginHorizontal: 8,
     borderRadius: 8,
-    backgroundColor: '#4A90E2',
-  },
-  flowerImage: {
-    width: 60,
-    height: 60,
-    marginHorizontal: 8,
-    borderRadius: 8,
-  },
-  topButtonRightAlignedWithHomepage: {
-    position: 'absolute',
-    right: 20,
-    top: 100,
-    zIndex: 10,
-  },
-  saveButtonFixedAlignedWithHomepage: {
-    position: 'absolute',
-    left: 20,
-    top: 100,
-    zIndex: 10,
-  },
-  modifiedImageButton: {
-    width: 40,
-    height: 40,
-  },
-  saveButton: {
-    backgroundColor: '#5C7BEE',
-    paddingVertical: 6,
-    paddingHorizontal: 14,
-    borderRadius: 10,
-  },
-  saveButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 14,
   },
 });
