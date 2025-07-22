@@ -31,7 +31,7 @@
     "ajv-keywords": "^5.1.0",
     "expo": "53.0.20",
     "expo-blur": "~14.1.5",
-    "expo-camera": "~16.1.10",
+    "expo-camera": "~16.1.11",
     "expo-constants": "~17.1.7",
     "expo-dev-client": "~5.2.4",
     "expo-font": "~13.3.2",
