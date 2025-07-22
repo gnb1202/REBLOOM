@@ -81,6 +81,8 @@ export default function Flowermanage() {
     setProgress,
     setCurrentFlowerId,
     addObtainedFlower,
+     completeChallenge,
+      obtainedFlowers,
   } = useProgress();
   const [hasAwarded, setHasAwarded] = useState(false);
 
@@ -94,6 +96,12 @@ export default function Flowermanage() {
 
       // 수집에 추가
       addObtainedFlower(currentFlowerId);
+
+      const count = obtainedFlowers.length + 1;
+          if (count <= 4) {
+            const challengeId = `flower-${count}`;
+            completeChallenge(challengeId);
+          }
 
       // 다음 꽃으로 이동
       const currentIndex = flowerSequence.indexOf(currentFlowerId);
