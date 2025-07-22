@@ -22,11 +22,23 @@ import ChairIcon from '../../../assets/images/furnitures/whiteroundchair.png';
 import StandIcon from '../../../assets/images/furnitures/yellowstand.png';
 
 import daisy from '../../../assets/images/flowers/daisy/daisystep3.png';
-// ... (다른 꽃 이미지 생략)
+import hydrangea from '../../../assets/images/flowers/hydrangea/hydrangeastep2.png';
+import lavender from '../../../assets/images/flowers/lavender/lavenderstep3.png';
+import lily from '../../../assets/images/flowers/lily/lilystep3.png';
+import rose from '../../../assets/images/flowers/rose/rosestep3.png';
+import sunflower from '../../../assets/images/flowers/sunflower/sunflowerstep2.png';
+import trumpetcreeper from '../../../assets/images/flowers/trumpetcreeper/trumpetcreeperstep2.png';
+import tulip from '../../../assets/images/flowers/tulip/tulipstep2.png';
 
 const flowerList = [
   { id: 'daisy', name: '데이지', image: daisy },
-  // ... (다른 꽃들 추가)
+  { id: 'hydrangea', name: '수국', image: hydrangea },
+  { id: 'lavender', name: '라벤더', image: lavender },
+  { id: 'lily', name: '백합', image: lily },
+  { id: 'rose', name: '장미', image: rose },
+  { id: 'sunflower', name: '해바라기', image: sunflower },
+  { id: 'trumpetcreeper', name: '능소화', image: trumpetcreeper },
+  { id: 'tulip', name: '튤립', image: tulip },
 ];
 
 const furnitureList = [
@@ -57,7 +69,7 @@ export default function RoomModified() {
   } = useProgress();
 
   const handleSelectItem = (itemId: string) => {
-    setSelectedFlowerReady(null); // reset flower
+    setSelectedFlowerReady(null);
     if (selectedTab === '가구') {
       if (tempFurniture.includes(itemId)) {
         setTempFurniture(prev => prev.filter(id => id !== itemId));
@@ -123,20 +135,18 @@ export default function RoomModified() {
         </ImageBackground>
       </ScrollView>
 
-      {/* 상단 버튼 */}
+      {/* 상단 버튼 영역 */}
       <View style={styles.topRightContainer}>
         <TouchableOpacity onPress={handleReturn}>
           <Image source={ModifiedButton} style={styles.modifiedImageButton} />
         </TouchableOpacity>
 
-        {isRoomOnly === 'true' && (
-          <TouchableOpacity onPress={handleSave} style={styles.saveButton}>
-            <Text style={styles.saveButtonText}>저장하기</Text>
-          </TouchableOpacity>
-        )}
+        <TouchableOpacity onPress={handleSave} style={styles.saveButton}>
+          <Text style={styles.saveButtonText}>저장하기</Text>
+        </TouchableOpacity>
       </View>
 
-      {/* 하단 탭 + 아이템 */}
+      {/* 하단 탭 및 아이템 영역 */}
       <View style={styles.overlay}>
         <View style={styles.tabContainer}>
           {['배경', '꽃', '가구'].map((tab) => (
