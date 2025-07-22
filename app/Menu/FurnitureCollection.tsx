@@ -101,6 +101,9 @@ export default function FurnitureCollection() {
           <Text style={styles.tab}>꽃</Text>
         </TouchableOpacity>
         <Text style={[styles.tab, styles.activeTab]}>가구</Text>
+        <TouchableOpacity onPress={() => router.push('/Menu/BadgeCollection')}>
+          <Text style={styles.tab}>뱃지</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );

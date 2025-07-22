@@ -159,7 +159,11 @@ export default function Collection() {
         <TouchableOpacity onPress={() => router.push('/Menu/FurnitureCollection')}>
           <Text style={styles.tab}>가구</Text>
         </TouchableOpacity>
+        <TouchableOpacity onPress={() => router.push('/Menu/BadgeCollection')}>
+          <Text style={styles.tab}>뱃지</Text>
+        </TouchableOpacity>
       </View>
+
     </View>
   );
 }
