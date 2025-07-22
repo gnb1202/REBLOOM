@@ -4,10 +4,11 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
+  Platform,
 } from 'react-native';
-import Slider from '@react-native-community/slider';
 import { useRouter } from 'expo-router';
 import { Video } from 'expo-av';
+import Slider from '@react-native-community/slider'; // 모바일용 슬라이더만 사용
 
 export default function ExerciseVideoPage() {
   const router = useRouter();
@@ -24,7 +25,7 @@ export default function ExerciseVideoPage() {
     }
   };
 
-  const handleSliderValueChange = async (value) => {
+  const handleSliderValueChange = async (value: number) => {
     if (status?.isLoaded) {
       await videoRef.current.setPositionAsync(value);
     }
@@ -53,15 +54,23 @@ export default function ExerciseVideoPage() {
       )}
 
       {status?.isLoaded && (
-        <Slider
-          style={styles.slider}
-          minimumValue={0}
-          maximumValue={status.durationMillis}
-          value={status.positionMillis}
-          onSlidingComplete={handleSliderValueChange}
-          minimumTrackTintColor="#5C7BEE"
-          maximumTrackTintColor="#ccc"
-        />
+        Platform.OS === 'web' ? (
+          <View style={styles.webSliderPlaceholder}>
+            <Text style={{ textAlign: 'center', color: '#999' }}>
+              ⚠ 슬라이더는 모바일에서만 작동합니다
+            </Text>
+          </View>
+        ) : (
+          <Slider
+            style={styles.slider}
+            minimumValue={0}
+            maximumValue={status.durationMillis}
+            value={status.positionMillis}
+            onSlidingComplete={handleSliderValueChange}
+            minimumTrackTintColor="#5C7BEE"
+            maximumTrackTintColor="#ccc"
+          />
+        )
       )}
 
       <View style={styles.bottomBar}>
@@ -126,6 +135,15 @@ const styles = StyleSheet.create({
     marginVertical: 8,
     width: '100%',
     height: 40,
+  },
+  webSliderPlaceholder: {
+    marginVertical: 8,
+    width: '100%',
+    padding: 12,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 8,
+    backgroundColor: '#f5f5f5',
   },
   bottomBar: {
     flexDirection: 'row',
