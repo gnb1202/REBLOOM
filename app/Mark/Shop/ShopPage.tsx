@@ -10,21 +10,25 @@ import {
 import { useRouter } from 'expo-router';
 
 import mysteryIcon from '../../../assets/images/Shop/Item.png';
-import { useCoin } from '../../../context/CoinContext'; // ← ✅ 추가
+import chairImage from '../../../assets/images/furnitures/chair.png';
+import tableImage from '../../../assets/images/furnitures/table.png';
+import { useCoin } from '../../../context/CoinContext';
 
 const categories = ['방', '가구'];
 const dummyItems = Array.from({ length: 9 }).map((_, i) => ({
   id: i.toString(),
 }));
 
+const furnitureImages = [chairImage, tableImage];
+
 export default function ShopPage() {
   const router = useRouter();
   const [selectedCategory, setSelectedCategory] = useState('방');
-  const { coins } = useCoin(); // ← ✅ 보유 코인 불러오기
+  const { coins } = useCoin();
 
   return (
     <View style={styles.container}>
-      {/* ✅ 상단 타이틀 + 코인 표시 */}
+      {/* 상단 타이틀 + 코인 표시 */}
       <View style={styles.header}>
         <Text style={styles.title}>상점</Text>
         <Text style={styles.coinText}>보유 코인: {coins}개</Text>
@@ -60,18 +64,26 @@ export default function ShopPage() {
         keyExtractor={(item) => item.id}
         numColumns={3}
         contentContainerStyle={styles.grid}
-        renderItem={({ item }) => (
-          <View style={styles.itemBox}>
-            <Image
-              source={mysteryIcon}
-              style={styles.itemImage}
-              resizeMode="contain"
-            />
-          </View>
-        )}
+        renderItem={({ item, index }) => {
+          let imageSource = mysteryIcon;
+
+          if (selectedCategory === '가구') {
+            imageSource = furnitureImages[index % furnitureImages.length];
+          }
+
+          return (
+            <View style={styles.itemBox}>
+              <Image
+                source={imageSource}
+                style={styles.itemImage}
+                resizeMode="contain"
+              />
+            </View>
+          );
+        }}
       />
 
-      {/* ✅ 닫기 버튼 */}
+      {/* 닫기 버튼 */}
       <TouchableOpacity
         style={styles.closeButton}
         onPress={() => router.push('/Home_page/Homepage')}
