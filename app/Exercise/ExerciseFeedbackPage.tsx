@@ -1,12 +1,23 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useProgress } from '../../context/ProgressContext';
 
 export default function ExerciseFeedbackPage() {
   const router = useRouter();
   const [selected, setSelected] = useState<number | null>(null);
+  const { incrementFeedbackCount } = useProgress();
 
   const emojis = ['😀', '😐', '😣'];
+
+  const handleSubmit = () => {
+    if (selected !== null) {
+      incrementFeedbackCount(); // ✅ 저장 및 도전과제 반영 포함
+      router.push('/Home_page/Homepage');
+    } else {
+      Alert.alert('선택 필요', '피드백을 선택해주세요.');
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -28,14 +39,18 @@ export default function ExerciseFeedbackPage() {
         </View>
       </View>
 
+      <TouchableOpacity style={styles.finishButton} onPress={handleSubmit}>
+        <Text style={styles.finishText}>마치기</Text>
+      </TouchableOpacity>
+
+      {/* 개발용: 피드백 횟수 초기화 */}
       <TouchableOpacity
-        style={styles.finishButton}
-        onPress={() => {
-          // 필요시 선택된 feedback 상태 저장 가능
-          router.push('/Home_page/Homepage'); // 홈 화면이나 다른 곳으로 이동
+        onPress={async () => {
+          await AsyncStorage.removeItem('@exerciseFeedbackCount');
+          Alert.alert('초기화됨', '피드백 횟수가 초기화되었습니다.');
         }}
       >
-        <Text style={styles.finishText}>마치기</Text>
+        <Text style={{ marginTop: 20, color: '#888' }}>횟수 초기화</Text>
       </TouchableOpacity>
     </View>
   );
