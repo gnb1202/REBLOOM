@@ -16,7 +16,10 @@ export default function Mainmenu() {
          </TouchableOpacity>
 
 
-      <TouchableOpacity style={[styles.menuButton, { borderColor: '#32CD32' }]}>
+      <TouchableOpacity
+        style={[styles.menuButton, { borderColor: '#32CD32' }]}
+        onPress={() => router.push('/Menu/Report')}
+      >
         <Text>건강 리포트</Text>
       </TouchableOpacity>
 
