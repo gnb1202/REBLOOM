@@ -1,98 +1,109 @@
 import React, { useRef, useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Platform,
-} from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
+import { CameraView, useCameraPermissions } from 'expo-camera';
 import { Video } from 'expo-av';
-import Slider from '@react-native-community/slider'; // 모바일용 슬라이더만 사용
 
 export default function ExerciseVideoPage() {
   const router = useRouter();
-  const videoRef = useRef(null);
-  const [status, setStatus] = useState(null);
+  const [cameraType, setCameraType] = useState<'front' | 'back'>('front');
+  const [permission, requestPermission] = useCameraPermissions();
+
+  const videoRef = useRef<Video>(null);
+  const [isPlaying, setIsPlaying] = useState(true);
   const [isExpanded, setIsExpanded] = useState(false);
 
+  const toggleCamera = () => {
+    setCameraType(prev => (prev === 'front' ? 'back' : 'front'));
+  };
+
   const togglePlayPause = async () => {
-    if (!status?.isLoaded) return;
-    if (status.isPlaying) {
+    if (!videoRef.current) return;
+
+    if (isPlaying) {
       await videoRef.current.pauseAsync();
+      setIsPlaying(false);
     } else {
       await videoRef.current.playAsync();
+      setIsPlaying(true);
     }
   };
 
-  const handleSliderValueChange = async (value: number) => {
-    if (status?.isLoaded) {
-      await videoRef.current.setPositionAsync(value);
-    }
+  const toggleExpand = () => {
+    setIsExpanded(prev => !prev);
   };
+
+  if (!permission) return <Text>카메라 권한 요청 중...</Text>;
+
+  if (!permission.granted) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.message}>카메라 권한이 필요합니다.</Text>
+        <TouchableOpacity onPress={requestPermission} style={styles.endButton}>
+          <Text style={styles.endButtonText}>권한 허용</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
-      <View style={[styles.previewBox, isExpanded && { flex: 6 }]}>
+      {/* ✅ 시범 영상 */}
+      <View style={[styles.previewBox, isExpanded && styles.previewBoxExpanded]}>
         <Video
           ref={videoRef}
           source={require('../../assets/images/animations/demo.mp4')}
-          style={styles.video}
+          style={StyleSheet.absoluteFill}
           resizeMode="cover"
-          useNativeControls={false}
           shouldPlay
           isLooping
-          onPlaybackStatusUpdate={setStatus}
+          useNativeControls={false}
         />
+        <View style={styles.previewOverlay}>
+          <Text style={styles.previewText}>시범영상</Text>
+        </View>
       </View>
 
+      {/* ✅ 본 영상 (카메라) - 확대 중이면 숨김 */}
       {!isExpanded && (
         <View style={styles.mainVideoBox}>
-          <Text style={styles.mainText}>본 영상</Text>
-          <Text style={styles.subInfo}>횟수 / 자세정확도 표시 등</Text>
+          <CameraView style={StyleSheet.absoluteFill} facing={cameraType} />
+          <View style={styles.overlay}>
+            <Text style={styles.mainText}>본 영상</Text>
+            <Text style={styles.subInfo}>본 영상 화면에서{"\n"}횟수 / 자세정확도 등 표시</Text>
+            <TouchableOpacity onPress={toggleCamera}>
+              <Text style={styles.toggleButton}>🔄 전면/후면 전환</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       )}
 
-      {status?.isLoaded && (
-        Platform.OS === 'web' ? (
-          <View style={styles.webSliderPlaceholder}>
-            <Text style={{ textAlign: 'center', color: '#999' }}>
-              ⚠ 슬라이더는 모바일에서만 작동합니다
-            </Text>
-          </View>
-        ) : (
-          <Slider
-            style={styles.slider}
-            minimumValue={0}
-            maximumValue={status.durationMillis}
-            value={status.positionMillis}
-            onSlidingComplete={handleSliderValueChange}
-            minimumTrackTintColor="#5C7BEE"
-            maximumTrackTintColor="#ccc"
-          />
-        )
+      {/* 하단 컨트롤 바 */}
+      {!isExpanded && (
+        <View style={styles.bottomBar}>
+          <TouchableOpacity onPress={() => router.back()}>
+            <Text style={styles.controlText}>◁</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity onPress={togglePlayPause}>
+            <Text style={styles.controlText}>{isPlaying ? '⏸' : '▶'}</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity onPress={toggleExpand}>
+            <Text style={styles.controlText}>⛶</Text>
+          </TouchableOpacity>
+        </View>
       )}
 
-      <View style={styles.bottomBar}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Text style={styles.controlText}>◁</Text>
+      {/* 운동 종료 버튼 */}
+      {!isExpanded && (
+        <TouchableOpacity
+          style={styles.endButton}
+          onPress={() => router.push('/Exercise/ExerciseSummaryPage')}
+        >
+          <Text style={styles.endButtonText}>운동 종료</Text>
         </TouchableOpacity>
-
-        <TouchableOpacity onPress={togglePlayPause}>
-          <Text style={styles.controlText}>{status?.isPlaying ? '⏸' : '▶'}</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity onPress={() => setIsExpanded(!isExpanded)}>
-          <Text style={styles.controlText}>⛶</Text>
-        </TouchableOpacity>
-      </View>
-
-      <TouchableOpacity
-        style={styles.endButton}
-        onPress={() => router.push('/Exercise/ExerciseSummaryPage')}
-      >
-        <Text style={styles.endButtonText}>운동 종료</Text>
-      </TouchableOpacity>
+      )}
     </View>
   );
 }
@@ -100,50 +111,63 @@ export default function ExerciseVideoPage() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff', padding: 16 },
   previewBox: {
-    backgroundColor: '#000',
     flex: 2,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 12,
+    backgroundColor: '#000',
     borderRadius: 8,
     overflow: 'hidden',
-  },
-  video: {
-    width: '100%',
-    height: '100%',
-  },
-  mainVideoBox: {
-    backgroundColor: '#bbb',
-    flex: 4,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderRadius: 8,
     marginBottom: 12,
+    position: 'relative',
   },
-  mainText: {
-    fontSize: 28,
+
+  previewBoxExpanded: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 10,
+    margin: 0,
+    borderRadius: 0,
+  },
+  previewOverlay: {
+    position: 'absolute',
+    top: 10,
+    left: 10,
+  },
+  previewText: {
     color: '#fff',
+    fontSize: 18,
     fontWeight: 'bold',
   },
+  mainVideoBox: {
+    flex: 4,
+    backgroundColor: '#000',
+    borderRadius: 8,
+    marginBottom: 12,
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  overlay: {
+    position: 'absolute',
+    bottom: 10,
+    width: '100%',
+    alignItems: 'center',
+  },
+  mainText: {
+    fontSize: 20,
+    color: '#fff',
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
   subInfo: {
-    marginTop: 10,
     fontSize: 14,
     color: '#fff',
     textAlign: 'center',
   },
-  slider: {
-    marginVertical: 8,
-    width: '100%',
-    height: 40,
-  },
-  webSliderPlaceholder: {
-    marginVertical: 8,
-    width: '100%',
-    padding: 12,
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-    backgroundColor: '#f5f5f5',
+  toggleButton: {
+    color: '#fff',
+    marginTop: 10,
+    textDecorationLine: 'underline',
   },
   bottomBar: {
     flexDirection: 'row',
@@ -168,5 +192,10 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: 'bold',
     fontSize: 16,
+  },
+  message: {
+    fontSize: 16,
+    textAlign: 'center',
+    marginVertical: 20,
   },
 });
