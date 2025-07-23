@@ -1,17 +1,41 @@
-import React, { useRef, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { useRef, useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Platform,
+  BackHandler,
+} from 'react-native';
 import { useRouter } from 'expo-router';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { Video } from 'expo-av';
+import Slider from '@react-native-community/slider';
 
 export default function ExerciseVideoPage() {
   const router = useRouter();
   const [cameraType, setCameraType] = useState<'front' | 'back'>('front');
   const [permission, requestPermission] = useCameraPermissions();
-
-  const videoRef = useRef<Video>(null);
   const [isPlaying, setIsPlaying] = useState(true);
   const [isExpanded, setIsExpanded] = useState(false);
+  const videoRef = useRef<Video>(null);
+  const [videoStatus, setVideoStatus] = useState<any>(null);
+
+  useEffect(() => {
+    const backAction = () => {
+      if (isExpanded) {
+        setIsExpanded(false);
+        return true;
+      }
+      return false;
+    };
+
+    const backHandler = BackHandler.addEventListener(
+      'hardwareBackPress',
+      backAction
+    );
+    return () => backHandler.remove();
+  }, [isExpanded]);
 
   const toggleCamera = () => {
     setCameraType(prev => (prev === 'front' ? 'back' : 'front'));
@@ -31,6 +55,19 @@ export default function ExerciseVideoPage() {
 
   const toggleExpand = () => {
     setIsExpanded(prev => !prev);
+  };
+
+  const handleSliderChange = async (value: number) => {
+    if (videoRef.current) {
+      await videoRef.current.setPositionAsync(value);
+    }
+  };
+
+  const formatTime = (millis: number) => {
+    const totalSeconds = Math.floor(millis / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
   };
 
   if (!permission) return <Text>카메라 권한 요청 중...</Text>;
@@ -58,10 +95,33 @@ export default function ExerciseVideoPage() {
           shouldPlay
           isLooping
           useNativeControls={false}
+          onPlaybackStatusUpdate={status => setVideoStatus(status)}
         />
         <View style={styles.previewOverlay}>
           <Text style={styles.previewText}>시범영상</Text>
         </View>
+
+        {/* ✅ 슬라이더 or 시간 */}
+        {videoStatus && (
+          <View style={styles.sliderContainer}>
+            {Platform.OS !== 'web' ? (
+              <Slider
+                style={{ width: '90%' }}
+                minimumValue={0}
+                maximumValue={videoStatus.durationMillis || 0}
+                value={videoStatus.positionMillis || 0}
+                onSlidingComplete={handleSliderChange}
+                minimumTrackTintColor="#FFFFFF"
+                maximumTrackTintColor="#888888"
+                thumbTintColor="#5C7BEE"
+              />
+            ) : (
+              <Text style={styles.timeText}>
+                {formatTime(videoStatus.positionMillis)} / {formatTime(videoStatus.durationMillis)}
+              </Text>
+            )}
+          </View>
+        )}
       </View>
 
       {/* ✅ 본 영상 (카메라) - 확대 중이면 숨김 */}
@@ -109,7 +169,12 @@ export default function ExerciseVideoPage() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff', padding: 16 },
+  container: {
+    flex: 1,
+    backgroundColor: '#fff',
+    padding: 16,
+    position: 'relative',
+  },
   previewBox: {
     flex: 2,
     backgroundColor: '#000',
@@ -118,14 +183,14 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     position: 'relative',
   },
-
   previewBoxExpanded: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    zIndex: 10,
+    zIndex: 999,
+    backgroundColor: '#000',
     margin: 0,
     borderRadius: 0,
   },
@@ -197,5 +262,15 @@ const styles = StyleSheet.create({
     fontSize: 16,
     textAlign: 'center',
     marginVertical: 20,
+  },
+  sliderContainer: {
+    position: 'absolute',
+    bottom: 10,
+    width: '100%',
+    alignItems: 'center',
+  },
+  timeText: {
+    color: '#fff',
+    fontSize: 14,
   },
 });
