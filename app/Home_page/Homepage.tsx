@@ -7,19 +7,27 @@ import {
   TouchableOpacity,
   Dimensions,
   Image,
+  Alert,
+  ActivityIndicator,
 } from 'react-native';
 import ImageZoom from 'react-native-image-pan-zoom';
+
 import QuestPage from '../Mark/Quest/QuestPage';
 import ShopPage from '../Mark/Shop/ShopPage';
 import DiaryCheckPage from '../Mark/Check/DiaryCheckPage';
 
 import BaseBackground from '../../assets/images/HomeBackgroundImages/FirstBaseBackground.png';
-import AddChair from '../../assets/images/Roommodifiedimages/Addchair.png';
-import AddStand from '../../assets/images/Roommodifiedimages/Addstand.png';
+import ChairIcon from '../../assets/images/furnitures/whiteroundchair.png';
+import StandIcon from '../../assets/images/furnitures/yellowstand.png';
 import { useProgress } from '../../context/ProgressContext';
 
 const ORIGINAL_WIDTH = 2300;
 const ORIGINAL_HEIGHT = 1518;
+
+const furnitureList = [
+  { id: 'whiteroundchair', overlay: ChairIcon, style: { width: 150, height: 150 } },
+  { id: 'yellowstand', overlay: StandIcon, style: { width: 200, height: 250 } },
+];
 
 export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean }) {
   const router = useRouter();
@@ -30,7 +38,7 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
   const [showDiary, setShowDiary] = useState(false);
   const [dimensions, setDimensions] = useState(Dimensions.get('window'));
 
-  const { hasChair, hasStand } = useProgress();
+  const { isLoaded, placedFurniture, setPlacedFurniture } = useProgress();
 
   const minScale = dimensions.height / ORIGINAL_HEIGHT;
   const imageScaledWidth = ORIGINAL_WIDTH * minScale;
@@ -62,9 +70,28 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
     setShowDiary(target === 'diary');
   };
 
+  const handlePlaceFurniture = (id: string, x: number, y: number) => {
+    const alreadyPlaced = placedFurniture.some(item => item.id === id);
+    if (alreadyPlaced) {
+      Alert.alert('이미 배치됨', '이 가구는 이미 방에 배치되어 있습니다.');
+      return;
+    }
+    const newItem = { id, x, y };
+    setPlacedFurniture([...placedFurniture, newItem]);
+  };
+
+  if (!isLoaded) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#5C7BEE" />
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       <ImageZoom
+        key={JSON.stringify(placedFurniture)}
         ref={imageZoomRef}
         cropWidth={dimensions.width}
         cropHeight={dimensions.height}
@@ -90,21 +117,18 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
           resizeMode="cover"
         />
 
-        {hasChair && (
-          <Image
-            source={AddChair}
-            style={[styles.addChairImage, { left: 900, top: 1050 }]}
-            resizeMode="contain"
-          />
-        )}
-
-        {hasStand && (
-          <Image
-            source={AddStand}
-            style={[styles.addStandImage, { left: 1200, top: 950 }]}
-            resizeMode="contain"
-          />
-        )}
+        {placedFurniture.map((item, index) => {
+          const data = furnitureList.find(f => f.id === item.id);
+          if (!data) return null;
+          return (
+            <Image
+              key={`furniture-${index}`}
+              source={data.overlay}
+              style={[{ position: 'absolute', left: item.x, top: item.y }, data.style]}
+              resizeMode="contain"
+            />
+          );
+        })}
       </ImageZoom>
 
       <View style={styles.rightCircleWrapper}>
@@ -122,17 +146,6 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
           />
         </TouchableOpacity>
       </View>
-
-      {isRoomOnly && (
-        <View style={styles.saveButtonWrapper}>
-          <TouchableOpacity
-            style={styles.saveButton}
-            onPress={() => alert('저장되었습니다!')}
-          >
-            <Text style={styles.saveButtonText}>저장하기</Text>
-          </TouchableOpacity>
-        </View>
-      )}
 
       {!isRoomOnly && (
         <>
@@ -195,6 +208,7 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
 
 const styles = StyleSheet.create({
   container: { flex: 1, position: 'relative', backgroundColor: '#000' },
+  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   topTabs: {
     flexDirection: 'row', paddingHorizontal: 20, paddingTop: 40,
     position: 'absolute', top: 0, left: 0, zIndex: 10,
@@ -228,27 +242,5 @@ const styles = StyleSheet.create({
     position: 'absolute', top: 0, left: 0, right: 0, height: '94%',
     backgroundColor: '#FFFFFFEE', zIndex: 100, paddingTop: 60,
   },
-  saveButtonWrapper: {
-    position: 'absolute', bottom: 30, alignSelf: 'center', zIndex: 10,
-  },
-  saveButton: {
-    backgroundColor: '#5C7BEE', paddingVertical: 10, paddingHorizontal: 24, borderRadius: 12,
-  },
-  saveButtonText: {
-    color: '#fff', fontWeight: 'bold', fontSize: 16,
-  },
-  modifiedImageButton: {
-    width: 40,
-    height: 40,
-  },
-  addChairImage: {
-    position: 'absolute',
-    width: 150,
-    height: 150,
-  },
-  addStandImage: {
-    position: 'absolute',
-    width: 150,
-    height: 150,
-  },
+  modifiedImageButton: { width: 40, height: 40 },
 });

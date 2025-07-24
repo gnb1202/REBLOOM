@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -15,8 +15,6 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useProgress } from '../../../context/ProgressContext';
 
 import BaseBackground from '../../../assets/images/HomeBackgroundImages/FirstBaseBackground.png';
-import AddChair from '../../../assets/images/Roommodifiedimages/Addchair.png';
-import AddStand from '../../../assets/images/Roommodifiedimages/Addstand.png';
 import ModifiedButton from '../../../assets/images/Modifiy/modifiedbutton.png';
 import ChairIcon from '../../../assets/images/furnitures/whiteroundchair.png';
 import StandIcon from '../../../assets/images/furnitures/yellowstand.png';
@@ -42,8 +40,8 @@ const flowerList = [
 ];
 
 const furnitureList = [
-  { id: 'whiteroundchair', icon: ChairIcon, overlay: AddChair },
-  { id: 'yellowstand', icon: StandIcon, overlay: AddStand },
+  { id: 'whiteroundchair', icon: ChairIcon },
+  { id: 'yellowstand', icon: StandIcon },
 ];
 
 const ORIGINAL_WIDTH = 2300;
@@ -58,45 +56,50 @@ export default function RoomModified() {
   const { isRoomOnly } = useLocalSearchParams();
   const [selectedTab, setSelectedTab] = useState<'배경' | '꽃' | '가구'>('배경');
   const [flowers, setFlowers] = useState<{ x: number; y: number; id: string }[]>([]);
-  const [selectedFlowerReady, setSelectedFlowerReady] = useState<null | string>(null);
-  const [tempFurniture, setTempFurniture] = useState<string[]>([]);
+  const [furnitureItems, setFurnitureItems] = useState<{ x: number; y: number; id: string }[]>([]);
+  const [selectedItemId, setSelectedItemId] = useState<null | string>(null);
 
   const {
     obtainedFlowers,
     obtainedFurniture,
-    setHasChair,
-    setHasStand,
+    placedFlowers,
+    placedFurniture,
+    setPlacedFlowers,
+    setPlacedFurniture,
   } = useProgress();
 
+  useEffect(() => {
+    setFlowers(placedFlowers);
+    setFurnitureItems(placedFurniture);
+  }, []);
+
+  const handleReturn = () => {
+    router.push('/Home_page/Homepage');
+  };
+
   const handleSelectItem = (itemId: string) => {
-    setSelectedFlowerReady(null);
-    if (selectedTab === '가구') {
-      if (tempFurniture.includes(itemId)) {
-        setTempFurniture(prev => prev.filter(id => id !== itemId));
-      } else {
-        setTempFurniture(prev => [...prev, itemId]);
-      }
-    } else if (selectedTab === '꽃') {
-      setSelectedFlowerReady(itemId);
-    }
+    setSelectedItemId(itemId);
   };
 
   const handleTouch = (event: any) => {
-    if (selectedTab === '꽃' && selectedFlowerReady) {
-      const { locationX, locationY } = event.nativeEvent;
-      setFlowers([...flowers, { x: locationX - 30, y: locationY - 30, id: selectedFlowerReady }]);
-      setSelectedFlowerReady(null);
+    const { locationX, locationY } = event.nativeEvent;
+
+    if (selectedTab === '꽃' && selectedItemId && obtainedFlowers.includes(selectedItemId)) {
+      setFlowers([...flowers, { x: locationX - 30, y: locationY - 30, id: selectedItemId }]);
+      setSelectedItemId(null);
+    }
+
+    if (selectedTab === '가구' && selectedItemId && obtainedFurniture.includes(selectedItemId)) {
+      setFurnitureItems([...furnitureItems, { x: locationX - 30, y: locationY - 30, id: selectedItemId }]);
+      setSelectedItemId(null);
     }
   };
 
-  const handleSave = () => {
-    setHasChair(tempFurniture.includes('whiteroundchair'));
-    setHasStand(tempFurniture.includes('yellowstand'));
+  const handleSave = async () => {
+    await setPlacedFlowers(flowers);
+    await setPlacedFurniture(furnitureItems);
     Alert.alert('저장되었습니다!');
-  };
-
-  const handleReturn = () => {
-    router.replace('/Home_page/Homepage');
+    router.push('/Home_page/Homepage');
   };
 
   return (
@@ -112,30 +115,46 @@ export default function RoomModified() {
           style={{ width: scaledWidth, height: scaledHeight }}
           resizeMode="cover"
         >
-          {tempFurniture.includes('whiteroundchair') && (
-            <Image source={AddChair} style={styles.overlayFurniture} resizeMode="contain" />
-          )}
-          {tempFurniture.includes('yellowstand') && (
-            <Image source={AddStand} style={styles.overlayFurniture} resizeMode="contain" />
-          )}
-
           <Pressable style={StyleSheet.absoluteFill} onPress={handleTouch}>
             {flowers.map((item, index) => {
               const flowerData = flowerList.find(f => f.id === item.id);
               if (!flowerData) return null;
               return (
-                <Image
+                <TouchableOpacity
                   key={`flower-${index}`}
-                  source={flowerData.image}
+                  onLongPress={() => {
+                    const updated = [...flowers];
+                    updated.splice(index, 1);
+                    setFlowers(updated);
+                  }}
                   style={[styles.placedImage, { left: item.x, top: item.y }]}
-                />
+                >
+                  <Image source={flowerData.image} style={{ width: 60, height: 60 }} />
+                </TouchableOpacity>
+              );
+            })}
+
+            {furnitureItems.map((item, index) => {
+              const furnitureData = furnitureList.find(f => f.id === item.id);
+              if (!furnitureData) return null;
+              return (
+                <TouchableOpacity
+                  key={`furniture-${index}`}
+                  onLongPress={() => {
+                    const updated = [...furnitureItems];
+                    updated.splice(index, 1);
+                    setFurnitureItems(updated);
+                  }}
+                  style={[styles.placedImage, { left: item.x, top: item.y }]}
+                >
+                  <Image source={furnitureData.icon} style={{ width: 60, height: 60 }} />
+                </TouchableOpacity>
               );
             })}
           </Pressable>
         </ImageBackground>
       </ScrollView>
 
-      {/* 상단 버튼 영역 */}
       <View style={styles.topRightContainer}>
         <TouchableOpacity onPress={handleReturn}>
           <Image source={ModifiedButton} style={styles.modifiedImageButton} />
@@ -146,7 +165,6 @@ export default function RoomModified() {
         </TouchableOpacity>
       </View>
 
-      {/* 하단 탭 및 아이템 영역 */}
       <View style={styles.overlay}>
         <View style={styles.tabContainer}>
           {['배경', '꽃', '가구'].map((tab) => (
@@ -155,7 +173,7 @@ export default function RoomModified() {
               style={[styles.tab, selectedTab === tab && styles.activeTab]}
               onPress={() => {
                 setSelectedTab(tab as any);
-                setSelectedFlowerReady(null);
+                setSelectedItemId(null);
               }}
             >
               <Text style={selectedTab === tab ? styles.activeText : styles.inactiveText}>
@@ -180,13 +198,7 @@ export default function RoomModified() {
               .filter(f => obtainedFurniture.includes(f.id))
               .map(item => (
                 <TouchableOpacity key={item.id} onPress={() => handleSelectItem(item.id)}>
-                  <Image
-                    source={item.icon}
-                    style={[
-                      styles.itemImage,
-                      tempFurniture.includes(item.id) && { borderWidth: 2, borderColor: '#5C7BEE' },
-                    ]}
-                  />
+                  <Image source={item.icon} style={styles.itemImage} />
                 </TouchableOpacity>
               ))}
         </ScrollView>
@@ -201,11 +213,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     width: 60,
     height: 60,
-  },
-  overlayFurniture: {
-    position: 'absolute',
-    width: '100%',
-    height: '100%',
   },
   topRightContainer: {
     position: 'absolute',

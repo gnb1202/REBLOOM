@@ -36,7 +36,11 @@ type ProgressContextType = {
   completeChallenge: (id: string) => void;
   completedChallenges: string[];
   exerciseFeedbackCount: number;
-    incrementFeedbackCount: () => void;
+  incrementFeedbackCount: () => void;
+  placedFlowers: { x: number; y: number; id: string }[];
+  setPlacedFlowers: (items: { x: number; y: number; id: string }[]) => void;
+  placedFurniture: { x: number; y: number; id: string }[];
+  setPlacedFurniture: (items: { x: number; y: number; id: string }[]) => void;
 };
 
 const ProgressContext = createContext<ProgressContextType>({
@@ -59,7 +63,11 @@ const ProgressContext = createContext<ProgressContextType>({
   completeChallenge: () => {},
   completedChallenges: [],
   exerciseFeedbackCount: 0,
-    incrementFeedbackCount: () => {},
+  incrementFeedbackCount: () => {},
+  placedFlowers: [],
+  setPlacedFlowers: () => {},
+  placedFurniture: [],
+  setPlacedFurniture: () => {},
 });
 
 export const ProgressProvider = ({ children }: { children: React.ReactNode }) => {
@@ -74,7 +82,8 @@ export const ProgressProvider = ({ children }: { children: React.ReactNode }) =>
   const [flowerBadgeLevel, setFlowerBadgeLevel] = useState(0);
   const [completedChallenges, setCompletedChallenges] = useState<string[]>([]);
   const [exerciseFeedbackCount, setExerciseFeedbackCount] = useState(0);
-
+  const [placedFlowers, setPlacedFlowersState] = useState<{ x: number; y: number; id: string }[]>([]);
+  const [placedFurniture, setPlacedFurnitureState] = useState<{ x: number; y: number; id: string }[]>([]);
 
   useEffect(() => {
     const loadData = async () => {
@@ -89,6 +98,8 @@ export const ProgressProvider = ({ children }: { children: React.ReactNode }) =>
         const savedBadgeLevel = await AsyncStorage.getItem('@flowerBadgeLevel');
         const savedCompletedChallenges = await AsyncStorage.getItem('@completedChallenges');
         const savedFeedbackCount = await AsyncStorage.getItem('@exerciseFeedbackCount');
+        const savedPlacedFlowers = await AsyncStorage.getItem('@placedFlowers');
+        const savedPlacedFurniture = await AsyncStorage.getItem('@placedFurniture');
 
         if (savedFeedbackCount !== null) setExerciseFeedbackCount(JSON.parse(savedFeedbackCount));
         if (savedProgress !== null) setProgressState(JSON.parse(savedProgress));
@@ -99,6 +110,8 @@ export const ProgressProvider = ({ children }: { children: React.ReactNode }) =>
         if (savedCoins !== null) setCoins(JSON.parse(savedCoins));
         if (savedBadgeLevel !== null) setFlowerBadgeLevel(JSON.parse(savedBadgeLevel));
         if (savedCompletedChallenges !== null) setCompletedChallenges(JSON.parse(savedCompletedChallenges));
+        if (savedPlacedFlowers !== null) setPlacedFlowersState(JSON.parse(savedPlacedFlowers));
+        if (savedPlacedFurniture !== null) setPlacedFurnitureState(JSON.parse(savedPlacedFurniture));
 
         if (savedFlowerId !== null) {
           setCurrentFlowerIdState(savedFlowerId);
@@ -116,26 +129,25 @@ export const ProgressProvider = ({ children }: { children: React.ReactNode }) =>
   }, []);
 
   const completeChallenge = async (id: string) => {
-      setCompletedChallenges((prev) => {
-        if (!prev.includes(id)) {
-          const updated = [...prev, id];
-          AsyncStorage.setItem('@completedChallenges', JSON.stringify(updated));
-          return updated;
-        }
-        return prev;
-      });
-    };
+    setCompletedChallenges((prev) => {
+      if (!prev.includes(id)) {
+        const updated = [...prev, id];
+        AsyncStorage.setItem('@completedChallenges', JSON.stringify(updated));
+        return updated;
+      }
+      return prev;
+    });
+  };
 
   const incrementFeedbackCount = async () => {
-      const newCount = exerciseFeedbackCount + 1;
-      setExerciseFeedbackCount(newCount);
-      await AsyncStorage.setItem('@exerciseFeedbackCount', JSON.stringify(newCount));
+    const newCount = exerciseFeedbackCount + 1;
+    setExerciseFeedbackCount(newCount);
+    await AsyncStorage.setItem('@exerciseFeedbackCount', JSON.stringify(newCount));
 
-      // 피드백 도전과제 조건 충족 시 자동 완료 처리
-      if (newCount === 3) await completeChallenge('feedback-3');
-      else if (newCount === 5) await completeChallenge('feedback-5');
-      else if (newCount === 7) await completeChallenge('feedback-7');
-    };
+    if (newCount === 3) await completeChallenge('feedback-3');
+    else if (newCount === 5) await completeChallenge('feedback-5');
+    else if (newCount === 7) await completeChallenge('feedback-7');
+  };
 
   const setProgress = async (value: number) => {
     try {
@@ -220,6 +232,24 @@ export const ProgressProvider = ({ children }: { children: React.ReactNode }) =>
     }
   };
 
+  const setPlacedFlowers = async (items: { x: number; y: number; id: string }[]) => {
+    try {
+      setPlacedFlowersState(items);
+      await AsyncStorage.setItem('@placedFlowers', JSON.stringify(items));
+    } catch (e) {
+      console.error('꽃 위치 저장 실패:', e);
+    }
+  };
+
+  const setPlacedFurniture = async (items: { x: number; y: number; id: string }[]) => {
+    try {
+      setPlacedFurnitureState(items);
+      await AsyncStorage.setItem('@placedFurniture', JSON.stringify(items));
+    } catch (e) {
+      console.error('가구 위치 저장 실패:', e);
+    }
+  };
+
   const spendCoins = async (amount: number) => {
     if (coins >= amount) {
       const updated = coins - amount;
@@ -254,6 +284,10 @@ export const ProgressProvider = ({ children }: { children: React.ReactNode }) =>
         completedChallenges,
         exerciseFeedbackCount,
         incrementFeedbackCount,
+        placedFlowers,
+        setPlacedFlowers,
+        placedFurniture,
+        setPlacedFurniture,
       }}
     >
       {children}

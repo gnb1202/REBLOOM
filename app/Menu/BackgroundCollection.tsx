@@ -90,8 +90,8 @@ export default function BackgroundCollection() {
               <TouchableOpacity onPress={() => router.push('/Menu/Collection')}>
                 <Text style={styles.tab}>꽃</Text>
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => router.push('/Menu/Collection')}>
-                              <Text style={styles.tab}>꽃</Text>
+              <TouchableOpacity onPress={() => router.push('/Menu/FurnitureCollection')}>
+                              <Text style={styles.tab}>가구</Text>
                             </TouchableOpacity>
               <TouchableOpacity onPress={() => router.push('/Menu/BadgeCollection')}>
                 <Text style={styles.tab}>뱃지</Text>
