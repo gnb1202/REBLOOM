@@ -17,6 +17,9 @@ import ShopPage from '../Mark/Shop/ShopPage';
 import DiaryCheckPage from '../Mark/Check/DiaryCheckPage';
 
 import BaseBackground from '../../assets/images/HomeBackgroundImages/FirstBaseBackground.png';
+import Background1 from '../../assets/images/HomeBackgroundImages/Backgroundlevel1.png';
+import Background2 from '../../assets/images/HomeBackgroundImages/Backgroundlevel2.png';
+
 import ChairIcon from '../../assets/images/furnitures/whiteroundchair.png';
 import StandIcon from '../../assets/images/furnitures/yellowstand.png';
 import { useProgress } from '../../context/ProgressContext';
@@ -29,6 +32,11 @@ const furnitureList = [
   { id: 'yellowstand', overlay: StandIcon, style: { width: 200, height: 250 } },
 ];
 
+const backgroundMap: { [key: string]: any } = {
+  room1: Background1,
+  room2: Background2,
+};
+
 export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean }) {
   const router = useRouter();
   const imageZoomRef = useRef(null);
@@ -38,7 +46,12 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
   const [showDiary, setShowDiary] = useState(false);
   const [dimensions, setDimensions] = useState(Dimensions.get('window'));
 
-  const { isLoaded, placedFurniture, setPlacedFurniture } = useProgress();
+  const {
+    isLoaded,
+    placedFurniture,
+    setPlacedFurniture,
+    selectedRoom,
+  } = useProgress();
 
   const minScale = dimensions.height / ORIGINAL_HEIGHT;
   const imageScaledWidth = ORIGINAL_WIDTH * minScale;
@@ -112,7 +125,7 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
         }}
       >
         <Image
-          source={BaseBackground}
+          source={backgroundMap[selectedRoom] || BaseBackground}
           style={{ width: imageScaledWidth, height: imageScaledHeight }}
           resizeMode="cover"
         />

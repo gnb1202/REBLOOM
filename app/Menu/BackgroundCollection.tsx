@@ -10,17 +10,25 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 
+import { useProgress } from '../../context/ProgressContext';
 import Backgroundlevel1 from '../../assets/images/HomeBackgroundImages/Backgroundlevel1.png';
 import Backgroundlevel2 from '../../assets/images/HomeBackgroundImages/Backgroundlevel2.png';
+import FirstBaseBackground from '../../assets/images/HomeBackgroundImages/FirstBaseBackground.png';
+
 
 const backgroundList = [
+    {
+        id: 'default',
+        desc: '기본 배경',
+        image: FirstBaseBackground,
+  },
   {
-    id: 'bg1',
+    id: 'room1',
     desc: '맑고 시원한 하늘 풍경',
     image: Backgroundlevel1,
   },
   {
-    id: 'bg2',
+    id: 'room2',
     desc: '푸르른 자연의 숲',
     image: Backgroundlevel2,
   },
@@ -28,9 +36,15 @@ const backgroundList = [
 
 export default function BackgroundCollection() {
   const router = useRouter();
+  const { obtainedRooms, setSelectedRoom } = useProgress();
   const [selectedBackground, setSelectedBackground] = useState(null);
 
-  const remainder = backgroundList.length % 3;
+  // 구매한 배경만 필터링
+  const visibleBackgrounds = backgroundList.filter((item) =>
+    obtainedRooms.includes(item.id)
+  );
+
+  const remainder = visibleBackgrounds.length % 3;
   const dummyCount = remainder === 0 ? 0 : 3 - remainder;
 
   return (
@@ -43,17 +57,13 @@ export default function BackgroundCollection() {
       </View>
 
       <ScrollView contentContainerStyle={styles.grid}>
-        {backgroundList.map((item, idx) => (
+        {visibleBackgrounds.map((item, idx) => (
           <TouchableOpacity
             key={idx}
             style={styles.item}
             onPress={() => setSelectedBackground(item)}
           >
-            <Image
-              source={item.image}
-              style={styles.image}
-              resizeMode="contain"
-            />
+            <Image source={item.image} style={styles.image} resizeMode="contain" />
           </TouchableOpacity>
         ))}
         {Array.from({ length: dummyCount }).map((_, i) => (
@@ -75,6 +85,18 @@ export default function BackgroundCollection() {
               resizeMode="contain"
             />
             <Text style={styles.modalDesc}>{selectedBackground?.desc}</Text>
+
+            <TouchableOpacity
+              onPress={async () => {
+                await setSelectedRoom(selectedBackground.id);
+                setSelectedBackground(null);
+                alert('배경이 적용되었습니다!');
+              }}
+              style={[styles.modalClose, { backgroundColor: '#4D7CFE' }]}
+            >
+              <Text style={styles.modalCloseText}>배경 적용</Text>
+            </TouchableOpacity>
+
             <TouchableOpacity
               onPress={() => setSelectedBackground(null)}
               style={styles.modalClose}
@@ -86,17 +108,17 @@ export default function BackgroundCollection() {
       </Modal>
 
       <View style={styles.tabBar}>
-              <Text style={[styles.tab, styles.activeTab]}>배경</Text>
-              <TouchableOpacity onPress={() => router.push('/Menu/Collection')}>
-                <Text style={styles.tab}>꽃</Text>
-              </TouchableOpacity>
-              <TouchableOpacity onPress={() => router.push('/Menu/FurnitureCollection')}>
-                              <Text style={styles.tab}>가구</Text>
-                            </TouchableOpacity>
-              <TouchableOpacity onPress={() => router.push('/Menu/BadgeCollection')}>
-                <Text style={styles.tab}>뱃지</Text>
-              </TouchableOpacity>
-            </View>
+        <Text style={[styles.tab, styles.activeTab]}>배경</Text>
+        <TouchableOpacity onPress={() => router.push('/Menu/Collection')}>
+          <Text style={styles.tab}>꽃</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => router.push('/Menu/FurnitureCollection')}>
+          <Text style={styles.tab}>가구</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => router.push('/Menu/BadgeCollection')}>
+          <Text style={styles.tab}>뱃지</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
@@ -175,6 +197,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 8,
+    marginTop: 8,
   },
   modalCloseText: { color: '#fff', fontWeight: 'bold' },
 });

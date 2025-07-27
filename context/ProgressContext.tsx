@@ -25,6 +25,10 @@ type ProgressContextType = {
   addObtainedFlower: (id: string) => void;
   obtainedFurniture: string[];
   addObtainedFurniture: (id: string) => void;
+  obtainedRooms: string[];
+  addObtainedRoom: (id: string) => void;
+  selectedRoom: string;
+  setSelectedRoom: (id: string) => void;
   hasChair: boolean;
   setHasChair: (value: boolean) => void;
   hasStand: boolean;
@@ -52,6 +56,10 @@ const ProgressContext = createContext<ProgressContextType>({
   addObtainedFlower: () => {},
   obtainedFurniture: [],
   addObtainedFurniture: () => {},
+  obtainedRooms: [],
+  addObtainedRoom: () => {},
+  selectedRoom: '',
+  setSelectedRoom: () => {},
   hasChair: false,
   setHasChair: () => {},
   hasStand: false,
@@ -76,6 +84,7 @@ export const ProgressProvider = ({ children }: { children: React.ReactNode }) =>
   const [obtainedFlowersState, setObtainedFlowersState] = useState<string[]>([]);
   const [obtainedFurnitureState, setObtainedFurnitureState] = useState<string[]>([]);
   const [obtainedRoomsState, setObtainedRoomsState] = useState<string[]>([]);
+  const [selectedRoom, setSelectedRoomState] = useState('');
   const [hasChair, setHasChairState] = useState(false);
   const [hasStand, setHasStandState] = useState(false);
   const [coins, setCoins] = useState(1000);
@@ -93,6 +102,8 @@ export const ProgressProvider = ({ children }: { children: React.ReactNode }) =>
         const savedFlowerId = await AsyncStorage.getItem('@currentFlowerId');
         const savedObtained = await AsyncStorage.getItem('@obtainedFlowers');
         const savedFurniture = await AsyncStorage.getItem('@obtainedFurniture');
+        const savedRooms = await AsyncStorage.getItem('@obtainedRooms');
+        const savedSelectedRoom = await AsyncStorage.getItem('@selectedRoom');
         const savedHasChair = await AsyncStorage.getItem('@hasChair');
         const savedHasStand = await AsyncStorage.getItem('@hasStand');
         const savedCoins = await AsyncStorage.getItem('@coins');
@@ -101,9 +112,9 @@ export const ProgressProvider = ({ children }: { children: React.ReactNode }) =>
         const savedFeedbackCount = await AsyncStorage.getItem('@exerciseFeedbackCount');
         const savedPlacedFlowers = await AsyncStorage.getItem('@placedFlowers');
         const savedPlacedFurniture = await AsyncStorage.getItem('@placedFurniture');
-        const savedRooms = await AsyncStorage.getItem('@obtainedRooms');
 
         if (savedRooms !== null) setObtainedRoomsState(JSON.parse(savedRooms));
+        if (savedSelectedRoom !== null) setSelectedRoomState(savedSelectedRoom);
         if (savedFeedbackCount !== null) setExerciseFeedbackCount(JSON.parse(savedFeedbackCount));
         if (savedProgress !== null) setProgressState(JSON.parse(savedProgress));
         if (savedObtained !== null) setObtainedFlowersState(JSON.parse(savedObtained));
@@ -227,6 +238,14 @@ export const ProgressProvider = ({ children }: { children: React.ReactNode }) =>
     }
   };
 
+  const setSelectedRoom = async (id: string) => {
+    try {
+      setSelectedRoomState(id);
+      await AsyncStorage.setItem('@selectedRoom', id);
+    } catch (e) {
+      console.error('선택된 방 저장 실패:', e);
+    }
+  };
 
   const setHasChair = async (value: boolean) => {
     try {
@@ -288,6 +307,8 @@ export const ProgressProvider = ({ children }: { children: React.ReactNode }) =>
         addObtainedFurniture,
         obtainedRooms: obtainedRoomsState,
         addObtainedRoom,
+        selectedRoom,
+        setSelectedRoom,
         hasChair,
         setHasChair,
         hasStand,

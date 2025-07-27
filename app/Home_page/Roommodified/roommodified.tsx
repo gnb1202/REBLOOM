@@ -15,6 +15,9 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useProgress } from '../../../context/ProgressContext';
 
 import BaseBackground from '../../../assets/images/HomeBackgroundImages/FirstBaseBackground.png';
+import Background1 from '../../../assets/images/HomeBackgroundImages/Backgroundlevel1.png';
+import Background2 from '../../../assets/images/HomeBackgroundImages/Backgroundlevel2.png';
+
 import ModifiedButton from '../../../assets/images/Modifiy/modifiedbutton.png';
 import ChairIcon from '../../../assets/images/furnitures/whiteroundchair.png';
 import StandIcon from '../../../assets/images/furnitures/yellowstand.png';
@@ -44,6 +47,12 @@ const furnitureList = [
   { id: 'yellowstand', icon: StandIcon },
 ];
 
+const roomList = [
+  { id: 'default', image: BaseBackground },
+  { id: 'room1', image: Background1 },
+  { id: 'room2', image: Background2 },
+];
+
 const ORIGINAL_WIDTH = 2300;
 const ORIGINAL_HEIGHT = 1518;
 const screenHeight = Dimensions.get('window').height;
@@ -58,10 +67,14 @@ export default function RoomModified() {
   const [flowers, setFlowers] = useState<{ x: number; y: number; id: string }[]>([]);
   const [furnitureItems, setFurnitureItems] = useState<{ x: number; y: number; id: string }[]>([]);
   const [selectedItemId, setSelectedItemId] = useState<null | string>(null);
+  const [tempSelectedRoom, setTempSelectedRoom] = useState<string>('default');
 
   const {
     obtainedFlowers,
     obtainedFurniture,
+    obtainedRooms,
+    selectedRoom,
+    setSelectedRoom,
     placedFlowers,
     placedFurniture,
     setPlacedFlowers,
@@ -71,6 +84,7 @@ export default function RoomModified() {
   useEffect(() => {
     setFlowers(placedFlowers);
     setFurnitureItems(placedFurniture);
+    setTempSelectedRoom(selectedRoom || 'default');
   }, []);
 
   const handleReturn = () => {
@@ -98,9 +112,12 @@ export default function RoomModified() {
   const handleSave = async () => {
     await setPlacedFlowers(flowers);
     await setPlacedFurniture(furnitureItems);
+    await setSelectedRoom(tempSelectedRoom);
     Alert.alert('저장되었습니다!');
     router.push('/Home_page/Homepage');
   };
+
+  const backgroundImage = roomList.find(bg => bg.id === tempSelectedRoom)?.image || BaseBackground;
 
   return (
     <View style={styles.fullScreen}>
@@ -111,7 +128,7 @@ export default function RoomModified() {
         bounces={false}
       >
         <ImageBackground
-          source={BaseBackground}
+          source={backgroundImage}
           style={{ width: scaledWidth, height: scaledHeight }}
           resizeMode="cover"
         >
@@ -184,6 +201,21 @@ export default function RoomModified() {
         </View>
 
         <ScrollView horizontal contentContainerStyle={styles.itemScrollContainer}>
+          {selectedTab === '배경' &&
+            roomList
+              .filter(room => room.id === 'default' || obtainedRooms.includes(room.id))
+              .map(room => (
+                <TouchableOpacity key={room.id} onPress={() => setTempSelectedRoom(room.id)}>
+                  <Image
+                    source={room.image}
+                    style={[
+                      styles.itemImage,
+                      tempSelectedRoom === room.id && { borderColor: '#5C7BEE', borderWidth: 2 },
+                    ]}
+                  />
+                </TouchableOpacity>
+              ))}
+
           {selectedTab === '꽃' &&
             flowerList
               .filter(f => obtainedFlowers.includes(f.id))
