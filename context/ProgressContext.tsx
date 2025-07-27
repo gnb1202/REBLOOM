@@ -75,6 +75,7 @@ export const ProgressProvider = ({ children }: { children: React.ReactNode }) =>
   const [currentFlowerId, setCurrentFlowerIdState] = useState('');
   const [obtainedFlowersState, setObtainedFlowersState] = useState<string[]>([]);
   const [obtainedFurnitureState, setObtainedFurnitureState] = useState<string[]>([]);
+  const [obtainedRoomsState, setObtainedRoomsState] = useState<string[]>([]);
   const [hasChair, setHasChairState] = useState(false);
   const [hasStand, setHasStandState] = useState(false);
   const [coins, setCoins] = useState(1000);
@@ -100,7 +101,9 @@ export const ProgressProvider = ({ children }: { children: React.ReactNode }) =>
         const savedFeedbackCount = await AsyncStorage.getItem('@exerciseFeedbackCount');
         const savedPlacedFlowers = await AsyncStorage.getItem('@placedFlowers');
         const savedPlacedFurniture = await AsyncStorage.getItem('@placedFurniture');
+        const savedRooms = await AsyncStorage.getItem('@obtainedRooms');
 
+        if (savedRooms !== null) setObtainedRoomsState(JSON.parse(savedRooms));
         if (savedFeedbackCount !== null) setExerciseFeedbackCount(JSON.parse(savedFeedbackCount));
         if (savedProgress !== null) setProgressState(JSON.parse(savedProgress));
         if (savedObtained !== null) setObtainedFlowersState(JSON.parse(savedObtained));
@@ -214,6 +217,17 @@ export const ProgressProvider = ({ children }: { children: React.ReactNode }) =>
     }
   };
 
+  const addObtainedRoom = async (id: string) => {
+    try {
+      const updated = [...new Set([...obtainedRoomsState, id])];
+      setObtainedRoomsState(updated);
+      await AsyncStorage.setItem('@obtainedRooms', JSON.stringify(updated));
+    } catch (e) {
+      console.error('수집 방 저장 실패:', e);
+    }
+  };
+
+
   const setHasChair = async (value: boolean) => {
     try {
       setHasChairState(value);
@@ -272,6 +286,8 @@ export const ProgressProvider = ({ children }: { children: React.ReactNode }) =>
         addObtainedFlower,
         obtainedFurniture: obtainedFurnitureState,
         addObtainedFurniture,
+        obtainedRooms: obtainedRoomsState,
+        addObtainedRoom,
         hasChair,
         setHasChair,
         hasStand,

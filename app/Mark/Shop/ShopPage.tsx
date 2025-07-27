@@ -14,34 +14,42 @@ import mysteryIcon from '../../../assets/images/Shop/Item.png';
 import chairImage from '../../../assets/images/furnitures/whiteroundchair.png';
 import tableImage from '../../../assets/images/furnitures/yellowstand.png';
 
-import { useCoin } from '../../../context/CoinContext';
 import { useProgress } from '../../../context/ProgressContext';
 
 const categories = ['방', '가구'];
 
-// 이미지 목록과 ID를 함께 정의
 const furnitureItems = [
   { id: 'whiteroundchair', image: chairImage, price: 10 },
   { id: 'yellowstand', image: tableImage, price: 10 },
 ];
 
 const roomImages = [
-  { id: 'room1', image: mysteryIcon },
-  { id: 'room2', image: mysteryIcon },
+  { id: 'room1', image: mysteryIcon, price: 15 },
+  { id: 'room2', image: mysteryIcon, price: 20 },
 ];
 
 export default function ShopPage() {
   const router = useRouter();
   const [selectedCategory, setSelectedCategory] = useState('방');
-  const { coins, spendCoins, obtainedFurniture, addObtainedFurniture } = useProgress();
 
+  const {
+    coins,
+    spendCoins,
+    obtainedFurniture,
+    addObtainedFurniture,
+    obtainedRooms,
+    addObtainedRoom,
+  } = useProgress();
 
-  const getItems = () => {
-    return selectedCategory === '가구' ? furnitureItems : roomImages;
-  };
+  const getItems = () => (selectedCategory === '가구' ? furnitureItems : roomImages);
+
+  const isOwned = (itemId: string) =>
+    selectedCategory === '가구'
+      ? obtainedFurniture.includes(itemId)
+      : obtainedRooms.includes(itemId);
 
   const handlePurchase = (itemId: string, price: number) => {
-    if (obtainedFurniture.includes(itemId)) {
+    if (isOwned(itemId)) {
       Alert.alert('이미 구매한 아이템입니다.');
       return;
     }
@@ -52,7 +60,13 @@ export default function ShopPage() {
     }
 
     spendCoins(price);
-    addObtainedFurniture(itemId);
+
+    if (selectedCategory === '가구') {
+      addObtainedFurniture(itemId);
+    } else {
+      addObtainedRoom(itemId);
+    }
+
     Alert.alert('구매 완료', '아이템이 성공적으로 추가되었습니다.');
   };
 
@@ -69,10 +83,7 @@ export default function ShopPage() {
         {categories.map((cat) => (
           <TouchableOpacity
             key={cat}
-            style={[
-              styles.tab,
-              selectedCategory === cat && styles.activeTab,
-            ]}
+            style={[styles.tab, selectedCategory === cat && styles.activeTab]}
             onPress={() => setSelectedCategory(cat)}
           >
             <Text
@@ -96,24 +107,16 @@ export default function ShopPage() {
         contentContainerStyle={styles.grid}
         renderItem={({ item }) => (
           <View style={styles.itemBox}>
-            <Image
-              source={item.image}
-              style={styles.itemImage}
-              resizeMode="contain"
-            />
-            {selectedCategory === '가구' ? (
-              obtainedFurniture.includes(item.id) ? (
-                <Text style={styles.ownedText}>보유 중</Text>
-              ) : (
-                <TouchableOpacity
-                  style={styles.buyButton}
-                  onPress={() => handlePurchase(item.id, item.price)}
-                >
-                  <Text style={styles.buyText}>{item.price} 코인 구매</Text>
-                </TouchableOpacity>
-              )
+            <Image source={item.image} style={styles.itemImage} resizeMode="contain" />
+            {isOwned(item.id) ? (
+              <Text style={styles.ownedText}>보유 중</Text>
             ) : (
-              <Text style={styles.ownedText}>미구현</Text>
+              <TouchableOpacity
+                style={styles.buyButton}
+                onPress={() => handlePurchase(item.id, item.price)}
+              >
+                <Text style={styles.buyText}>{item.price} 코인 구매</Text>
+              </TouchableOpacity>
             )}
           </View>
         )}
