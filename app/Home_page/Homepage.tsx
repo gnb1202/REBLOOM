@@ -14,7 +14,7 @@ import ImageZoom from 'react-native-image-pan-zoom';
 
 import QuestPage from '../Mark/Quest/QuestPage';
 import ShopPage from '../Mark/Shop/ShopPage';
-import DiaryCheckPage from '../Mark/Check/DiaryCheckPage';
+// import DiaryCheckPage from '../Mark/Check/DiaryCheckPage'; // 출석체크 import 제거
 
 import BaseBackground from '../../assets/images/HomeBackgroundImages/FirstBaseBackground.png';
 import Background1 from '../../assets/images/HomeBackgroundImages/Backgroundlevel1.png';
@@ -41,9 +41,10 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
   const router = useRouter();
   const imageZoomRef = useRef(null);
   const [layoutReady, setLayoutReady] = useState(false);
+  // 출석체크 state 제거
   const [showQuest, setShowQuest] = useState(false);
   const [showShop, setShowShop] = useState(false);
-  const [showDiary, setShowDiary] = useState(false);
+  // const [showDiary, setShowDiary] = useState(false);
   const [dimensions, setDimensions] = useState(Dimensions.get('window'));
 
   const {
@@ -77,10 +78,11 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
     });
   };
 
-  const openOnlyOneOverlay = (target: 'quest' | 'shop' | 'diary') => {
+  // 출석체크 관련 함수에서 diary 부분 제거
+  const openOnlyOneOverlay = (target: 'quest' | 'shop') => {
     setShowQuest(target === 'quest');
     setShowShop(target === 'shop');
-    setShowDiary(target === 'diary');
+    // setShowDiary(target === 'diary');
   };
 
   const handlePlaceFurniture = (id: string, x: number, y: number) => {
@@ -175,9 +177,10 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
           </View>
 
           <View style={styles.indicatorContainer}>
-            <TouchableOpacity onPress={() => openOnlyOneOverlay('diary')}>
+            {/* 출석체크 관련 인디케이터/버튼 완전 제거 */}
+            {/* <TouchableOpacity onPress={() => openOnlyOneOverlay('diary')}>
               <View style={styles.indicatorDot} />
-            </TouchableOpacity>
+            </TouchableOpacity> */}
             <TouchableOpacity onPress={() => openOnlyOneOverlay('shop')}>
               <View style={styles.shopDot}>
                 <Image
@@ -212,7 +215,7 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
 
           {showQuest && <View style={styles.overlayPartial}><QuestPage /></View>}
           {showShop && <View style={styles.overlayPartial}><ShopPage /></View>}
-          {showDiary && <View style={styles.overlayPartial}><DiaryCheckPage /></View>}
+          {/* {showDiary && <View style={styles.overlayPartial}><DiaryCheckPage /></View>} */}
         </>
       )}
     </View>
