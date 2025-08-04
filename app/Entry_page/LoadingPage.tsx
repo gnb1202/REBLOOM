@@ -2,7 +2,6 @@ import React, { useEffect } from 'react';
 import { View, StyleSheet, Dimensions, Platform, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 
-// ✅ GIF 이미지 import (경로는 실제 파일에 맞게 조정)
 import loadingGif from '../../assets/images/animations/loading_animation.gif';
 
 export default function LoadingPage() {
@@ -11,16 +10,21 @@ export default function LoadingPage() {
   useEffect(() => {
     const timeout = setTimeout(() => {
       router.replace('/Entry_page/Loginpage');
-    }, 2000); // 애니메이션 시간에 맞게 조정
+    }, 2000);
 
     return () => clearTimeout(timeout);
   }, []);
+
+  const windowWidth = Dimensions.get('window').width;
+  const imageSize = Platform.OS === 'web'
+    ? windowWidth * 0.4 // 웹에서는 40%
+    : windowWidth * 0.8; // 앱에서는 80%
 
   return (
     <View style={styles.container}>
       <Image
         source={loadingGif}
-        style={styles.image}
+        style={[styles.image, { width: imageSize, height: imageSize }]}
         resizeMode="contain"
       />
     </View>
@@ -35,7 +39,5 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   image: {
-    width: Dimensions.get('window').width * 0.8,
-    height: Dimensions.get('window').width * 0.8,
   },
 });

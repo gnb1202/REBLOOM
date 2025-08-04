@@ -115,7 +115,6 @@ export default function Startpage() {
             <Text style={styles.menuText}>로그인</Text>
           </TouchableOpacity>
 
-
           <Text style={styles.menuDivider}>|</Text>
 
           <TouchableOpacity onPress={() => router.push('/Entry_page/Signuppage')}>
