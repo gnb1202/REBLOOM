@@ -121,12 +121,6 @@ export default function Startpage() {
           <TouchableOpacity onPress={() => router.push('/Entry_page/Signuppage')}>
             <Text style={styles.menuText}>회원가입</Text>
           </TouchableOpacity>
-
-          <Text style={styles.menuDivider}>|</Text>
-
-          <TouchableOpacity onPress={() => alert('ID/PW 찾기 페이지로 이동 예정')}>
-            <Text style={styles.menuText}>ID/PW 찾기</Text>
-          </TouchableOpacity>
         </View>
       </View>
     </View>
