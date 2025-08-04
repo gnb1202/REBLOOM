@@ -17,7 +17,7 @@ import * as MediaLibrary from 'expo-media-library';
 import { Camera } from 'expo-camera';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import doorImage from '../../assets/images/StartImages/Startimage.png';
+import doorImage from '../../assets/images/StartImages/Startimage2.png';
 
 const { width, height } = Dimensions.get('window');
 
