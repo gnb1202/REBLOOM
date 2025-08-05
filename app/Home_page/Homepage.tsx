@@ -332,6 +332,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 12,
     fontSize: 14,
-    color: '#333',
+    color: '#000',
+    fontWeight:'bold',
   },
 });
