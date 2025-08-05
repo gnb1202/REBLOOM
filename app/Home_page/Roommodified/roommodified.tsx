@@ -87,7 +87,7 @@ export default function RoomModified() {
     setFlowers(placedFlowers);
     setFurnitureItems(placedFurniture);
     setTempSelectedRoom(selectedRoom || 'default');
-  }, []);
+  }, [placedFlowers, placedFurniture, selectedRoom]);
 
   const handleReturn = () => {
     router.push('/Home_page/Homepage');

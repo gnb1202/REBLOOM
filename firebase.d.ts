@@ -1,0 +1,11 @@
+declare module 'firebase/app';
+declare module 'firebase/auth';
+declare module 'firebase/firestore';
+declare module 'firebase/compat/app';
+declare module 'firebase/compat/auth';
+declare module 'firebase/compat/firestore';
+declare module 'firebase/compat/storage';
+declare module 'firebase/compat/database';
+declare module 'firebase/compat/messaging';
+declare module 'firebase/compat/analytics';
+declare module 'firebase/compat/remote-config';

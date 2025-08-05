@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Image, StyleSheet, Text } from 'react-native';
 import { useRouter } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useProgress } from '../../context/ProgressContext'; // 전역 상태 접근
 
 // 단계별 이미지 결정 함수
@@ -70,10 +71,18 @@ export default function PlantRewardPage() {
       });
     }, 20);
 
-    // 2. 실제 진행도 반영 및 이동
-    const timeout = setTimeout(() => {
-      const newProgress = Math.min(progress + 10, 100);
-      setProgress(newProgress); // ✅ 오류 수정: updateProgress → setProgress
+    // 2. 실제 진행도 반영 및 이동 (하루에 한 번만 성장 허용)
+    const timeout = setTimeout(async () => {
+      const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD 형식
+      const lastGrowthDate = await AsyncStorage.getItem('@lastFlowerGrowthDate');
+      
+      if (lastGrowthDate !== today) {
+        // 오늘 첫 번째 운동이므로 꽃 성장 허용
+        const newProgress = Math.min(progress + 10, 100);
+        setProgress(newProgress);
+        await AsyncStorage.setItem('@lastFlowerGrowthDate', today);
+      }
+      // 하루에 한 번 성장 제한과 관계없이 보상 페이지로 이동
       router.push('/Exercise/CoinRewardPage');
     }, 2000);
 

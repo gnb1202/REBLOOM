@@ -102,17 +102,11 @@ export const ProgressProvider = ({ children }: { children: React.ReactNode }) =>
   const [placedFlowers, setPlacedFlowersState] = useState<{ x: number; y: number; id: string }[]>([]);
   const [placedFurniture, setPlacedFurnitureState] = useState<{ x: number; y: number; id: string }[]>([]);
 
-  // Firebase에서 데이터 로드 (사용자 로그인 시)
-  useEffect(() => {
-    if (user) {
-      loadFromFirebase(user.uid);
-    }
-  }, [user]);
-
+  // 통합된 데이터 로딩 로직 (AsyncStorage -> Firebase 순서)
   useEffect(() => {
     const loadData = async () => {
       try {
-        // 먼저 AsyncStorage에서 데이터 로드 (Firebase 로드 전 임시 데이터)
+        // 1단계: AsyncStorage에서 데이터 로드 (즉시 사용 가능한 로컬 데이터)
         const savedProgress = await AsyncStorage.getItem('@flowerProgress');
         const savedFlowerId = await AsyncStorage.getItem('@currentFlowerId');
         const savedObtained = await AsyncStorage.getItem('@obtainedFlowers');
@@ -148,14 +142,22 @@ export const ProgressProvider = ({ children }: { children: React.ReactNode }) =>
           await AsyncStorage.setItem('@currentFlowerId', 'daisy');
           setCurrentFlowerIdState('daisy');
         }
+
+        // 2단계: Firebase에서 최신 데이터 로드 (사용자가 로그인한 경우)
+        if (user) {
+          console.log('Firebase에서 최신 데이터 로딩 시작...');
+          await loadFromFirebase(user.uid);
+          console.log('Firebase 데이터 로딩 완료');
+        }
       } catch (e) {
         console.error('저장된 데이터 불러오기 실패:', e);
       } finally {
         setIsLoaded(true);
+        console.log('모든 데이터 로딩 완료, isLoaded: true');
       }
     };
     loadData();
-  }, []);
+  }, [user]);
 
   const completeChallenge = async (id: string) => {
     setCompletedChallenges((prev) => {
@@ -226,15 +228,9 @@ export const ProgressProvider = ({ children }: { children: React.ReactNode }) =>
   };
 
   const addObtainedFlower = async (id: string) => {
-    try {
-      const updated = [...new Set([...obtainedFlowersState, id])];
-      setObtainedFlowersState(updated);
-      await AsyncStorage.setItem('@obtainedFlowers', JSON.stringify(updated));
-      // Firebase 자동 동기화
-      setTimeout(autoSyncToFirebase, 100);
-    } catch (e) {
-      console.error('수집 꽃 저장 실패:', e);
-    }
+    // 꽃은 상점에서 구매할 수 없으며, 오직 운동을 통해서만 획득 가능
+    console.warn('꽃은 상점 구매가 불가능합니다. 운동을 통해서만 획득 가능합니다.');
+    return;
   };
 
   const addObtainedFurniture = async (id: string) => {
@@ -290,14 +286,29 @@ export const ProgressProvider = ({ children }: { children: React.ReactNode }) =>
     }
   };
 
-  // Firebase 자동 동기화 헬퍼 함수
+  // Firebase 동기화 재시도 로직
+  const syncWithFirebaseRetry = async (userId: string, maxRetries: number = 3) => {
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        await syncWithFirebase(userId);
+        console.log(`Firebase 동기화 성공 (시도 ${attempt}/${maxRetries})`);
+        return;
+      } catch (error) {
+        console.error(`Firebase 동기화 실패 (시도 ${attempt}/${maxRetries}):`, error);
+        if (attempt === maxRetries) {
+          console.error('Firebase 동기화 최종 실패 - 모든 재시도 완료');
+        } else {
+          // 재시도 전 대기 (지수 백오프)
+          await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+        }
+      }
+    }
+  };
+
+  // Firebase 자동 동기화 헬퍼 함수 (기존 코드 호환성 유지)
   const autoSyncToFirebase = async () => {
     if (user && isLoaded) {
-      try {
-        await syncWithFirebase(user.uid);
-      } catch (error) {
-        console.error('자동 Firebase 동기화 실패:', error);
-      }
+      await syncWithFirebaseRetry(user.uid, 3);
     }
   };
 
@@ -305,8 +316,12 @@ export const ProgressProvider = ({ children }: { children: React.ReactNode }) =>
     try {
       setPlacedFlowersState(items);
       await AsyncStorage.setItem('@placedFlowers', JSON.stringify(items));
-      // Firebase 자동 동기화
-      setTimeout(autoSyncToFirebase, 100);
+      
+      // Firebase 즉시 동기화 (재시도 로직 포함)
+      if (user && isLoaded) {
+        console.log('꽃 배치 데이터 Firebase 동기화 시작...');
+        await syncWithFirebaseRetry(user.uid, 3);
+      }
     } catch (e) {
       console.error('꽃 위치 저장 실패:', e);
     }
@@ -316,8 +331,12 @@ export const ProgressProvider = ({ children }: { children: React.ReactNode }) =>
     try {
       setPlacedFurnitureState(items);
       await AsyncStorage.setItem('@placedFurniture', JSON.stringify(items));
-      // Firebase 자동 동기화
-      setTimeout(autoSyncToFirebase, 100);
+      
+      // Firebase 즉시 동기화 (재시도 로직 포함)
+      if (user && isLoaded) {
+        console.log('가구 배치 데이터 Firebase 동기화 시작...');
+        await syncWithFirebaseRetry(user.uid, 3);
+      }
     } catch (e) {
       console.error('가구 위치 저장 실패:', e);
     }

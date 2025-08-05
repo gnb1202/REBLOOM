@@ -19,7 +19,7 @@ import tableImage from '../../../assets/images/furnitures/yellowstand.png';
 
 import { useProgress } from '../../../context/ProgressContext';
 
-const categories = ['Room', 'Furniture', 'Flower', 'Decoration'];
+const categories = ['Room', 'Furniture', 'Decoration'];
 
 // Default shop items (fallback if Firebase loading fails)
 const defaultShopItems = {
@@ -33,12 +33,6 @@ const defaultShopItems = {
     { id: 'room_cozy', name: 'Cozy Room', image: mysteryIcon, price: 500, category: 'Room' },
     { id: 'room_modern', name: 'Modern Room', image: mysteryIcon, price: 800, category: 'Room' },
     { id: 'room_garden', name: 'Garden Room', image: mysteryIcon, price: 1000, category: 'Room' },
-  ],
-  'Flower': [
-    { id: 'flower_rose', name: 'Rose', image: mysteryIcon, price: 50, category: 'Flower' },
-    { id: 'flower_tulip', name: 'Tulip', image: mysteryIcon, price: 60, category: 'Flower' },
-    { id: 'flower_sunflower', name: 'Sunflower', image: mysteryIcon, price: 80, category: 'Flower' },
-    { id: 'flower_lily', name: 'Lily', image: mysteryIcon, price: 70, category: 'Flower' },
   ],
   'Decoration': [
     { id: 'deco_frame', name: 'Frame', image: mysteryIcon, price: 100, category: 'Decoration' },
@@ -62,8 +56,6 @@ export default function ShopPage() {
     addObtainedFurniture,
     obtainedRooms,
     addObtainedRoom,
-    obtainedFlowers,
-    addObtainedFlower,
   } = useProgress();
 
   // Firebase에서 상점 데이터 로드
@@ -113,8 +105,6 @@ export default function ShopPage() {
         return obtainedFurniture.includes(itemId);
       case 'Room':
         return obtainedRooms.includes(itemId);
-      case 'Flower':
-        return obtainedFlowers.includes(itemId);
       case 'Decoration':
         return purchasedItems.includes(itemId);
       default:
@@ -148,9 +138,6 @@ export default function ShopPage() {
           break;
         case 'Room':
           addObtainedRoom(itemId);
-          break;
-        case 'Flower':
-          addObtainedFlower(itemId);
           break;
         case 'Decoration':
           // Decoration items are managed separately
