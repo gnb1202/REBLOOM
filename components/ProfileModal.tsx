@@ -103,46 +103,36 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ visible, onClose }) => {
     }
   };
 
-  const handleLogout = () => {
-    console.log('handleLogout function called');
-    Alert.alert(
-      'Logout',
-      'Are you sure you want to logout?',
-      [
-        {
-          text: 'Cancel',
-          style: 'cancel',
-          onPress: () => console.log('Logout cancelled'),
-        },
-        {
-          text: 'Logout',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              console.log('Logout started');
-              onClose();
-              
-              // 로그아웃 시작 전 안전한 대기
-              console.log('Waiting before logout...');
-              await new Promise(resolve => setTimeout(resolve, 300));
-              
-              await signOut();
-              console.log('Logout completed');
-              
-              // 화면 전환 전 추가 대기
-              await new Promise(resolve => setTimeout(resolve, 100));
-              router.replace('/Entry_page/Loginpage');
-              
-            } catch (error) {
-              console.error('Logout error:', error);
-              // 오류가 발생해도 로그인 화면으로 이동 (강제 로그아웃)
-              console.log('Error occurred, forcing logout');
-              router.replace('/Entry_page/Loginpage');
-            }
-          },
-        },
-      ]
-    );
+  const handleLogout = async () => {
+    console.log('handleLogout function called - starting direct logout');
+    try {
+      console.log('Starting logout process...');
+      onClose();
+      console.log('Modal closed');
+      
+      // 로그아웃 시작 전 안전한 대기
+      console.log('Waiting before logout...');
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      console.log('Calling signOut...');
+      await signOut();
+      console.log('signOut completed successfully');
+      
+      // 화면 전환 전 추가 대기
+      console.log('Waiting before navigation...');
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      console.log('Navigating to login page...');
+      router.replace('/Entry_page/Loginpage');
+      console.log('Navigation completed');
+      
+    } catch (error) {
+      console.error('Logout error:', error);
+      // 오류가 발생해도 로그인 화면으로 이동 (강제 로그아웃)
+      console.log('Error occurred, forcing navigation to login');
+      router.replace('/Entry_page/Loginpage');
+      console.log('Force navigation completed');
+    }
   };
 
   if (!userProfile) {
