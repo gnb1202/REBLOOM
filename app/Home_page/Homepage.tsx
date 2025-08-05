@@ -43,19 +43,14 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
   const router = useRouter();
   const imageZoomRef = useRef(null);
   const [layoutReady, setLayoutReady] = useState(false);
-  // 출석체크 state 제거
   const [showQuest, setShowQuest] = useState(false);
   const [showShop, setShowShop] = useState(false);
   const [showDiary, setShowDiary] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
   const [dimensions, setDimensions] = useState(Dimensions.get('window'));
 
-  const {
-    isLoaded,
-    placedFurniture,
-    setPlacedFurniture,
-    selectedRoom,
-  } = useProgress();
+  const { isLoaded, placedFurniture, setPlacedFurniture, selectedRoom } = useProgress();
 
   const minScale = dimensions.height / ORIGINAL_HEIGHT;
   const imageScaledWidth = ORIGINAL_WIDTH * minScale;
@@ -79,13 +74,6 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
       scale: minScale,
       duration: 0,
     });
-  };
-
-  // 오버레이 관리 함수
-  const openOnlyOneOverlay = (target: 'quest' | 'shop' | 'diary') => {
-    setShowQuest(target === 'quest');
-    setShowShop(target === 'shop');
-    setShowDiary(target === 'diary');
   };
 
   const handlePlaceFurniture = (id: string, x: number, y: number) => {
@@ -150,78 +138,57 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
       </ImageZoom>
 
       <View style={styles.rightCircleWrapper}>
-        <TouchableOpacity
-          onPress={() =>
-            isRoomOnly
-              ? router.replace('/Home_page/Homepage')
-              : router.push('/Home_page/Roommodified/roommodified')
-          }
-        >
+        <TouchableOpacity onPress={() => setShowDropdown(prev => !prev)}>
           <Image
             source={require('../../assets/images/Modifiy/modifiedbutton.png')}
             style={styles.modifiedImageButton}
             resizeMode="contain"
           />
         </TouchableOpacity>
+        {showDropdown && (
+          <View style={styles.dropdownMenu}>
+            <TouchableOpacity onPress={() => { setShowDropdown(false); setShowShop(true); }}>
+              <Text style={styles.menuItem}>Shop</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => { setShowDropdown(false); setShowQuest(true); }}>
+              <Text style={styles.menuItem}>Quest</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => { setShowDropdown(false); setShowDiary(true); }}>
+              <Text style={styles.menuItem}>Diary Check</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => { setShowDropdown(false); router.push('/Home_page/Roommodified/roommodified'); }}>
+              <Text style={styles.menuItem}>Room Modify</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => { setShowDropdown(false); router.push('/Menu/Menupage'); }}>
+              <Text style={styles.menuItem}>Main Menu</Text>
+            </TouchableOpacity>
+          </View>
+        )}
       </View>
 
       {!isRoomOnly && (
         <>
-          {/* 프로필 카드 */}
           <View style={styles.profileCardContainer}>
             <ProfileCard onPress={() => setShowProfileModal(true)} />
-          </View>
-
-          <View style={styles.indicatorContainer}>
-            {/* 건강 체크 버튼 */}
-            <TouchableOpacity onPress={() => openOnlyOneOverlay('diary')}>
-              <View style={styles.healthCheckDot}>
-                <Text style={styles.healthCheckText}>💊</Text>
-              </View>
-            </TouchableOpacity>
-            
-            <TouchableOpacity onPress={() => openOnlyOneOverlay('shop')}>
-              <View style={styles.shopDot}>
-                <Image
-                  source={require('../../assets/images/Shop/Shopmark.png')}
-                  style={styles.shopIcon}
-                  resizeMode="contain"
-                />
-              </View>
-            </TouchableOpacity>
-            
-            <TouchableOpacity onPress={() => openOnlyOneOverlay('quest')}>
-              <View style={styles.questDot}>
-                <Image
-                  source={require('../../assets/images/Quest/Questmark.png')}
-                  style={styles.questIcon}
-                  resizeMode="contain"
-                />
-              </View>
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.bottomBar}>
-            <TouchableOpacity onPress={() => router.push('/Travel/TravelListPage')}>
-              <Text style={styles.bottomText}>Explore</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => router.push('/Menu/Menupage')}>
-              <Text style={styles.bottomText}>Menu</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => router.push('/Exercise/Explain')}>
-              <Text style={styles.bottomText}>Exercise</Text>
-            </TouchableOpacity>
           </View>
 
           {showQuest && <View style={styles.overlayPartial}><QuestPage /></View>}
           {showShop && <View style={styles.overlayPartial}><ShopPage /></View>}
           {showDiary && <View style={styles.overlayPartial}><DiaryCheckPage /></View>}
-          
-          {/* 프로필 모달 */}
-          <ProfileModal 
-            visible={showProfileModal} 
-            onClose={() => setShowProfileModal(false)} 
+
+          <ProfileModal
+            visible={showProfileModal}
+            onClose={() => setShowProfileModal(false)}
           />
+
+          <View style={styles.bottomButtonContainer}>
+            <TouchableOpacity style={styles.bottomButton} onPress={() => router.push('/Travel/TravelListPage')}>
+              <Text style={styles.bottomButtonText}>Explore</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.bottomButton} onPress={() => router.push('/Exercise/Explain')}>
+              <Text style={styles.bottomButtonText}>Exercise</Text>
+            </TouchableOpacity>
+          </View>
         </>
       )}
     </View>
@@ -238,32 +205,53 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   rightCircleWrapper: { position: 'absolute', right: 20, top: 100, zIndex: 10 },
-  indicatorContainer: {
-    position: 'absolute', bottom: 60, left: 20, flexDirection: 'row', gap: 16,
-    zIndex: 20, alignItems: 'center',
-  },
-  healthCheckDot: {
-    width: 30, height: 30, borderRadius: 15, justifyContent: 'center', alignItems: 'center',
-    backgroundColor: '#fff', shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2, shadowRadius: 3, elevation: 3,
-  },
-  healthCheckText: { fontSize: 16 },
-  questDot: {
-    width: 30, height: 30, borderRadius: 15, justifyContent: 'center', alignItems: 'center',
-  },
-  questIcon: { width: 30, height: 30 },
-  shopDot: {
-    width: 30, height: 30, borderRadius: 15, justifyContent: 'center', alignItems: 'center',
-  },
-  shopIcon: { width: 30, height: 30 },
-  bottomBar: {
-    position: 'absolute', bottom: 0, width: '100%', backgroundColor: '#5C7BEE',
-    flexDirection: 'row', justifyContent: 'space-around', paddingVertical: 12, zIndex: 10,
-  },
-  bottomText: { color: '#fff', fontSize: 14 },
   overlayPartial: {
     position: 'absolute', top: 0, left: 0, right: 0, height: '94%',
     backgroundColor: '#FFFFFFEE', zIndex: 100, paddingTop: 60,
   },
   modifiedImageButton: { width: 40, height: 40 },
+  bottomButtonContainer: {
+    position: 'absolute',
+    bottom: 30,
+    width: '100%',
+    flexDirection: 'row',
+    justifyContent: 'space-evenly',
+    zIndex: 10,
+  },
+  bottomButton: {
+    backgroundColor: '#fff',
+    paddingVertical: 6,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  bottomButtonText: {
+    color: '#5C7BEE',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  dropdownMenu: {
+    position: 'absolute',
+    top: 50,
+    right: 0,
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 5,
+    zIndex: 20,
+    padding: 10,
+  },
+  menuItem: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    fontSize: 14,
+    color: '#333',
+  },
 });

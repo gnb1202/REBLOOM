@@ -7,14 +7,22 @@ export default function Mainmenu() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>Main Menu</Text>
-        <TouchableOpacity
-          style={[styles.menuButton, { borderColor: '#FFA500' }]}
-          onPress={() => router.push('/Menu/profilemodified')}
-        >
-          <Text>View/Edit Profile</Text>
-         </TouchableOpacity>
+      {/* 🔙 뒤로가기 버튼 */}
+      <TouchableOpacity
+        style={styles.backButton}
+        onPress={() => router.replace('/Home_page/Homepage')}
+      >
+        <Text style={styles.backButtonText}>← Back</Text>
+      </TouchableOpacity>
 
+      <Text style={styles.header}>Main Menu</Text>
+
+      <TouchableOpacity
+        style={[styles.menuButton, { borderColor: '#FFA500' }]}
+        onPress={() => router.push('/Menu/profilemodified')}
+      >
+        <Text>Edit Profile</Text>
+      </TouchableOpacity>
 
       <TouchableOpacity
         style={[styles.menuButton, { borderColor: '#32CD32' }]}
@@ -37,11 +45,8 @@ export default function Mainmenu() {
         <Text>Collection View</Text>
       </TouchableOpacity>
 
-
-
       <View style={styles.bottomBar}>
         <Text style={styles.bottomText}>Explore</Text>
-        <Text style={styles.bottomText}>Menu</Text>
         <Text style={styles.bottomText}>Exercise</Text>
       </View>
     </View>
@@ -54,6 +59,17 @@ const styles = StyleSheet.create({
     paddingTop: 60,
     alignItems: 'center',
     backgroundColor: '#fff',
+  },
+  backButton: {
+    position: 'absolute',
+    top: 20,
+    left: 20,
+    padding: 10,
+    zIndex: 10,
+  },
+  backButtonText: {
+    fontSize: 16,
+    color: '#007AFF',
   },
   header: {
     fontSize: 18,
