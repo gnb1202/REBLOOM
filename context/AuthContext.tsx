@@ -74,22 +74,24 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         console.log('사용자 로그아웃됨, 상태 정리 중...');
         setUserProfile(null);
         
-        // Firestore 리스너들 정리
-        firestoreListeners.forEach(unsubscribe => {
-          try {
-            unsubscribe();
-          } catch (error) {
-            console.warn('Auth state 변경 중 리스너 정리 오류:', error);
-          }
+        // Firestore 리스너들 정리 (현재 상태 값을 직접 사용)
+        setFirestoreListeners(currentListeners => {
+          currentListeners.forEach(unsubscribe => {
+            try {
+              unsubscribe();
+            } catch (error) {
+              console.warn('Auth state 변경 중 리스너 정리 오류:', error);
+            }
+          });
+          return []; // 빈 배열로 초기화
         });
-        setFirestoreListeners([]);
       }
-      
+
       setLoading(false);
     });
 
     return unsubscribe;
-  }, [firestoreListeners]);
+  }, []); // dependency 배열을 비워서 무한 루프 방지
 
   const signIn = async (userId: string, password: string) => {
     setLoading(true);
