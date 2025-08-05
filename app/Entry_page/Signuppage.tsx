@@ -33,7 +33,7 @@ export default function Signuppage() {
 
   const validateId = (value: string) => /^[a-z0-9]+$/.test(value);
   const validatePassword = (value: string) => value.length >= 6;
-  const validateNickname = (value: string) => value.length <= 6;
+  const validateNickname = (value: string) => value.length <= 15;
   const validateDate = (value: string) =>
     /^\d{4}-\d{1,2}-\d{1,2}$/.test(value);
 
@@ -62,7 +62,7 @@ export default function Signuppage() {
       setPasswordError('Please enter your password.');
       hasError = true;
     } else if (!validatePassword(password)) {
-      setPasswordError('Password must be at least 6 characters.');
+      setPasswordError('Password must be at least 15 characters.');
       hasError = true;
     }
 
