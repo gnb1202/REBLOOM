@@ -1,17 +1,17 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
+import { Alert, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useProgress } from '../../context/ProgressContext';
 
 const flowerData = {
-  daisy: { name: '데이지', desc: '순수함과 밝은 에너지' },
-  hydrangea: { name: '수국', desc: '진심, 감사' },
-  lavender: { name: '라벤더', desc: '힐링과 평온' },
-  lily: { name: '백합', desc: '순결과 평온' },
-  rose: { name: '장미', desc: '사랑과 열정' },
-  sunflower: { name: '해바라기', desc: '희망과 충성' },
-  trumpetcreeper: { name: '능소화', desc: '영광' },
-  tulip: { name: '튤립', desc: '사랑의 고백' },
+  daisy: { name: 'Daisy', desc: 'Purity and bright energy' },
+  hydrangea: { name: 'Hydrangea', desc: 'Sincerity and gratitude' },
+  lavender: { name: 'Lavender', desc: 'Healing and serenity' },
+  lily: { name: 'Lily', desc: 'Purity and serenity' },
+  rose: { name: 'Rose', desc: 'Love and passion' },
+  sunflower: { name: 'Sunflower', desc: 'Hope and loyalty' },
+  trumpetcreeper: { name: 'Trumpet Creeper', desc: 'Glory' },
+  tulip: { name: 'Tulip', desc: 'Declaration of love' },
 };
 
 const flowerImages = {
@@ -67,10 +67,10 @@ function getStepImageName(flowerId: string, progress: number): string {
 }
 
 function getFlowerMessage(progress: number): string {
-  if (progress >= 100) return '🌼 예쁘게 피었습니다!';
-  if (progress >= 80) return '🌸 거의 다 피었어요!';
-  if (progress >= 40) return '🌿 꽃이 자라고 있어요!';
-  return '🌱 아직 새싹이에요!';
+  if (progress >= 100) return '🌼 Bloomed beautifully!';
+  if (progress >= 80) return '🌸 Almost fully bloomed!';
+  if (progress >= 40) return '🌿 Flower is growing!';
+  return '🌱 Still a sprout!';
 }
 
 export default function Flowermanage() {
@@ -92,7 +92,7 @@ export default function Flowermanage() {
 
   useEffect(() => {
     if (progress >= 100 && !hasAwarded) {
-      Alert.alert('🎉 꽃을 획득했어요!', '꽃이 만개했습니다!');
+      Alert.alert('🎉 Flower obtained!', 'The flower has fully bloomed!');
 
       // 수집에 추가
       addObtainedFlower(currentFlowerId);
@@ -120,7 +120,7 @@ export default function Flowermanage() {
   if (!flower) {
     return (
       <View style={styles.container}>
-        <Text style={{ marginTop: 100 }}>🌸 현재 관리 중인 꽃이 없습니다.</Text>
+        <Text style={{ marginTop: 100 }}>🌸 No flowers currently being managed.</Text>
       </View>
     );
   }
@@ -132,7 +132,7 @@ export default function Flowermanage() {
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <Text style={styles.back}>{'←'}</Text>
         </TouchableOpacity>
-        <Text style={styles.title}>꽃 관리</Text>
+        <Text style={styles.title}>Flower Management</Text>
       </View>
 
       {/* 진행률 바 */}

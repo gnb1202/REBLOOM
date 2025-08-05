@@ -1,35 +1,35 @@
-import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Image,
-  ScrollView,
-  Modal,
-} from 'react-native';
 import { useRouter } from 'expo-router';
+import { useState } from 'react';
+import {
+    Image,
+    Modal,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
+} from 'react-native';
 
-import { useProgress } from '../../context/ProgressContext';
 import Backgroundlevel1 from '../../assets/images/HomeBackgroundImages/Backgroundlevel1.png';
 import Backgroundlevel2 from '../../assets/images/HomeBackgroundImages/Backgroundlevel2.png';
 import FirstBaseBackground from '../../assets/images/HomeBackgroundImages/FirstBaseBackground.png';
+import { useProgress } from '../../context/ProgressContext';
 
 
 const backgroundList = [
     {
         id: 'default',
-        desc: '기본 배경',
+        desc: 'Default background',
         image: FirstBaseBackground,
   },
   {
     id: 'room1',
-    desc: '맑고 시원한 하늘 풍경',
+    desc: 'Clear and cool sky scenery',
     image: Backgroundlevel1,
   },
   {
     id: 'room2',
-    desc: '푸르른 자연의 숲',
+    desc: 'Lush natural forest',
     image: Backgroundlevel2,
   },
 ];
@@ -53,7 +53,7 @@ export default function BackgroundCollection() {
         <TouchableOpacity onPress={() => router.back()}>
           <Text style={styles.back}>{'\u2190'}</Text>
         </TouchableOpacity>
-        <Text style={styles.title}>배경 도감</Text>
+        <Text style={styles.title}>Background Collection</Text>
       </View>
 
       <ScrollView contentContainerStyle={styles.grid}>
@@ -90,33 +90,33 @@ export default function BackgroundCollection() {
               onPress={async () => {
                 await setSelectedRoom(selectedBackground.id);
                 setSelectedBackground(null);
-                alert('배경이 적용되었습니다!');
+                alert('Background applied!');
               }}
               style={[styles.modalClose, { backgroundColor: '#4D7CFE' }]}
             >
-              <Text style={styles.modalCloseText}>배경 적용</Text>
+              <Text style={styles.modalCloseText}>Apply Background</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               onPress={() => setSelectedBackground(null)}
               style={styles.modalClose}
             >
-              <Text style={styles.modalCloseText}>닫기</Text>
+              <Text style={styles.modalCloseText}>Close</Text>
             </TouchableOpacity>
           </View>
         </View>
       </Modal>
 
       <View style={styles.tabBar}>
-        <Text style={[styles.tab, styles.activeTab]}>배경</Text>
+        <Text style={[styles.tab, styles.activeTab]}>Background</Text>
         <TouchableOpacity onPress={() => router.push('/Menu/Collection')}>
-          <Text style={styles.tab}>꽃</Text>
+          <Text style={styles.tab}>Flower</Text>
         </TouchableOpacity>
         <TouchableOpacity onPress={() => router.push('/Menu/FurnitureCollection')}>
-          <Text style={styles.tab}>가구</Text>
+          <Text style={styles.tab}>Furniture</Text>
         </TouchableOpacity>
         <TouchableOpacity onPress={() => router.push('/Menu/BadgeCollection')}>
-          <Text style={styles.tab}>뱃지</Text>
+          <Text style={styles.tab}>Badge</Text>
         </TouchableOpacity>
       </View>
     </View>

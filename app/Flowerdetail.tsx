@@ -1,6 +1,5 @@
-import React from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useProgress } from '../context/ProgressContext';
 
 const flowerData = {
@@ -42,7 +41,7 @@ export default function FlowerDetail() {
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <Text style={styles.back}>{'←'}</Text>
         </TouchableOpacity>
-        <Text style={styles.title}>꽃 관리</Text>
+        <Text style={styles.title}>Flower Management</Text>
       </View>
 
       <View style={styles.progressContainer}>
@@ -62,7 +61,7 @@ export default function FlowerDetail() {
         style={{ marginTop: 20 }}
         disabled={progress >= 100}
       >
-        <Text style={{ color: 'blue' }}>진행도 +20%</Text>
+        <Text style={{ color: 'blue' }}>Progress +20%</Text>
       </TouchableOpacity>
 
       {/* 다음 꽃 버튼 */}
@@ -72,7 +71,7 @@ export default function FlowerDetail() {
         style={{ marginTop: 10, opacity: progress < 100 || isLast ? 0.4 : 1 }}
       >
         <Text style={{ color: 'green' }}>
-          {isLast ? '마지막 꽃입니다' : '다음 꽃으로 이동'}
+          {isLast ? 'This is the last flower' : 'Move to next flower'}
         </Text>
       </TouchableOpacity>
     </View>

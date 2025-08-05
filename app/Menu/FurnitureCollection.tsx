@@ -1,14 +1,14 @@
-import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  ScrollView,
-  Modal,
-  Image,
-} from 'react-native';
 import { useRouter } from 'expo-router';
+import { useState } from 'react';
+import {
+  Image,
+  Modal,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { useProgress } from '../../context/ProgressContext';
 
 import chair1 from '../../assets/images/furnitures/whiteroundchair.png';
@@ -17,14 +17,14 @@ import stand1 from '../../assets/images/furnitures/yellowstand.png';
 const furnitureList = [
   {
     id: 'whiteroundchair',
-    name: '테이블',
-    desc: '심플하고 튼튼한 테이블',
+    name: 'White Round Chair',
+    desc: 'Simple and sturdy chair',
     image: chair1,
   },
   {
     id: 'yellowstand',
-    name: '의자',
-    desc: '편안한 디자인의 의자',
+    name: 'Yellow Stand',
+    desc: 'Comfortable design stand',
     image: stand1,
   },
 ];
@@ -40,15 +40,15 @@ export default function FurnitureCollection() {
 
   return (
     <View style={styles.container}>
-      {/* 헤더 */}
+      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
           <Text style={styles.back}>{'\u2190'}</Text>
         </TouchableOpacity>
-        <Text style={styles.title}>가구 도감</Text>
+        <Text style={styles.title}>Furniture Collection</Text>
       </View>
 
-      {/* 획득한 가구 목록만 표시 */}
+      {/* Display only obtained furniture */}
       <ScrollView contentContainerStyle={styles.grid}>
         {ownedItems.map((item, idx) => (
           <TouchableOpacity
@@ -66,7 +66,7 @@ export default function FurnitureCollection() {
         ))}
       </ScrollView>
 
-      {/* 상세 모달 */}
+      {/* Detail Modal */}
       <Modal
         visible={!!selectedFurniture}
         transparent
@@ -86,23 +86,23 @@ export default function FurnitureCollection() {
               onPress={() => setSelectedFurniture(null)}
               style={styles.modalClose}
             >
-              <Text style={styles.modalCloseText}>닫기</Text>
+              <Text style={styles.modalCloseText}>Close</Text>
             </TouchableOpacity>
           </View>
         </View>
       </Modal>
 
-      {/* 탭 바 */}
+      {/* Tab Bar */}
       <View style={styles.tabBar}>
         <TouchableOpacity onPress={() => router.push('/Menu/BackgroundCollection')}>
-          <Text style={styles.tab}>배경</Text>
+          <Text style={styles.tab}>Background</Text>
         </TouchableOpacity>
         <TouchableOpacity onPress={() => router.push('/Menu/Collection')}>
-          <Text style={styles.tab}>꽃</Text>
+          <Text style={styles.tab}>Flower</Text>
         </TouchableOpacity>
-        <Text style={[styles.tab, styles.activeTab]}>가구</Text>
+        <Text style={[styles.tab, styles.activeTab]}>Furniture</Text>
         <TouchableOpacity onPress={() => router.push('/Menu/BadgeCollection')}>
-          <Text style={styles.tab}>뱃지</Text>
+          <Text style={styles.tab}>Badge</Text>
         </TouchableOpacity>
       </View>
     </View>

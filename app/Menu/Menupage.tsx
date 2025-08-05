@@ -7,12 +7,12 @@ export default function Mainmenu() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>메인메뉴</Text>
+      <Text style={styles.header}>Main Menu</Text>
         <TouchableOpacity
           style={[styles.menuButton, { borderColor: '#FFA500' }]}
           onPress={() => router.push('/Menu/profilemodified')}
         >
-          <Text>개인정보 확인/수정</Text>
+          <Text>View/Edit Profile</Text>
          </TouchableOpacity>
 
 
@@ -20,29 +20,29 @@ export default function Mainmenu() {
         style={[styles.menuButton, { borderColor: '#32CD32' }]}
         onPress={() => router.push('/Menu/Report')}
       >
-        <Text>건강 리포트</Text>
+        <Text>Health Report</Text>
       </TouchableOpacity>
 
       <TouchableOpacity
         style={[styles.menuButton, { borderColor: '#9370DB' }]}
         onPress={() => router.push('/Menu/Flowermanage')}
       >
-        <Text>꽃 관리</Text>
+        <Text>Flower Management</Text>
       </TouchableOpacity>
 
       <TouchableOpacity
         style={[styles.menuButton, { borderColor: '#00CED1' }]}
         onPress={() => router.push('/Menu/Collection')}
       >
-        <Text>수집 요소 확인</Text>
+        <Text>Collection View</Text>
       </TouchableOpacity>
 
 
 
       <View style={styles.bottomBar}>
-        <Text style={styles.bottomText}>탐험</Text>
-        <Text style={styles.bottomText}>menu</Text>
-        <Text style={styles.bottomText}>운동하기</Text>
+        <Text style={styles.bottomText}>Explore</Text>
+        <Text style={styles.bottomText}>Menu</Text>
+        <Text style={styles.bottomText}>Exercise</Text>
       </View>
     </View>
   );

@@ -1,16 +1,16 @@
-import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  TextInput,
-  Image,
-  Alert,
-  ScrollView,
-} from 'react-native';
-import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
+import { useRouter } from 'expo-router';
+import { useState } from 'react';
+import {
+    Alert,
+    Image,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
+} from 'react-native';
 import { useProgress } from '../../context/ProgressContext';
 
 export default function ProfileModified() {
@@ -25,7 +25,7 @@ export default function ProfileModified() {
   const pickImage = async () => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) {
-      alert('이미지 접근 권한이 필요합니다.');
+      alert('Image access permission is required.');
       return;
     }
 
@@ -51,16 +51,16 @@ export default function ProfileModified() {
 
   const handleSave = () => {
     if (!password || !confirmPassword) {
-      Alert.alert('알림', '비밀번호를 입력해주세요.');
+      Alert.alert('Notice', 'Please enter your password.');
       return;
     }
     if (password !== confirmPassword) {
-      Alert.alert('알림', '비밀번호가 일치하지 않습니다.');
+      Alert.alert('Notice', 'Passwords do not match.');
       return;
     }
 
     setSelectedBadges(selected); // ✅ 선택한 뱃지 저장
-    Alert.alert('성공', '개인정보가 저장되었습니다.');
+    Alert.alert('Success', 'Profile information has been saved.');
     router.back();
   };
 
@@ -82,7 +82,7 @@ export default function ProfileModified() {
         <TouchableOpacity onPress={() => router.back()}>
           <Text style={styles.back}>{'←'}</Text>
         </TouchableOpacity>
-        <Text style={styles.title}>개인정보 수정</Text>
+        <Text style={styles.title}>Edit Profile</Text>
       </View>
 
       {/* 프로필 박스 */}
@@ -97,7 +97,7 @@ export default function ProfileModified() {
 
         <View style={styles.profileRight}>
           <View style={styles.nicknameRow}>
-            <Text style={styles.nickname}>닉네임</Text>
+            <Text style={styles.nickname}>Nickname</Text>
             <View style={styles.badgeRow}>
               {selected.map(id => (
                 <Image
@@ -108,29 +108,29 @@ export default function ProfileModified() {
               ))}
             </View>
           </View>
-          <Text style={styles.bio}>자기소개자기소개자기소개자기소개</Text>
-          <Text style={styles.bio}>자기소개자기소개자기소개자기소개</Text>
+          <Text style={styles.bio}>Self Introduction</Text>
+          <Text style={styles.bio}>Tell us about yourself</Text>
         </View>
       </View>
 
       {/* 비밀번호 입력 */}
       <TextInput
         style={styles.input}
-        placeholder="비밀번호를 입력해주세요"
+        placeholder="Enter your password"
         secureTextEntry
         value={password}
         onChangeText={setPassword}
       />
       <TextInput
         style={styles.input}
-        placeholder="비밀번호를 한 번 더 입력해주세요"
+        placeholder="Confirm your password"
         secureTextEntry
         value={confirmPassword}
         onChangeText={setConfirmPassword}
       />
 
       {/* 뱃지 선택 */}
-      <Text style={styles.selectTitle}>표시할 뱃지를 선택하세요</Text>
+      <Text style={styles.selectTitle}>Select badges to display</Text>
       <View style={styles.badgeSelectContainer}>
         {completedChallenges.map(id => (
           <TouchableOpacity
@@ -148,7 +148,7 @@ export default function ProfileModified() {
 
       {/* 저장 버튼 */}
       <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
-        <Text style={styles.saveText}>저장</Text>
+        <Text style={styles.saveText}>Save</Text>
       </TouchableOpacity>
     </ScrollView>
   );

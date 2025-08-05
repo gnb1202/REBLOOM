@@ -1,22 +1,22 @@
-import React, { useEffect, useState, useRef } from 'react';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useEffect, useRef, useState } from 'react';
 import {
-  View,
-  Text,
-  TouchableOpacity,
-  ScrollView,
-  StyleSheet,
-  Pressable,
-  Dimensions,
-  Alert,
-  Image,
-  ImageBackground,
+    Alert,
+    Dimensions,
+    Image,
+    ImageBackground,
+    Pressable,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from 'react-native';
-import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useProgress } from '../../../context/ProgressContext';
 
-import BaseBackground from '../../../assets/images/HomeBackgroundImages/FirstBaseBackground.png';
 import Background1 from '../../../assets/images/HomeBackgroundImages/Backgroundlevel1.png';
 import Background2 from '../../../assets/images/HomeBackgroundImages/Backgroundlevel2.png';
+import BaseBackground from '../../../assets/images/HomeBackgroundImages/FirstBaseBackground.png';
 
 import ModifiedButton from '../../../assets/images/Modifiy/modifiedbutton.png';
 import ChairIcon from '../../../assets/images/furnitures/whiteroundchair.png';

@@ -1,5 +1,7 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import { getUserRoomData, saveUserRoomData } from '../firebase.config';
+import { useAuth } from './AuthContext';
 
 const flowerOrder = [
   'daisy',
@@ -45,6 +47,8 @@ type ProgressContextType = {
   setPlacedFlowers: (items: { x: number; y: number; id: string }[]) => void;
   placedFurniture: { x: number; y: number; id: string }[];
   setPlacedFurniture: (items: { x: number; y: number; id: string }[]) => void;
+  syncWithFirebase: (userId: string) => Promise<void>;
+  loadFromFirebase: (userId: string) => Promise<void>;
 };
 
 const ProgressContext = createContext<ProgressContextType>({
@@ -76,9 +80,12 @@ const ProgressContext = createContext<ProgressContextType>({
   setPlacedFlowers: () => {},
   placedFurniture: [],
   setPlacedFurniture: () => {},
+  syncWithFirebase: async () => {},
+  loadFromFirebase: async () => {},
 });
 
 export const ProgressProvider = ({ children }: { children: React.ReactNode }) => {
+  const { user } = useAuth();
   const [progress, setProgressState] = useState(0);
   const [currentFlowerId, setCurrentFlowerIdState] = useState('');
   const [obtainedFlowersState, setObtainedFlowersState] = useState<string[]>([]);
@@ -95,9 +102,17 @@ export const ProgressProvider = ({ children }: { children: React.ReactNode }) =>
   const [placedFlowers, setPlacedFlowersState] = useState<{ x: number; y: number; id: string }[]>([]);
   const [placedFurniture, setPlacedFurnitureState] = useState<{ x: number; y: number; id: string }[]>([]);
 
+  // Firebase에서 데이터 로드 (사용자 로그인 시)
+  useEffect(() => {
+    if (user) {
+      loadFromFirebase(user.uid);
+    }
+  }, [user]);
+
   useEffect(() => {
     const loadData = async () => {
       try {
+        // 먼저 AsyncStorage에서 데이터 로드 (Firebase 로드 전 임시 데이터)
         const savedProgress = await AsyncStorage.getItem('@flowerProgress');
         const savedFlowerId = await AsyncStorage.getItem('@currentFlowerId');
         const savedObtained = await AsyncStorage.getItem('@obtainedFlowers');
@@ -194,6 +209,8 @@ export const ProgressProvider = ({ children }: { children: React.ReactNode }) =>
         setProgressState(value);
         await AsyncStorage.setItem('@flowerProgress', JSON.stringify(value));
       }
+      // Firebase 자동 동기화
+      setTimeout(autoSyncToFirebase, 100);
     } catch (e) {
       console.error('진행도 저장 실패:', e);
     }
@@ -213,6 +230,8 @@ export const ProgressProvider = ({ children }: { children: React.ReactNode }) =>
       const updated = [...new Set([...obtainedFlowersState, id])];
       setObtainedFlowersState(updated);
       await AsyncStorage.setItem('@obtainedFlowers', JSON.stringify(updated));
+      // Firebase 자동 동기화
+      setTimeout(autoSyncToFirebase, 100);
     } catch (e) {
       console.error('수집 꽃 저장 실패:', e);
     }
@@ -223,6 +242,8 @@ export const ProgressProvider = ({ children }: { children: React.ReactNode }) =>
       const updated = [...new Set([...obtainedFurnitureState, id])];
       setObtainedFurnitureState(updated);
       await AsyncStorage.setItem('@obtainedFurniture', JSON.stringify(updated));
+      // Firebase 자동 동기화
+      setTimeout(autoSyncToFirebase, 100);
     } catch (e) {
       console.error('수집 가구 저장 실패:', e);
     }
@@ -233,6 +254,8 @@ export const ProgressProvider = ({ children }: { children: React.ReactNode }) =>
       const updated = [...new Set([...obtainedRoomsState, id])];
       setObtainedRoomsState(updated);
       await AsyncStorage.setItem('@obtainedRooms', JSON.stringify(updated));
+      // Firebase 자동 동기화
+      setTimeout(autoSyncToFirebase, 100);
     } catch (e) {
       console.error('수집 방 저장 실패:', e);
     }
@@ -242,6 +265,8 @@ export const ProgressProvider = ({ children }: { children: React.ReactNode }) =>
     try {
       setSelectedRoomState(id);
       await AsyncStorage.setItem('@selectedRoom', id);
+      // Firebase 자동 동기화
+      setTimeout(autoSyncToFirebase, 100);
     } catch (e) {
       console.error('선택된 방 저장 실패:', e);
     }
@@ -265,10 +290,23 @@ export const ProgressProvider = ({ children }: { children: React.ReactNode }) =>
     }
   };
 
+  // Firebase 자동 동기화 헬퍼 함수
+  const autoSyncToFirebase = async () => {
+    if (user && isLoaded) {
+      try {
+        await syncWithFirebase(user.uid);
+      } catch (error) {
+        console.error('자동 Firebase 동기화 실패:', error);
+      }
+    }
+  };
+
   const setPlacedFlowers = async (items: { x: number; y: number; id: string }[]) => {
     try {
       setPlacedFlowersState(items);
       await AsyncStorage.setItem('@placedFlowers', JSON.stringify(items));
+      // Firebase 자동 동기화
+      setTimeout(autoSyncToFirebase, 100);
     } catch (e) {
       console.error('꽃 위치 저장 실패:', e);
     }
@@ -278,6 +316,8 @@ export const ProgressProvider = ({ children }: { children: React.ReactNode }) =>
     try {
       setPlacedFurnitureState(items);
       await AsyncStorage.setItem('@placedFurniture', JSON.stringify(items));
+      // Firebase 자동 동기화
+      setTimeout(autoSyncToFirebase, 100);
     } catch (e) {
       console.error('가구 위치 저장 실패:', e);
     }
@@ -291,6 +331,58 @@ export const ProgressProvider = ({ children }: { children: React.ReactNode }) =>
       return true;
     } else {
       return false;
+    }
+  };
+
+  // Firebase 동기화 함수들
+  const syncWithFirebase = async (userId: string) => {
+    try {
+      await saveUserRoomData(userId, {
+        furniture: placedFurniture,
+        selectedRoom: selectedRoom,
+        flowers: placedFlowers,
+        obtainedFlowers: obtainedFlowersState,
+        obtainedFurniture: obtainedFurnitureState,
+        obtainedRooms: obtainedRoomsState,
+        progress: progress,
+        currentFlowerId: currentFlowerId,
+        coins: coins,
+        hasChair: hasChair,
+        hasStand: hasStand,
+        flowerBadgeLevel: flowerBadgeLevel,
+        completedChallenges: completedChallenges,
+        exerciseFeedbackCount: exerciseFeedbackCount
+      });
+      console.log('Firebase 동기화 완료');
+    } catch (error) {
+      console.error('Firebase 동기화 실패:', error);
+    }
+  };
+
+  const loadFromFirebase = async (userId: string) => {
+    try {
+      const roomData = await getUserRoomData(userId);
+      if (roomData) {
+        // Firebase 데이터로 state 업데이트
+        if (roomData.furniture) setPlacedFurnitureState(roomData.furniture);
+        if (roomData.selectedRoom) setSelectedRoomState(roomData.selectedRoom);
+        if (roomData.flowers) setPlacedFlowersState(roomData.flowers);
+        if (roomData.obtainedFlowers) setObtainedFlowersState(roomData.obtainedFlowers);
+        if (roomData.obtainedFurniture) setObtainedFurnitureState(roomData.obtainedFurniture);
+        if (roomData.obtainedRooms) setObtainedRoomsState(roomData.obtainedRooms);
+        if (roomData.progress !== undefined) setProgressState(roomData.progress);
+        if (roomData.currentFlowerId) setCurrentFlowerIdState(roomData.currentFlowerId);
+        if (roomData.coins !== undefined) setCoins(roomData.coins);
+        if (roomData.hasChair !== undefined) setHasChairState(roomData.hasChair);
+        if (roomData.hasStand !== undefined) setHasStandState(roomData.hasStand);
+        if (roomData.flowerBadgeLevel !== undefined) setFlowerBadgeLevel(roomData.flowerBadgeLevel);
+        if (roomData.completedChallenges) setCompletedChallenges(roomData.completedChallenges);
+        if (roomData.exerciseFeedbackCount !== undefined) setExerciseFeedbackCount(roomData.exerciseFeedbackCount);
+
+        console.log('Firebase에서 방 데이터 로드 완료');
+      }
+    } catch (error) {
+      console.error('Firebase에서 방 데이터 로드 실패:', error);
     }
   };
 
@@ -325,6 +417,8 @@ export const ProgressProvider = ({ children }: { children: React.ReactNode }) =>
         setPlacedFlowers,
         placedFurniture,
         setPlacedFurniture,
+        syncWithFirebase,
+        loadFromFirebase,
       }}
     >
       {children}

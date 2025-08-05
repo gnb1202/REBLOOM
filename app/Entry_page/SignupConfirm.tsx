@@ -1,7 +1,7 @@
 // Entry_page/Signupconfirm.tsx
-import { View, Text, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useEffect } from 'react';
+import { StyleSheet, Text, View } from 'react-native';
 
 export default function Signupconfirm() {
   const router = useRouter();
@@ -16,8 +16,8 @@ export default function Signupconfirm() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.text}>회원가입이 완료되었습니다.</Text>
-      <Text style={styles.subtext}>3초 후 로그인 화면으로 이동합니다.</Text>
+      <Text style={styles.text}>Signup completed.</Text>
+      <Text style={styles.subtext}>3 seconds later, you will be redirected to the login screen.</Text>
     </View>
   );
 }

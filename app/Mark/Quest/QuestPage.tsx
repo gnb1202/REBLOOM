@@ -29,9 +29,9 @@ const getBadgeImage = (level: number) => {
 };
 
 const feedbackSteps = [
-  { id: 'feedback-3', emoji: '🗣️', text: '피드백 3회 완료!' },
-  { id: 'feedback-5', emoji: '🗣️', text: '피드백 5회 완료!' },
-  { id: 'feedback-7', emoji: '🗣️', text: '피드백 7회 완료!' },
+  { id: 'feedback-3', emoji: '🗣️', text: 'Complete 3 feedbacks!' },
+  { id: 'feedback-5', emoji: '🗣️', text: 'Complete 5 feedbacks!' },
+  { id: 'feedback-7', emoji: '🗣️', text: 'Complete 7 feedbacks!' },
 ];
 
 export default function QuestPage() {
@@ -41,33 +41,33 @@ export default function QuestPage() {
     completedChallenges,
     completeChallenge,
     exerciseFeedbackCount,
-    attendanceStreak, // ✅ 출석일 수 가져오기
+    attendanceStreak, // ✅ Get attendance streak count
   } = useProgress();
 
   const badgeImage = getBadgeImage(flowerBadgeLevel);
 
-  const [selectedTab, setSelectedTab] = useState('일간');
+  const [selectedTab, setSelectedTab] = useState('Daily');
   const [flowerStepIndex, setFlowerStepIndex] = useState(0);
   const [exerciseStepIndex, setExerciseStepIndex] = useState(0);
   const [attendanceStepIndex, setAttendanceStepIndex] = useState(0);
   const [recentlyCompletedId, setRecentlyCompletedId] = useState<string | null>(null);
 
   const flowerChallengeSteps = [
-    { id: 'flower-1', emoji: '🌸', text: '꽃을 1개 완전히 키우기' },
-    { id: 'flower-2', emoji: '🌸', text: '꽃을 2개 완전히 키우기' },
-    { id: 'flower-3', emoji: '🌸', text: '꽃을 3개 완전히 키우기' },
-    { id: 'flower-4', emoji: '🌸', text: '꽃을 4개 완전히 키우기' },
+    { id: 'flower-1', emoji: '🌸', text: 'Fully grow 1 flower' },
+    { id: 'flower-2', emoji: '🌸', text: 'Fully grow 2 flowers' },
+    { id: 'flower-3', emoji: '🌸', text: 'Fully grow 3 flowers' },
+    { id: 'flower-4', emoji: '🌸', text: 'Fully grow 4 flowers' },
   ];
   const exerciseSteps = [
-    { id: 'time-100', emoji: '⏱️', text: '운동 누적 100분 달성' },
-    { id: 'time-300', emoji: '⏱️', text: '운동 누적 300분 돌파!' },
-    { id: 'time-500', emoji: '⏱️', text: '운동 누적 500분! 대단해요' },
+    { id: 'time-100', emoji: '⏱️', text: 'Achieve 100 minutes of exercise' },
+    { id: 'time-300', emoji: '⏱️', text: 'Break through 300 minutes of exercise!' },
+    { id: 'time-500', emoji: '⏱️', text: '500 minutes of exercise! Amazing' },
   ];
   const attendanceSteps = [
-    { id: 'attend-3', emoji: '📅', text: '3일 연속 출석 성공' },
-    { id: 'attend-5', emoji: '📅', text: '5일 연속 출석 도전' },
-    { id: 'attend-7', emoji: '📅', text: '7일 연속 개근!' },
-    { id: 'attend-14', emoji: '📅', text: '14일 개근! 최고예요' },
+    { id: 'attend-3', emoji: '📅', text: '3 consecutive days attendance' },
+    { id: 'attend-5', emoji: '📅', text: '5 consecutive days attendance challenge' },
+    { id: 'attend-7', emoji: '📅', text: '7 consecutive days perfect attendance!' },
+    { id: 'attend-14', emoji: '📅', text: '14 days perfect attendance! Excellent' },
   ];
 
   const challengeQuests = [
@@ -78,11 +78,11 @@ export default function QuestPage() {
   ];
 
   const allQuests = [
-    { id: '1', emoji: '☕️', text: '따뜻한 차 한 잔 하기', type: '일간' },
-    { id: '2', emoji: '🌱', text: '식물 쓰다듬기 3회', type: '일간' },
-    { id: '3', emoji: '❓', text: '오늘의 퀴즈 풀기', type: '주간' },
-    { id: '4', emoji: '💰', text: '600 코인 벌기', type: '월간' },
-    ...challengeQuests.filter(Boolean).map((q) => ({ ...q, type: '도전과제' })),
+    { id: '1', emoji: '☕️', text: 'Have a warm cup of tea', type: 'Daily' },
+    { id: '2', emoji: '🌱', text: 'Pet plants 3 times', type: 'Daily' },
+    { id: '3', emoji: '❓', text: 'Solve today\'s quiz', type: 'Weekly' },
+    { id: '4', emoji: '💰', text: 'Earn 600 coins', type: 'Monthly' },
+    ...challengeQuests.filter(Boolean).map((q) => ({ ...q, type: 'Challenge' })),
   ];
 
   const filtered = allQuests.filter((q) => q.type === selectedTab);
@@ -106,10 +106,10 @@ export default function QuestPage() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>퀘스트</Text>
+      <Text style={styles.title}>Quest</Text>
 
       <View style={styles.tabWrapper}>
-        {['일간', '주간', '월간', '도전과제'].map((tab, index, array) => {
+        {['Daily', 'Weekly', 'Monthly', 'Challenge'].map((tab, index, array) => {
           const isActive = selectedTab === tab;
           const isFirst = index === 0;
           const isLast = index === array.length - 1;
@@ -167,7 +167,7 @@ export default function QuestPage() {
                   setRecentlyCompletedId(item.id);
                 }}
               >
-                <Text style={styles.completeBtnText}>{done ? '완료됨' : '완료'}</Text>
+                <Text style={styles.completeBtnText}>{done ? 'Completed' : 'Complete'}</Text>
               </TouchableOpacity>
             </View>
           );
@@ -178,7 +178,7 @@ export default function QuestPage() {
         <View style={{ alignItems: 'center', marginTop: 10 }}>
           <Image source={badgeImage} style={{ width: 100, height: 100 }} />
           <Text style={{ color: '#3F5C45', fontWeight: 'bold', marginTop: 6 }}>
-            🌸 {flowerBadgeLevel}단계 꽃 뱃지를 획득했어요!
+            🌸 You earned a Level {flowerBadgeLevel} flower badge!
           </Text>
         </View>
       )}
@@ -187,7 +187,7 @@ export default function QuestPage() {
         style={styles.closeButton}
         onPress={() => router.push('/Home_page/Homepage')}
       >
-        <Text style={{ color: 'white', fontWeight: 'bold' }}>닫기</Text>
+        <Text style={{ color: 'white', fontWeight: 'bold' }}>Close</Text>
       </TouchableOpacity>
     </View>
   );

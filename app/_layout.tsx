@@ -8,6 +8,8 @@ import { View, Text } from 'react-native';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { ProgressProvider } from '../context/ProgressContext';
 import { CoinProvider } from '../context/CoinContext';
+import { AuthProvider } from '../context/AuthContext';
+import { ExerciseProvider } from '../context/ExerciseContext';
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
@@ -24,20 +26,24 @@ export default function RootLayout() {
   }
 
   return (
-    <CoinProvider>
-      <ProgressProvider>
-        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-          <Stack>
-            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-            <Stack.Screen name="+not-found" />
-            <Stack.Screen
-              name="Exercise/ExerciseIntroPage"
-              options={{ animation: 'none' }}
-            />
-          </Stack>
-          <StatusBar style="auto" />
-        </ThemeProvider>
-      </ProgressProvider>
-    </CoinProvider>
+    <AuthProvider>
+      <ExerciseProvider>
+        <CoinProvider>
+          <ProgressProvider>
+            <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+              <Stack>
+                <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                <Stack.Screen name="+not-found" />
+                <Stack.Screen
+                  name="Exercise/ExerciseIntroPage"
+                  options={{ animation: 'none' }}
+                />
+              </Stack>
+              <StatusBar style="auto" />
+            </ThemeProvider>
+          </ProgressProvider>
+        </CoinProvider>
+      </ExerciseProvider>
+    </AuthProvider>
   );
 }

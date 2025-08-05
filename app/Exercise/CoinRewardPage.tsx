@@ -1,14 +1,22 @@
-import React, { useEffect } from 'react';
-import { View, Image, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useEffect } from 'react';
+import { Image, StyleSheet, View } from 'react-native';
 import { useCoin } from '../../context/CoinContext';
+import { useExercise } from '../../context/ExerciseContext';
 
 export default function CoinRewardPage() {
   const router = useRouter();
   const { addCoins } = useCoin();
+  const { calculateRewards, currentExercise } = useExercise();
 
   useEffect(() => {
-    addCoins(5); // 운동 완료 후 5코인 추가
+    if (currentExercise) {
+      const rewards = calculateRewards();
+      addCoins(rewards.currency); // 계산된 코인 추가
+    } else {
+      addCoins(5); // 기본값
+    }
+    
     const timeout = setTimeout(() => {
       router.push('/Exercise/ExerciseFeedbackPage');
     }, 2000);

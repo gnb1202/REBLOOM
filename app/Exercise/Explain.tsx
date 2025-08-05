@@ -1,10 +1,10 @@
-// app/Home_page/WorkoutPage.tsx
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useExercise } from '../../context/ExerciseContext';
 
 export default function WorkoutPage() {
   const router = useRouter();
+  const { setCurrentExercise } = useExercise();
 
   return (
     <View style={styles.container}>
@@ -13,34 +13,45 @@ export default function WorkoutPage() {
         <TouchableOpacity onPress={() => router.back()}>
           <Text style={styles.backArrow}>←</Text>
         </TouchableOpacity>
-        <Text style={styles.title}>운동하기</Text>
+        <Text style={styles.title}>Exercise</Text>
       </View>
 
       {/* 운동 루틴 */}
       <View style={styles.section}>
-        <Text style={styles.subTitle}>오늘의 운동 루틴</Text>
+        <Text style={styles.subTitle}>Today's Exercise Routine</Text>
         <View style={styles.subInfoBox}>
-          <Text style={styles.subInfo}>n회 반복 | n세트 | 예상소요시간</Text>
+          <Text style={styles.subInfo}>n reps | n sets | Expected duration</Text>
         </View>
         <View style={styles.routineBox}>
-          <Text style={styles.routineItem}>1. 심호흡 운동</Text>
-          <Text style={styles.routineItem}>2. 손목 운동</Text>
-          <Text style={styles.routineItem}>3. 어깨 돌리기</Text>
+          <Text style={styles.routineItem}>1. Deep Breathing Exercise</Text>
+          <Text style={styles.routineItem}>2. Wrist Exercise</Text>
+          <Text style={styles.routineItem}>3. Shoulder Rotation</Text>
         </View>
       </View>
 
       {/* 주의사항 */}
       <View style={styles.notice}>
-        <Text style={styles.noticeTitle}>운동시주의사항</Text>
-        <Text style={styles.noticeContent}>운동진행방법안내(‘영상을 보며 따라해주세요...’)</Text>
+        <Text style={styles.noticeTitle}>Exercise Precautions</Text>
+        <Text style={styles.noticeContent}>Exercise Instructions ('Please follow along with the video...')</Text>
       </View>
 
       {/* 시작 버튼 */}
       <TouchableOpacity
         style={styles.startButton}
-        onPress={() => router.push('/Exercise/ExerciseIntroPage')}
+        onPress={() => {
+          // 운동 정보 설정
+          setCurrentExercise({
+            exerciseId: 'basic_routine_001',
+            exerciseName: 'Today\'s Basic Routine',
+            duration: 20, // 예상 20분
+            difficulty: 3, // 중간 난이도
+            targetAreas: ['wrist', 'shoulder', 'neck']
+          });
+          
+          router.push('/Exercise/ExerciseIntroPage');
+        }}
       >
-         <Text style={styles.startText}>시작!</Text>
+         <Text style={styles.startText}>Start!</Text>
       </TouchableOpacity>
     </View>
   );

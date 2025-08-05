@@ -1,21 +1,21 @@
-import React, { useEffect, useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Camera } from 'expo-camera';
+import * as MediaLibrary from 'expo-media-library';
+import { useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
 import {
-  View,
+  ActivityIndicator,
+  Alert,
+  Dimensions,
+  ImageBackground,
+  Linking,
+  Platform,
+  StatusBar,
+  StyleSheet,
   Text,
   TouchableOpacity,
-  StyleSheet,
-  StatusBar,
-  Alert,
-  ActivityIndicator,
-  Platform,
-  Linking,
-  ImageBackground,
-  Dimensions,
+  View,
 } from 'react-native';
-import { useRouter } from 'expo-router';
-import * as MediaLibrary from 'expo-media-library';
-import { Camera } from 'expo-camera';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import doorImage from '../../assets/images/StartImages/Startimage2.png';
 
@@ -48,11 +48,11 @@ export default function Startpage() {
           setPermissionsGranted(true);
         } else {
           Alert.alert(
-            '권한 필요',
-            '앱을 사용하려면 카메라와 갤러리 권한이 필요합니다.',
+            'Permission required',
+            'To use the app, you need camera and gallery permissions.',
             [
               {
-                text: '설정으로 이동',
+                text: 'Go to settings',
                 onPress: () => {
                   if (Platform.OS === 'ios') {
                     Linking.openURL('app-settings:');
@@ -62,7 +62,7 @@ export default function Startpage() {
                 },
               },
               {
-                text: '취소',
+                text: 'Cancel',
                 style: 'cancel',
                 onPress: () => setPermissionsGranted(false),
               },
@@ -70,7 +70,7 @@ export default function Startpage() {
           );
         }
       } catch (err) {
-        console.error('권한 요청 중 오류 발생:', err);
+        console.error('Error occurred while requesting permissions:', err);
         setPermissionsGranted(false);
       }
     };
@@ -82,7 +82,7 @@ export default function Startpage() {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#5C7BEE" />
-        <Text style={{ marginTop: 12 }}>권한을 확인하는 중입니다...</Text>
+        <Text style={{ marginTop: 12 }}>Checking permissions...</Text>
       </View>
     );
   }
@@ -91,8 +91,8 @@ export default function Startpage() {
     return (
       <View style={styles.loadingContainer}>
         <Text style={{ color: '#000', textAlign: 'center' }}>
-          권한이 거부되어 앱을 실행할 수 없습니다.
-          {'\n'}설정에서 권한을 허용해주세요.
+          Permission denied.
+          {'\n'}Please allow permissions in settings.
         </Text>
       </View>
     );
@@ -112,14 +112,14 @@ export default function Startpage() {
 
         <View style={styles.menuContainer}>
           <TouchableOpacity onPress={() => router.push('/Entry_page/LoadingPage')}>
-            <Text style={styles.menuText}>로그인</Text>
+            <Text style={styles.menuText}>Login</Text>
           </TouchableOpacity>
 
 
           <Text style={styles.menuDivider}>|</Text>
 
           <TouchableOpacity onPress={() => router.push('/Entry_page/Signuppage')}>
-            <Text style={styles.menuText}>회원가입</Text>
+            <Text style={styles.menuText}>Signup</Text>
           </TouchableOpacity>
         </View>
       </View>

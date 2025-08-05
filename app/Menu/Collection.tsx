@@ -1,14 +1,14 @@
-import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Image,
-  ScrollView,
-  Modal,
-} from 'react-native';
 import { useRouter } from 'expo-router';
+import { useState } from 'react';
+import {
+    Image,
+    Modal,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
+} from 'react-native';
 import { useProgress } from '../../context/ProgressContext';
 
 const silhouetteImage = require('../../assets/images/flowers/silhouette.png');
@@ -16,50 +16,50 @@ const silhouetteImage = require('../../assets/images/flowers/silhouette.png');
 const flowerList = [
   {
     id: 'daisy',
-    name: '데이지',
-    desc: '순수함과 밝은 에너지',
+    name: 'Daisy',
+    desc: 'Purity and bright energy',
     image: require('../../assets/images/flowers/daisy/daisystep3.png'),
   },
   {
     id: 'hydrangea',
-    name: '수국',
-    desc: '진심, 감사',
+    name: 'Hydrangea',
+    desc: 'Sincerity and gratitude',
     image: require('../../assets/images/flowers/hydrangea/hydrangeastep2.png'),
   },
   {
     id: 'lavender',
-    name: '라벤더',
-    desc: '고요함과 힐링',
+    name: 'Lavender',
+    desc: 'Serenity and healing',
     image: require('../../assets/images/flowers/lavender/lavenderstep3.png'),
   },
   {
     id: 'lily',
-    name: '백합',
-    desc: '순결과 고귀함',
+    name: 'Lily',
+    desc: 'Purity and nobility',
     image: require('../../assets/images/flowers/lily/lilystep3.png'),
   },
   {
     id: 'rose',
-    name: '장미',
-    desc: '사랑과 열정',
+    name: 'Rose',
+    desc: 'Love and passion',
     image: require('../../assets/images/flowers/rose/rosestep3.png'),
   },
   {
     id: 'sunflower',
-    name: '해바라기',
-    desc: '희망과 충성',
+    name: 'Sunflower',
+    desc: 'Hope and loyalty',
     image: require('../../assets/images/flowers/sunflower/sunflowerstep2.png'),
   },
   {
     id: 'trumpetcreeper',
-    name: '능소화',
-    desc: '명예와 존경',
+    name: 'Trumpet Creeper',
+    desc: 'Honor and respect',
     image: require('../../assets/images/flowers/trumpetcreeper/trumpetcreeperstep2.png'),
   },
   {
     id: 'tulip',
-    name: '튤립',
-    desc: '사랑의 고백',
+    name: 'Tulip',
+    desc: 'Declaration of love',
     image: require('../../assets/images/flowers/tulip/tulipstep2.png'),
   },
 ];
@@ -78,21 +78,21 @@ export default function Collection() {
     setSelectedFlower({ flower, isCollected });
   };
 
-  // 줄 정렬 보정
+  // Row alignment adjustment
   const remainder = flowerList.length % 3;
   const dummyCount = remainder === 0 ? 0 : 3 - remainder;
 
   return (
     <View style={styles.container}>
-      {/* 헤더 */}
+      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
           <Text style={styles.back}>{'←'}</Text>
         </TouchableOpacity>
-        <Text style={styles.title}>꽃 도감</Text>
+        <Text style={styles.title}>Flower Collection</Text>
       </View>
 
-      {/* 꽃 그리드 */}
+      {/* Flower Grid */}
       <ScrollView contentContainerStyle={styles.grid}>
         {flowerList.map((flower, index) => {
           const isCollected = obtainedFlowers.includes(flower.id);
@@ -112,13 +112,13 @@ export default function Collection() {
           );
         })}
 
-        {/* 정렬 보정용 투명 아이템 */}
+        {/* Transparent items for alignment */}
         {Array.from({ length: dummyCount }).map((_, idx) => (
           <View key={`dummy-${idx}`} style={styles.item} />
         ))}
       </ScrollView>
 
-      {/* 꽃 상세 팝업 */}
+      {/* Flower Detail Popup */}
       <Modal
         visible={!!selectedFlower}
         transparent
@@ -144,23 +144,23 @@ export default function Collection() {
               onPress={() => setSelectedFlower(null)}
               style={styles.modalClose}
             >
-              <Text style={styles.modalCloseText}>닫기</Text>
+              <Text style={styles.modalCloseText}>Close</Text>
             </TouchableOpacity>
           </View>
         </View>
       </Modal>
 
-      {/* 탭 바 */}
+      {/* Tab Bar */}
       <View style={styles.tabBar}>
         <TouchableOpacity onPress={() => router.push('/Menu/BackgroundCollection')}>
-          <Text style={styles.tab}>배경</Text>
+          <Text style={styles.tab}>Background</Text>
         </TouchableOpacity>
-        <Text style={[styles.tab, styles.activeTab]}>꽃</Text>
+        <Text style={[styles.tab, styles.activeTab]}>Flower</Text>
         <TouchableOpacity onPress={() => router.push('/Menu/FurnitureCollection')}>
-          <Text style={styles.tab}>가구</Text>
+          <Text style={styles.tab}>Furniture</Text>
         </TouchableOpacity>
         <TouchableOpacity onPress={() => router.push('/Menu/BadgeCollection')}>
-          <Text style={styles.tab}>뱃지</Text>
+          <Text style={styles.tab}>Badge</Text>
         </TouchableOpacity>
       </View>
 

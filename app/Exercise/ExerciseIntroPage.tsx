@@ -1,6 +1,5 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export default function ExerciseIntroPage() {
   const router = useRouter();
@@ -8,11 +7,11 @@ export default function ExerciseIntroPage() {
   return (
     <View style={styles.container}>
       <View style={styles.contentBox}>
-        <Text style={styles.title}>1. 심호흡 운동</Text>
+        <Text style={styles.title}>1. Long Deep Breathing</Text>
         <View style={styles.bulletList}>
-          <Text style={styles.bullet}>• 어떤걸 위한 운동인지</Text>
-          <Text style={styles.bullet}>• 해당 운동 시 주의사항</Text>
-          <Text style={styles.bulletSub}>  • 격려문구</Text>
+          <Text style={styles.bullet}>• What is it for?</Text>
+          <Text style={styles.bullet}>• What to pay attention to?</Text>
+          <Text style={styles.bulletSub}>  • Encouragement</Text>
           <Text style={styles.bulletSub}>  • etc</Text>
         </View>
       </View>
@@ -22,7 +21,7 @@ export default function ExerciseIntroPage() {
         style={styles.nextButton}
         onPress={() => router.push('/Exercise/ExerciseVideoPage')}
       >
-        <Text style={styles.nextButtonText}>다음으로</Text>
+        <Text style={styles.nextButtonText}>Next</Text>
       </TouchableOpacity>
     </View>
   );

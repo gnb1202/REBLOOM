@@ -1,24 +1,23 @@
-import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Image,
-  ScrollView,
-} from 'react-native';
 import { useRouter } from 'expo-router';
+import {
+    Image,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
+} from 'react-native';
 import { useProgress } from '../../context/ProgressContext';
 
 const badgeList = [
-  { id: 'flower-1', name: '꽃 1개 키움', image: require('../../assets/images/badge/getflowerstep1.png') },
-  { id: 'flower-2', name: '꽃 2개 키움', image: require('../../assets/images/badge/getflowerstep2.png') },
-  { id: 'flower-3', name: '꽃 3개 키움', image: require('../../assets/images/badge/getflowerstep3.png') },
-  { id: 'flower-4', name: '꽃 4개 키움', image: require('../../assets/images/badge/getflowerstep4.png') },
-  { id: 'attend-3', name: '3일 출석', image: require('../../assets/images/badge/exercisestep1.png') },
-  { id: 'attend-5', name: '5일 출석', image: require('../../assets/images/badge/exercisestep2.png') },
-  { id: 'attend-7', name: '7일 출석', image: require('../../assets/images/badge/exercisestep3.png') },
-  { id: 'attend-14', name: '14일 출석', image: require('../../assets/images/badge/exercisestep4.png') },
+  { id: 'flower-1', name: 'Grew 1 flower', image: require('../../assets/images/badge/getflowerstep1.png') },
+  { id: 'flower-2', name: 'Grew 2 flowers', image: require('../../assets/images/badge/getflowerstep2.png') },
+  { id: 'flower-3', name: 'Grew 3 flowers', image: require('../../assets/images/badge/getflowerstep3.png') },
+  { id: 'flower-4', name: 'Grew 4 flowers', image: require('../../assets/images/badge/getflowerstep4.png') },
+  { id: 'attend-3', name: '3-day attendance', image: require('../../assets/images/badge/exercisestep1.png') },
+  { id: 'attend-5', name: '5-day attendance', image: require('../../assets/images/badge/exercisestep2.png') },
+  { id: 'attend-7', name: '7-day attendance', image: require('../../assets/images/badge/exercisestep3.png') },
+  { id: 'attend-14', name: '14-day attendance', image: require('../../assets/images/badge/exercisestep4.png') },
 ];
 
 export default function BadgeCollection() {
@@ -29,17 +28,17 @@ export default function BadgeCollection() {
 
   return (
     <View style={styles.container}>
-      {/* 헤더 */}
+      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
           <Text style={styles.back}>{'←'}</Text>
         </TouchableOpacity>
-        <Text style={styles.title}>획득한 뱃지</Text>
+        <Text style={styles.title}>Obtained Badges</Text>
       </View>
 
       <ScrollView contentContainerStyle={styles.grid}>
         {obtainedBadges.length === 0 ? (
-          <Text style={styles.emptyText}>아직 획득한 뱃지가 없어요.</Text>
+          <Text style={styles.emptyText}>No badges obtained yet.</Text>
         ) : (
           obtainedBadges.map((badge) => (
             <View key={badge.id} style={styles.item}>
@@ -50,18 +49,18 @@ export default function BadgeCollection() {
         )}
       </ScrollView>
 
-      {/* 탭 바 */}
+      {/* Tab Bar */}
       <View style={styles.tabBar}>
         <TouchableOpacity onPress={() => router.push('/Menu/BackgroundCollection')}>
-          <Text style={styles.tab}>배경</Text>
+          <Text style={styles.tab}>Background</Text>
         </TouchableOpacity>
         <TouchableOpacity onPress={() => router.push('/Menu/Collection')}>
-          <Text style={styles.tab}>꽃</Text>
+          <Text style={styles.tab}>Flower</Text>
         </TouchableOpacity>
         <TouchableOpacity onPress={() => router.push('/Menu/FurnitureCollection')}>
-          <Text style={styles.tab}>가구</Text>
+          <Text style={styles.tab}>Furniture</Text>
         </TouchableOpacity>
-        <Text style={[styles.tab, styles.activeTab]}>뱃지</Text>
+        <Text style={[styles.tab, styles.activeTab]}>Badge</Text>
       </View>
     </View>
   );

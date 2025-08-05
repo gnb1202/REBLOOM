@@ -1,27 +1,29 @@
-import React, { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'expo-router';
+import { useEffect, useRef, useState } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
+  ActivityIndicator,
+  Alert,
   Dimensions,
   Image,
-  Alert,
-  ActivityIndicator,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import ImageZoom from 'react-native-image-pan-zoom';
 
+import DiaryCheckPage from '../Mark/Check/DiaryCheckPage';
 import QuestPage from '../Mark/Quest/QuestPage';
 import ShopPage from '../Mark/Shop/ShopPage';
-// import DiaryCheckPage from '../Mark/Check/DiaryCheckPage'; // 출석체크 import 제거
 
-import BaseBackground from '../../assets/images/HomeBackgroundImages/FirstBaseBackground.png';
 import Background1 from '../../assets/images/HomeBackgroundImages/Backgroundlevel1.png';
 import Background2 from '../../assets/images/HomeBackgroundImages/Backgroundlevel2.png';
+import BaseBackground from '../../assets/images/HomeBackgroundImages/FirstBaseBackground.png';
 
 import ChairIcon from '../../assets/images/furnitures/whiteroundchair.png';
 import StandIcon from '../../assets/images/furnitures/yellowstand.png';
+import ProfileCard from '../../components/ProfileCard';
+import ProfileModal from '../../components/ProfileModal';
 import { useProgress } from '../../context/ProgressContext';
 
 const ORIGINAL_WIDTH = 2300;
@@ -44,7 +46,8 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
   // 출석체크 state 제거
   const [showQuest, setShowQuest] = useState(false);
   const [showShop, setShowShop] = useState(false);
-  // const [showDiary, setShowDiary] = useState(false);
+  const [showDiary, setShowDiary] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
   const [dimensions, setDimensions] = useState(Dimensions.get('window'));
 
   const {
@@ -78,17 +81,17 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
     });
   };
 
-  // 출석체크 관련 함수에서 diary 부분 제거
-  const openOnlyOneOverlay = (target: 'quest' | 'shop') => {
+  // 오버레이 관리 함수
+  const openOnlyOneOverlay = (target: 'quest' | 'shop' | 'diary') => {
     setShowQuest(target === 'quest');
     setShowShop(target === 'shop');
-    // setShowDiary(target === 'diary');
+    setShowDiary(target === 'diary');
   };
 
   const handlePlaceFurniture = (id: string, x: number, y: number) => {
     const alreadyPlaced = placedFurniture.some(item => item.id === id);
     if (alreadyPlaced) {
-      Alert.alert('이미 배치됨', '이 가구는 이미 방에 배치되어 있습니다.');
+      Alert.alert('Already Placed', 'This furniture is already placed in the room.');
       return;
     }
     const newItem = { id, x, y };
@@ -164,23 +167,19 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
 
       {!isRoomOnly && (
         <>
-          <View style={styles.topTabs}>
-            <TouchableOpacity
-              style={styles.activeTab}
-              onPress={() => router.push('/Menu/profilemodified')}
-            >
-              <Text style={styles.activeTabText}>프로필정보</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.inactiveTab}>
-              <Text style={styles.inactiveTabText}>경과</Text>
-            </TouchableOpacity>
+          {/* 프로필 카드 */}
+          <View style={styles.profileCardContainer}>
+            <ProfileCard onPress={() => setShowProfileModal(true)} />
           </View>
 
           <View style={styles.indicatorContainer}>
-            {/* 출석체크 관련 인디케이터/버튼 완전 제거 */}
-            {/* <TouchableOpacity onPress={() => openOnlyOneOverlay('diary')}>
-              <View style={styles.indicatorDot} />
-            </TouchableOpacity> */}
+            {/* 건강 체크 버튼 */}
+            <TouchableOpacity onPress={() => openOnlyOneOverlay('diary')}>
+              <View style={styles.healthCheckDot}>
+                <Text style={styles.healthCheckText}>💊</Text>
+              </View>
+            </TouchableOpacity>
+            
             <TouchableOpacity onPress={() => openOnlyOneOverlay('shop')}>
               <View style={styles.shopDot}>
                 <Image
@@ -190,6 +189,7 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
                 />
               </View>
             </TouchableOpacity>
+            
             <TouchableOpacity onPress={() => openOnlyOneOverlay('quest')}>
               <View style={styles.questDot}>
                 <Image
@@ -203,19 +203,25 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
 
           <View style={styles.bottomBar}>
             <TouchableOpacity onPress={() => router.push('/Travel/TravelListPage')}>
-              <Text style={styles.bottomText}>탐험</Text>
+              <Text style={styles.bottomText}>Explore</Text>
             </TouchableOpacity>
             <TouchableOpacity onPress={() => router.push('/Menu/Menupage')}>
-              <Text style={styles.bottomText}>menu</Text>
+              <Text style={styles.bottomText}>Menu</Text>
             </TouchableOpacity>
             <TouchableOpacity onPress={() => router.push('/Exercise/Explain')}>
-              <Text style={styles.bottomText}>운동하기</Text>
+              <Text style={styles.bottomText}>Exercise</Text>
             </TouchableOpacity>
           </View>
 
           {showQuest && <View style={styles.overlayPartial}><QuestPage /></View>}
           {showShop && <View style={styles.overlayPartial}><ShopPage /></View>}
-          {/* {showDiary && <View style={styles.overlayPartial}><DiaryCheckPage /></View>} */}
+          {showDiary && <View style={styles.overlayPartial}><DiaryCheckPage /></View>}
+          
+          {/* 프로필 모달 */}
+          <ProfileModal 
+            visible={showProfileModal} 
+            onClose={() => setShowProfileModal(false)} 
+          />
         </>
       )}
     </View>
@@ -225,22 +231,23 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
 const styles = StyleSheet.create({
   container: { flex: 1, position: 'relative', backgroundColor: '#000' },
   loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  topTabs: {
-    flexDirection: 'row', paddingHorizontal: 20, paddingTop: 40,
-    position: 'absolute', top: 0, left: 0, zIndex: 10,
+  profileCardContainer: {
+    position: 'absolute',
+    top: 40,
+    left: 0,
+    zIndex: 10,
   },
-  activeTab: {
-    backgroundColor: '#5C7BEE', paddingVertical: 10, paddingHorizontal: 16, borderRadius: 2,
-  },
-  inactiveTab: { marginLeft: 20, justifyContent: 'center' },
-  activeTabText: { color: '#fff', fontWeight: 'bold', fontSize: 14 },
-  inactiveTabText: { color: '#000', fontSize: 14 },
   rightCircleWrapper: { position: 'absolute', right: 20, top: 100, zIndex: 10 },
   indicatorContainer: {
     position: 'absolute', bottom: 60, left: 20, flexDirection: 'row', gap: 16,
     zIndex: 20, alignItems: 'center',
   },
-  indicatorDot: { width: 30, height: 30, backgroundColor: '#ddd', borderRadius: 15 },
+  healthCheckDot: {
+    width: 30, height: 30, borderRadius: 15, justifyContent: 'center', alignItems: 'center',
+    backgroundColor: '#fff', shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2, shadowRadius: 3, elevation: 3,
+  },
+  healthCheckText: { fontSize: 16 },
   questDot: {
     width: 30, height: 30, borderRadius: 15, justifyContent: 'center', alignItems: 'center',
   },
