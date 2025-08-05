@@ -152,7 +152,7 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
 
         {/* 왼쪽 분홍 문 클릭 → Explore로 이동 */}
         <TouchableOpacity
-          onPress={() => router.push('/Travel/TravelListPage')}
+          onPress={() => router.push('/Home_page/TravelLoadingPage')}
           style={{
             position: 'absolute',
             left: imageScaledWidth * 0.06,
@@ -167,7 +167,7 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
 
         {/* 오른쪽 문 클릭 → Exercise로 이동 */}
         <TouchableOpacity
-          onPress={() => router.push('/Exercise/Explain')}
+          onPress={() => router.push('/Home_page/ExerciseLoadingPage')}
           style={{
             position: 'absolute',
             left: imageScaledWidth * 0.81,
