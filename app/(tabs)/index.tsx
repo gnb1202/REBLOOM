@@ -17,7 +17,7 @@ import {
   View,
 } from 'react-native';
 
-import doorImage from '../../assets/images/StartImages/Startimage2.png';
+import doorImage from '../../assets/images/StartImages/startpage.png';
 
 const { width, height } = Dimensions.get('window');
 

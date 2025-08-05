@@ -17,7 +17,7 @@ import {
   View,
 } from 'react-native';
 
-import doorImage from '../assets/images/StartImages/Startimage2.png';
+import doorImage from '../assets/images/StartImages/startpage.png';
 
 const { width, height } = Dimensions.get('window');
 
@@ -143,11 +143,11 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'flex-end',
     alignItems: 'center',
-    paddingBottom: 100,
+    paddingBottom: 150,
   },
   title: {
     position: 'absolute',
-    top: 40,
+    top: 70,
     fontSize: 36,
     fontWeight: 'bold',
     color: '#4A4A4A',

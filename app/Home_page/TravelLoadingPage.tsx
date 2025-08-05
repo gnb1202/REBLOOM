@@ -33,9 +33,9 @@ const styles = StyleSheet.create({
   },
   bottomRightImage: {
     position: 'absolute',
-    width: 300,       // 원하는 크기로 조절 가능
+    width: 300,
     height: 300,
-    bottom: 30,       // 하단 여백
-    right: 20,        // 오른쪽 여백
+    bottom: 30,
+    right: 20,
   },
 });
