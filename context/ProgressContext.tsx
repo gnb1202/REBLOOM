@@ -10,7 +10,6 @@ const flowerOrder = [
   'lily',
   'rose',
   'sunflower',
-  'trumpetcreeper',
   'tulip',
   'freesia',
 ];

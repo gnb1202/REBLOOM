@@ -26,12 +26,33 @@ import ProfileCard from '../../components/ProfileCard';
 import ProfileModal from '../../components/ProfileModal';
 import { useProgress } from '../../context/ProgressContext';
 
+// 🌸 꽃 이미지 import
+import daisy from '../../assets/images/flowers/Display/daisy_display.png';
+import hydrangea from '../../assets/images/flowers/Display/hydrangea_display.png';
+import lavender from '../../assets/images/flowers/Display/lavender_display.png';
+import lily from '../../assets/images/flowers/Display/lily_display.png';
+import rose from '../../assets/images/flowers/Display/rose_display.png';
+import sunflower from '../../assets/images/flowers/Display/sunflower_display.png';
+import freesia from '../../assets/images/flowers/Display/freesia_display.png';
+import tulip from '../../assets/images/flowers/Display/tulip_display.png';
+
 const ORIGINAL_WIDTH = 2300;
 const ORIGINAL_HEIGHT = 1518;
 
 const furnitureList = [
   { id: 'whiteroundchair', overlay: ChairIcon, style: { width: 150, height: 150 } },
   { id: 'yellowstand', overlay: StandIcon, style: { width: 200, height: 250 } },
+];
+
+const flowerList = [
+  { id: 'daisy', image: daisy },
+  { id: 'hydrangea', image: hydrangea },
+  { id: 'lavender', image: lavender },
+  { id: 'lily', image: lily },
+  { id: 'rose', image: rose },
+  { id: 'sunflower', image: sunflower },
+  { id: 'freesia', image: freesia },
+  { id: 'tulip', image: tulip },
 ];
 
 const backgroundMap: { [key: string]: any } = {
@@ -50,7 +71,13 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
   const [showDropdown, setShowDropdown] = useState(false);
   const [dimensions, setDimensions] = useState(Dimensions.get('window'));
 
-  const { isLoaded, placedFurniture, setPlacedFurniture, selectedRoom } = useProgress();
+  const {
+    isLoaded,
+    placedFurniture,
+    placedFlowers,
+    setPlacedFurniture,
+    selectedRoom,
+  } = useProgress();
 
   const minScale = dimensions.height / ORIGINAL_HEIGHT;
   const imageScaledWidth = ORIGINAL_WIDTH * minScale;
@@ -97,7 +124,7 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
   return (
     <View style={styles.container}>
       <ImageZoom
-        key={JSON.stringify(placedFurniture)}
+        key={JSON.stringify({ placedFurniture, placedFlowers })}
         ref={imageZoomRef}
         cropWidth={dimensions.width}
         cropHeight={dimensions.height}
@@ -123,6 +150,7 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
           resizeMode="cover"
         />
 
+        {/* 가구 렌더링 */}
         {placedFurniture.map((item, index) => {
           const data = furnitureList.find(f => f.id === item.id);
           if (!data) return null;
@@ -135,8 +163,29 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
             />
           );
         })}
+
+        {/* 꽃 렌더링 */}
+        {placedFlowers.map((item, index) => {
+          const flowerData = flowerList.find(f => f.id === item.id);
+          if (!flowerData) return null;
+          return (
+            <Image
+              key={`flower-${index}`}
+              source={flowerData.image}
+              style={{
+                position: 'absolute',
+                left: item.x,
+                top: item.y,
+                width: 60,
+                height: 60,
+              }}
+              resizeMode="contain"
+            />
+          );
+        })}
       </ImageZoom>
 
+      {/* 메뉴 버튼 */}
       <View style={styles.rightCircleWrapper}>
         <TouchableOpacity onPress={() => setShowDropdown(prev => !prev)}>
           <Image

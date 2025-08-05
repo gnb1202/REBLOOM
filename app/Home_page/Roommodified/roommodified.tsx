@@ -1,16 +1,16 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import {
-    Alert,
-    Dimensions,
-    Image,
-    ImageBackground,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Alert,
+  Dimensions,
+  Image,
+  ImageBackground,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { useProgress } from '../../../context/ProgressContext';
 
@@ -97,22 +97,18 @@ export default function RoomModified() {
     setSelectedItemId(itemId);
   };
 
-  // 웹/모바일 위치 모두 커버
   const handleTouch = (event: any) => {
     let x = 0, y = 0;
 
-    // 모바일 환경: locationX, locationY 사용
     if (event.nativeEvent.locationX !== undefined && event.nativeEvent.locationY !== undefined) {
       x = event.nativeEvent.locationX;
       y = event.nativeEvent.locationY;
-    }
-    // 웹 환경: clientX, clientY와 컨테이너 좌표 사용
-    else if (
+    } else if (
       typeof window !== 'undefined' &&
       event.nativeEvent?.clientX !== undefined &&
       event.nativeEvent?.clientY !== undefined &&
       containerRef.current &&
-      // @ts-ignore (react-native-web에서 getBoundingClientRect 사용)
+      // @ts-ignore
       typeof containerRef.current.getBoundingClientRect === 'function'
     ) {
       // @ts-ignore
@@ -121,14 +117,17 @@ export default function RoomModified() {
       y = event.nativeEvent.clientY - rect.top;
     }
 
-    if (selectedTab === 'Flower' && selectedItemId && obtainedFlowers.includes(selectedItemId)) {
-      setFlowers([...flowers, { x: x - 30, y: y - 30, id: selectedItemId }]);
-      setSelectedItemId(null);
-    }
+    const adjustedX = x - 30;
+    const adjustedY = y - 30;
 
-    if (selectedTab === 'Furniture' && selectedItemId && obtainedFurniture.includes(selectedItemId)) {
-      setFurnitureItems([...furnitureItems, { x: x - 30, y: y - 30, id: selectedItemId }]);
-      setSelectedItemId(null);
+    if (selectedItemId) {
+      if (selectedTab === 'Flower' && obtainedFlowers.includes(selectedItemId)) {
+        setFlowers([...flowers, { x: adjustedX, y: adjustedY, id: selectedItemId }]);
+        setSelectedItemId(null);
+      } else if (selectedTab === 'Furniture' && obtainedFurniture.includes(selectedItemId)) {
+        setFurnitureItems([...furnitureItems, { x: adjustedX, y: adjustedY, id: selectedItemId }]);
+        setSelectedItemId(null);
+      }
     }
   };
 
@@ -160,7 +159,6 @@ export default function RoomModified() {
             style={StyleSheet.absoluteFill}
             onPress={handleTouch}
           >
-            {/* 꽃 렌더링 */}
             {flowers.map((item, index) => {
               const flowerData = flowerList.find(f => f.id === item.id);
               if (!flowerData) return null;
@@ -179,7 +177,6 @@ export default function RoomModified() {
               );
             })}
 
-            {/* 가구 렌더링 */}
             {furnitureItems.map((item, index) => {
               const furnitureData = furnitureList.find(f => f.id === item.id);
               if (!furnitureData) return null;
