@@ -16,7 +16,7 @@ import { useProgress } from '../../../context/ProgressContext';
 
 import Background1 from '../../../assets/images/HomeBackgroundImages/Backgroundlevel1.png';
 import Background2 from '../../../assets/images/HomeBackgroundImages/Backgroundlevel2.png';
-import BaseBackground from '../../../assets/images/HomeBackgroundImages/FirstBaseBackground.png';
+import BaseBackground from '../../../assets/images/HomeBackgroundImages/BasicHomepage.png';
 
 import ModifiedButton from '../../../assets/images/Modifiy/modifiedbutton.png';
 import ChairIcon from '../../../assets/images/furnitures/whiteroundchair.png';

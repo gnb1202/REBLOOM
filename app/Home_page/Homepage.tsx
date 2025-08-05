@@ -18,7 +18,7 @@ import ShopPage from '../Mark/Shop/ShopPage';
 
 import Background1 from '../../assets/images/HomeBackgroundImages/Backgroundlevel1.png';
 import Background2 from '../../assets/images/HomeBackgroundImages/Backgroundlevel2.png';
-import BaseBackground from '../../assets/images/HomeBackgroundImages/FirstBaseBackground.png';
+import BaseBackground from '../../assets/images/HomeBackgroundImages/BasicHomepage.png';
 
 import ChairIcon from '../../assets/images/furnitures/whiteroundchair.png';
 import StandIcon from '../../assets/images/furnitures/yellowstand.png';
@@ -150,6 +150,37 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
           resizeMode="cover"
         />
 
+        {/* 왼쪽 분홍 문 클릭 → Explore로 이동 */}
+        <TouchableOpacity
+          onPress={() => router.push('/Travel/TravelListPage')}
+          style={{
+            position: 'absolute',
+            left: imageScaledWidth * 0.06,
+            top: imageScaledHeight * 0.49,
+            width: imageScaledWidth * 0.13,
+            height: imageScaledHeight * 0.28,
+            zIndex: 5,
+          }}
+        >
+          <View style={{ flex: 1 }} />
+        </TouchableOpacity>
+
+        {/* 오른쪽 문 클릭 → Exercise로 이동 */}
+        <TouchableOpacity
+          onPress={() => router.push('/Exercise/Explain')}
+          style={{
+            position: 'absolute',
+            left: imageScaledWidth * 0.81,
+            top: imageScaledHeight * 0.49,
+            width: imageScaledWidth * 0.13,
+            height: imageScaledHeight * 0.28,
+            zIndex: 5,
+          }}
+        >
+          <View style={{ flex: 1 }} />
+        </TouchableOpacity>
+
+
         {/* 가구 렌더링 */}
         {placedFurniture.map((item, index) => {
           const data = furnitureList.find(f => f.id === item.id);
@@ -245,7 +276,7 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, position: 'relative', backgroundColor: '#000' },
+  container: { flex: 1, position: 'relative', backgroundColor: '#fff' },
   loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   profileCardContainer: {
     position: 'absolute',
