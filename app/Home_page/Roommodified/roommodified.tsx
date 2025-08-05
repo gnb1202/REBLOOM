@@ -22,24 +22,24 @@ import ModifiedButton from '../../../assets/images/Modifiy/modifiedbutton.png';
 import ChairIcon from '../../../assets/images/furnitures/whiteroundchair.png';
 import StandIcon from '../../../assets/images/furnitures/yellowstand.png';
 
-import daisy from '../../../assets/images/flowers/daisy/daisystep3.png';
-import hydrangea from '../../../assets/images/flowers/hydrangea/hydrangeastep2.png';
-import lavender from '../../../assets/images/flowers/lavender/lavenderstep3.png';
-import lily from '../../../assets/images/flowers/lily/lilystep3.png';
-import rose from '../../../assets/images/flowers/rose/rosestep3.png';
-import sunflower from '../../../assets/images/flowers/sunflower/sunflowerstep2.png';
-import trumpetcreeper from '../../../assets/images/flowers/trumpetcreeper/trumpetcreeperstep2.png';
-import tulip from '../../../assets/images/flowers/tulip/tulipstep2.png';
+import daisy from '../../../assets/images/flowers/Display/daisy_display.png';
+import hydrangea from '../../../assets/images/flowers/Display/hydrangea_display.png';
+import lavender from '../../../assets/images/flowers/Display/lavender_display.png';
+import lily from '../../../assets/images/flowers/Display/lily_display.png';
+import rose from '../../../assets/images/flowers/Display/rose_display.png';
+import sunflower from '../../../assets/images/flowers/Display/sunflower_display.png';
+import freesia from '../../../assets/images/flowers/Display/freesia_display.png';
+import tulip from '../../../assets/images/flowers/Display/tulip_display.png';
 
 const flowerList = [
-  { id: 'daisy', name: '데이지', image: daisy },
-  { id: 'hydrangea', name: '수국', image: hydrangea },
-  { id: 'lavender', name: '라벤더', image: lavender },
-  { id: 'lily', name: '백합', image: lily },
-  { id: 'rose', name: '장미', image: rose },
-  { id: 'sunflower', name: '해바라기', image: sunflower },
-  { id: 'trumpetcreeper', name: '능소화', image: trumpetcreeper },
-  { id: 'tulip', name: '튤립', image: tulip },
+  { id: 'daisy', name: 'daisy', image: daisy },
+  { id: 'hydrangea', name: 'hydrangea', image: hydrangea },
+  { id: 'lavender', name: 'lavender', image: lavender },
+  { id: 'lily', name: 'lily', image: lily },
+  { id: 'rose', name: 'rose', image: rose },
+  { id: 'sunflower', name: 'sunflower', image: sunflower },
+  { id: 'freesia', name: 'freesia', image: freesia },
+  { id: 'tulip', name: 'tulip', image: tulip },
 ];
 
 const furnitureList = [
@@ -63,7 +63,7 @@ const scaledHeight = ORIGINAL_HEIGHT * minScale;
 export default function RoomModified() {
   const router = useRouter();
   const { isRoomOnly } = useLocalSearchParams();
-  const [selectedTab, setSelectedTab] = useState<'배경' | '꽃' | '가구'>('배경');
+  const [selectedTab, setSelectedTab] = useState<'Background' | 'Flower' | 'Furniture'>('Background');
   const [flowers, setFlowers] = useState<{ x: number; y: number; id: string }[]>([]);
   const [furnitureItems, setFurnitureItems] = useState<{ x: number; y: number; id: string }[]>([]);
   const [selectedItemId, setSelectedItemId] = useState<null | string>(null);
@@ -121,12 +121,12 @@ export default function RoomModified() {
       y = event.nativeEvent.clientY - rect.top;
     }
 
-    if (selectedTab === '꽃' && selectedItemId && obtainedFlowers.includes(selectedItemId)) {
+    if (selectedTab === 'Flower' && selectedItemId && obtainedFlowers.includes(selectedItemId)) {
       setFlowers([...flowers, { x: x - 30, y: y - 30, id: selectedItemId }]);
       setSelectedItemId(null);
     }
 
-    if (selectedTab === '가구' && selectedItemId && obtainedFurniture.includes(selectedItemId)) {
+    if (selectedTab === 'Furniture' && selectedItemId && obtainedFurniture.includes(selectedItemId)) {
       setFurnitureItems([...furnitureItems, { x: x - 30, y: y - 30, id: selectedItemId }]);
       setSelectedItemId(null);
     }
@@ -136,7 +136,7 @@ export default function RoomModified() {
     await setPlacedFlowers(flowers);
     await setPlacedFurniture(furnitureItems);
     await setSelectedRoom(tempSelectedRoom);
-    Alert.alert('저장되었습니다!');
+    Alert.alert('Save!');
     router.push('/Home_page/Homepage');
   };
 
@@ -206,13 +206,13 @@ export default function RoomModified() {
           <Image source={ModifiedButton} style={styles.modifiedImageButton} />
         </TouchableOpacity>
         <TouchableOpacity onPress={handleSave} style={styles.saveButton}>
-          <Text style={styles.saveButtonText}>저장하기</Text>
+          <Text style={styles.saveButtonText}>Save</Text>
         </TouchableOpacity>
       </View>
 
       <View style={styles.overlay}>
         <View style={styles.tabContainer}>
-          {['배경', '꽃', '가구'].map((tab) => (
+          {['Background', 'Flower', 'Furniture'].map((tab) => (
             <TouchableOpacity
               key={tab}
               style={[styles.tab, selectedTab === tab && styles.activeTab]}
@@ -229,7 +229,7 @@ export default function RoomModified() {
         </View>
 
         <ScrollView horizontal contentContainerStyle={styles.itemScrollContainer}>
-          {selectedTab === '배경' &&
+          {selectedTab === 'Background' &&
             roomList
               .filter(room => room.id === 'default' || obtainedRooms.includes(room.id))
               .map(room => (
@@ -244,7 +244,7 @@ export default function RoomModified() {
                 </TouchableOpacity>
               ))}
 
-          {selectedTab === '꽃' &&
+          {selectedTab === 'Flower' &&
             flowerList
               .filter(f => obtainedFlowers.includes(f.id))
               .map((flower) => (
@@ -253,7 +253,7 @@ export default function RoomModified() {
                 </TouchableOpacity>
               ))}
 
-          {selectedTab === '가구' &&
+          {selectedTab === 'Furniture' &&
             furnitureList
               .filter(f => obtainedFurniture.includes(f.id))
               .map(item => (

@@ -12,6 +12,7 @@ const flowerOrder = [
   'sunflower',
   'trumpetcreeper',
   'tulip',
+  'freesia',
 ];
 
 const getFlowerBadgeLevel = (count: number) => {

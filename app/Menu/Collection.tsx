@@ -24,7 +24,7 @@ const flowerList = [
     id: 'hydrangea',
     name: 'Hydrangea',
     desc: 'Sincerity and gratitude',
-    image: require('../../assets/images/flowers/hydrangea/hydrangeastep2.png'),
+    image: require('../../assets/images/flowers/hydrangea/hydrangeastep3.png'),
   },
   {
     id: 'lavender',
@@ -48,19 +48,19 @@ const flowerList = [
     id: 'sunflower',
     name: 'Sunflower',
     desc: 'Hope and loyalty',
-    image: require('../../assets/images/flowers/sunflower/sunflowerstep2.png'),
+    image: require('../../assets/images/flowers/sunflower/sunflowerstep3.png'),
   },
   {
-    id: 'trumpetcreeper',
-    name: 'Trumpet Creeper',
-    desc: 'Honor and respect',
-    image: require('../../assets/images/flowers/trumpetcreeper/trumpetcreeperstep2.png'),
+    id: 'freesia',
+    name: 'freesia',
+    desc: "I'm rooting for your start",
+    image: require('../../assets/images/flowers/freesia/freesiastep3.png'),
   },
   {
     id: 'tulip',
     name: 'Tulip',
     desc: 'Declaration of love',
-    image: require('../../assets/images/flowers/tulip/tulipstep2.png'),
+    image: require('../../assets/images/flowers/tulip/tulipstep3.png'),
   },
 ];
 

@@ -10,8 +10,8 @@ const flowerData = {
   lily: { name: 'Lily', desc: 'Purity and serenity' },
   rose: { name: 'Rose', desc: 'Love and passion' },
   sunflower: { name: 'Sunflower', desc: 'Hope and loyalty' },
-  trumpetcreeper: { name: 'Trumpet Creeper', desc: 'Glory' },
   tulip: { name: 'Tulip', desc: 'Declaration of love' },
+  freesia: { name: 'Freesia', desc: "I'm rooting for your start" },
 };
 
 const flowerImages = {
@@ -21,6 +21,7 @@ const flowerImages = {
 
   hydrangea_step1: require('../../assets/images/flowers/hydrangea/hydrangeastep1.png'),
   hydrangea_step2: require('../../assets/images/flowers/hydrangea/hydrangeastep2.png'),
+  hydrangea_step3: require('../../assets/images/flowers/hydrangea/hydrangeastep3.png'),
 
   lavender_step1: require('../../assets/images/flowers/lavender/lavenderstep1.png'),
   lavender_step2: require('../../assets/images/flowers/lavender/lavenderstep2.png'),
@@ -36,12 +37,15 @@ const flowerImages = {
 
   sunflower_step1: require('../../assets/images/flowers/sunflower/sunflowerstep1.png'),
   sunflower_step2: require('../../assets/images/flowers/sunflower/sunflowerstep2.png'),
-
-  trumpetcreeper_step1: require('../../assets/images/flowers/trumpetcreeper/trumpetcreeperstep1.png'),
-  trumpetcreeper_step2: require('../../assets/images/flowers/trumpetcreeper/trumpetcreeperstep2.png'),
+  sunflower_step3: require('../../assets/images/flowers/sunflower/sunflowerstep3.png'),
 
   tulip_step1: require('../../assets/images/flowers/tulip/tulipstep1.png'),
   tulip_step2: require('../../assets/images/flowers/tulip/tulipstep2.png'),
+  tulip_step3: require('../../assets/images/flowers/tulip/tulipstep3.png'),
+
+  freesia_step1: require('../../assets/images/flowers/freesia/freesiastep1.png'),
+  freesia_step2: require('../../assets/images/flowers/freesia/freesiastep2.png'),
+  freesia_step3: require('../../assets/images/flowers/freesia/freesiastep3.png'),
 };
 
 const flowerSequence = [
@@ -51,19 +55,14 @@ const flowerSequence = [
   'lily',
   'rose',
   'sunflower',
-  'trumpetcreeper',
   'tulip',
+  'freesia',
 ];
 
 function getStepImageName(flowerId: string, progress: number): string {
-  const twoStep = ['hydrangea', 'sunflower', 'trumpetcreeper', 'tulip'];
-  if (twoStep.includes(flowerId)) {
-    return progress >= 50 ? `${flowerId}_step2` : `${flowerId}_step1`;
-  } else {
-    if (progress >= 80) return `${flowerId}_step3`;
-    if (progress >= 40) return `${flowerId}_step2`;
-    return `${flowerId}_step1`;
-  }
+  if (progress >= 80) return `${flowerId}_step3`;
+  if (progress >= 40) return `${flowerId}_step2`;
+  return `${flowerId}_step1`;
 }
 
 function getFlowerMessage(progress: number): string {
@@ -81,8 +80,8 @@ export default function Flowermanage() {
     setProgress,
     setCurrentFlowerId,
     addObtainedFlower,
-     completeChallenge,
-      obtainedFlowers,
+    completeChallenge,
+    obtainedFlowers,
   } = useProgress();
   const [hasAwarded, setHasAwarded] = useState(false);
 
@@ -93,17 +92,14 @@ export default function Flowermanage() {
   useEffect(() => {
     if (progress >= 100 && !hasAwarded) {
       Alert.alert('🎉 Flower obtained!', 'The flower has fully bloomed!');
-
-      // 수집에 추가
       addObtainedFlower(currentFlowerId);
 
       const count = obtainedFlowers.length + 1;
-          if (count <= 4) {
-            const challengeId = `flower-${count}`;
-            completeChallenge(challengeId);
-          }
+      if (count <= 4) {
+        const challengeId = `flower-${count}`;
+        completeChallenge(challengeId);
+      }
 
-      // 다음 꽃으로 이동
       const currentIndex = flowerSequence.indexOf(currentFlowerId);
       const nextFlower = flowerSequence[currentIndex + 1] || '';
 
@@ -113,7 +109,7 @@ export default function Flowermanage() {
     }
 
     if (progress < 100 && hasAwarded) {
-      setHasAwarded(false); // 상태 복구
+      setHasAwarded(false);
     }
   }, [progress]);
 
@@ -127,7 +123,6 @@ export default function Flowermanage() {
 
   return (
     <View style={styles.container}>
-      {/* 상단 */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <Text style={styles.back}>{'←'}</Text>
@@ -135,17 +130,14 @@ export default function Flowermanage() {
         <Text style={styles.title}>Flower Management</Text>
       </View>
 
-      {/* 진행률 바 */}
       <View style={styles.progressContainer}>
         <View style={styles.progressBackground} />
         <View style={[styles.progressBar, { width: `${progress}%` }]} />
         <Text style={styles.progressTextLeft}>{progress}%</Text>
       </View>
 
-      {/* 이미지 */}
       <Image source={image} style={styles.image} resizeMode="contain" />
 
-      {/* 텍스트 */}
       <Text style={styles.name}>{flower.name}</Text>
       <Text style={styles.desc}>{flower.desc}</Text>
       <Text style={styles.statusMessage}>{getFlowerMessage(progress)}</Text>

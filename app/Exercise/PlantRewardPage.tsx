@@ -18,32 +18,36 @@ function getStepImageName(flowerId: string, progress: number): string {
 // 이미지 매핑
 const flowerImages = {
   daisy_step1: require('../../assets/images/flowers/daisy/daisystep1.png'),
-  daisy_step2: require('../../assets/images/flowers/daisy/daisystep2.png'),
-  daisy_step3: require('../../assets/images/flowers/daisy/daisystep3.png'),
+    daisy_step2: require('../../assets/images/flowers/daisy/daisystep2.png'),
+    daisy_step3: require('../../assets/images/flowers/daisy/daisystep3.png'),
 
-  hydrangea_step1: require('../../assets/images/flowers/hydrangea/hydrangeastep1.png'),
-  hydrangea_step2: require('../../assets/images/flowers/hydrangea/hydrangeastep2.png'),
+    hydrangea_step1: require('../../assets/images/flowers/hydrangea/hydrangeastep1.png'),
+    hydrangea_step2: require('../../assets/images/flowers/hydrangea/hydrangeastep2.png'),
+    hydrangea_step3: require('../../assets/images/flowers/hydrangea/hydrangeastep3.png'),
 
-  lavender_step1: require('../../assets/images/flowers/lavender/lavenderstep1.png'),
-  lavender_step2: require('../../assets/images/flowers/lavender/lavenderstep2.png'),
-  lavender_step3: require('../../assets/images/flowers/lavender/lavenderstep3.png'),
+    lavender_step1: require('../../assets/images/flowers/lavender/lavenderstep1.png'),
+    lavender_step2: require('../../assets/images/flowers/lavender/lavenderstep2.png'),
+    lavender_step3: require('../../assets/images/flowers/lavender/lavenderstep3.png'),
 
-  lily_step1: require('../../assets/images/flowers/lily/lilystep1.png'),
-  lily_step2: require('../../assets/images/flowers/lily/lilystep2.png'),
-  lily_step3: require('../../assets/images/flowers/lily/lilystep3.png'),
+    lily_step1: require('../../assets/images/flowers/lily/lilystep1.png'),
+    lily_step2: require('../../assets/images/flowers/lily/lilystep2.png'),
+    lily_step3: require('../../assets/images/flowers/lily/lilystep3.png'),
 
-  rose_step1: require('../../assets/images/flowers/rose/rosestep1.png'),
-  rose_step2: require('../../assets/images/flowers/rose/rosestep2.png'),
-  rose_step3: require('../../assets/images/flowers/rose/rosestep3.png'),
+    rose_step1: require('../../assets/images/flowers/rose/rosestep1.png'),
+    rose_step2: require('../../assets/images/flowers/rose/rosestep2.png'),
+    rose_step3: require('../../assets/images/flowers/rose/rosestep3.png'),
 
-  sunflower_step1: require('../../assets/images/flowers/sunflower/sunflowerstep1.png'),
-  sunflower_step2: require('../../assets/images/flowers/sunflower/sunflowerstep2.png'),
+    sunflower_step1: require('../../assets/images/flowers/sunflower/sunflowerstep1.png'),
+    sunflower_step2: require('../../assets/images/flowers/sunflower/sunflowerstep2.png'),
+    sunflower_step3: require('../../assets/images/flowers/sunflower/sunflowerstep3.png'),
 
-  trumpetcreeper_step1: require('../../assets/images/flowers/trumpetcreeper/trumpetcreeperstep1.png'),
-  trumpetcreeper_step2: require('../../assets/images/flowers/trumpetcreeper/trumpetcreeperstep2.png'),
+    tulip_step1: require('../../assets/images/flowers/tulip/tulipstep1.png'),
+    tulip_step2: require('../../assets/images/flowers/tulip/tulipstep2.png'),
+    tulip_step3: require('../../assets/images/flowers/tulip/tulipstep3.png'),
 
-  tulip_step1: require('../../assets/images/flowers/tulip/tulipstep1.png'),
-  tulip_step2: require('../../assets/images/flowers/tulip/tulipstep2.png'),
+    freesia_step1: require('../../assets/images/flowers/freesia/freesiastep1.png'),
+    freesia_step2: require('../../assets/images/flowers/freesia/freesiastep2.png'),
+    freesia_step3: require('../../assets/images/flowers/freesia/freesiastep3.png'),
 };
 
 export default function PlantRewardPage() {
