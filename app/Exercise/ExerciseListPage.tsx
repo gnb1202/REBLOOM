@@ -178,6 +178,7 @@ export default function ExerciseListPage() {
           <Text style={styles.backButton}>{'<'}</Text>
         </TouchableOpacity>
         <Text style={styles.title}>Select exercise</Text>
+        <View style={{width:24}}/>
       </View>
 
       <ScrollView style={styles.exerciseList}>
@@ -306,6 +307,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     marginBottom: 20,
+    justifyContent: 'space-between',
   },
   backButton: {
     fontSize: 24,
@@ -313,7 +315,7 @@ const styles = StyleSheet.create({
     color: '#333',
   },
   title: {
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: 'bold',
     color: '#333',
   },

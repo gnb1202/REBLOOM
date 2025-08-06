@@ -7,17 +7,17 @@ export default function ExerciseSummaryPage() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>오늘의 운동 끝!{'\n'}수고하셨습니다</Text>
+      <Text style={styles.header}>Today's workout is over!{'\n'}Congratulations!!!</Text>
 
-      <Text style={styles.subHeader}>운동 통계</Text>
+      <Text style={styles.subHeader}>Exercise Statistics</Text>
 
       <View style={styles.summaryBox}>
         <View style={styles.pieChartPlaceholder}>
-          <Text style={styles.chartLabel}>운동 한 부위</Text>
+          <Text style={styles.chartLabel}>Area of Exercise </Text>
         </View>
 
         <View style={styles.detailRow}>
-          <Text style={styles.detailLabel}>총 운동시간</Text>
+          <Text style={styles.detailLabel}>Total Exercise Time</Text>
           <Text style={styles.detailValue}>20:00</Text>
         </View>
 
@@ -31,7 +31,7 @@ export default function ExerciseSummaryPage() {
         style={styles.endButton}
         onPress={() => router.push('/Exercise/PlantRewardPage')}
       >
-        <Text style={styles.endButtonText}>보상 보기</Text>
+        <Text style={styles.endButtonText}>Reward</Text>
       </TouchableOpacity>
     </View>
   );

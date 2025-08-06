@@ -266,7 +266,7 @@ export default function ExplorePage() {
       <View style={styles.container}>
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()}>
-            <Text style={styles.back}>{'<'}</Text>
+            <Text style={styles.back}>{'<-'}</Text>
           </TouchableOpacity>
           <Text style={styles.title}>Explore</Text>
         </View>
@@ -283,9 +283,10 @@ export default function ExplorePage() {
       {/* 상단 바 */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.replace('/Home_page/Homepage')}>
-          <Text style={styles.back}>{'<'}</Text>
+          <Text style={styles.back}>{'←'}</Text>
         </TouchableOpacity>
         <Text style={styles.title}>Explore</Text>
+        <View style={{ width: 24 }} />
       </View>
 
       {/* 프로필 카드 목록 */}
@@ -371,13 +372,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     marginBottom: 20,
+    justifyContent: 'space-between',
   },
   back: { 
     fontSize: 24,
     color: '#333'
   },
   title: {
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: 'bold',
     marginLeft: 12,
     color: '#333'

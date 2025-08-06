@@ -14,6 +14,7 @@ export default function WorkoutPage() {
           <Text style={styles.backArrow}>←</Text>
         </TouchableOpacity>
         <Text style={styles.title}>Exercise</Text>
+        <View style={{ width: 24 }} />
       </View>
 
       {/* 운동 루틴 */}
@@ -59,9 +60,9 @@ export default function WorkoutPage() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 20, backgroundColor: '#fff' },
-  header: { flexDirection: 'row', alignItems: 'center', marginBottom: 20 },
+  header: { flexDirection: 'row', alignItems: 'center', marginBottom: 20 ,justifyContent: 'space-between',},
   backArrow: { fontSize: 24 },
-  title: { fontSize: 20, fontWeight: 'bold', marginLeft: 10 },
+  title: { fontSize: 24, fontWeight: 'bold', marginLeft: 10 },
   section: { alignItems: 'center', marginTop: 20 },
   subTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 10 },
   subInfoBox: {
