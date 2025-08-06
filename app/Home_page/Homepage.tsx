@@ -30,9 +30,10 @@ import mailbox_A_blackwhite from '../../assets/images/furnitures/mailbox/mailbox
 import mailbox_A_white from '../../assets/images/furnitures/mailbox/mailbox_A_white.png';
 import signboard from '../../assets/images/furnitures/signboard/Standingboard.png';
 
+import LetItSnow from '../../assets/images/animations/Backgroundsnow.gif';
+
 import { useProgress } from '../../context/ProgressContext';
 
-// 🌸 꽃 이미지 import
 import daisy from '../../assets/images/flowers/Display/daisy_display.png';
 import freesia from '../../assets/images/flowers/Display/freesia_display.png';
 import hydrangea from '../../assets/images/flowers/Display/hydrangea_display.png';
@@ -54,7 +55,6 @@ const furnitureList = [
   { id: 'signboard', overlay: signboard, style: { width: 160, height: 140 } },
 ];
 
-
 const flowerList = [
   { id: 'daisy', image: daisy },
   { id: 'hydrangea', image: hydrangea },
@@ -73,7 +73,7 @@ const backgroundMap: { [key: string]: any } = {
 
 export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean }) {
   const router = useRouter();
-  const imageZoomRef = useRef(null);
+  const imageZoomRef = useRef<any>(null);
   const [layoutReady, setLayoutReady] = useState(false);
   const [showQuest, setShowQuest] = useState(false);
   const [showShop, setShowShop] = useState(false);
@@ -100,13 +100,14 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
       setTimeout(centerImage, 100);
     });
     return () => subscription?.remove?.();
+    // eslint-disable-next-line
   }, []);
 
   const centerImage = () => {
     const offsetX = (imageScaledWidth - dimensions.width) / 2;
     const offsetY = (imageScaledHeight - dimensions.height) / 2;
 
-    imageZoomRef.current?.centerOn({
+    imageZoomRef.current?.centerOn?.({
       x: -offsetX,
       y: -offsetY,
       scale: minScale,
@@ -155,9 +156,25 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
           }
         }}
       >
+        {/* 배경 */}
         <Image
           source={backgroundMap[selectedRoom] || BaseBackground}
           style={{ width: imageScaledWidth, height: imageScaledHeight }}
+          resizeMode="cover"
+        />
+
+        {/* 눈 내리는 GIF 오버레이 */}
+        <Image
+          source={LetItSnow}
+          style={{
+            position: 'absolute',
+            left: 0,
+            top: 0,
+            width: imageScaledWidth,
+            height: imageScaledHeight,
+            zIndex: 2, // 배경 위에, 가구/꽃 아래
+            pointerEvents: 'none', // 드래그/터치 방해 안함
+          }}
           resizeMode="cover"
         />
 
