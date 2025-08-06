@@ -54,7 +54,7 @@ export default function BackgroundCollection() {
           <Text style={styles.back}>{'\u2190'}</Text>
         </TouchableOpacity>
         <Text style={styles.title}>Background Collection</Text>
-        <View style={{ width: 32 }} /> {/* 오른쪽 여백 */}
+        <View style={{ width: 32 }} />
       </View>
 
 
@@ -139,7 +139,7 @@ const styles = StyleSheet.create({
   back: { fontSize: 22, marginRight: 10 },
   title: {
     flex: 1,
-    fontSize: 18,
+    fontSize: 24,
     fontWeight: 'bold',
     textAlign: 'center',
   },

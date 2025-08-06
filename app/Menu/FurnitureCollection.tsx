@@ -75,7 +75,7 @@ export default function FurnitureCollection() {
           <Text style={styles.back}>{'\u2190'}</Text>
         </TouchableOpacity>
         <Text style={styles.title}>Furniture Collection</Text>
-        <View style={{ width: 32 }} /> {/* 오른쪽 여백 */}
+        <View style={{ width: 32 }} />
       </View>
 
       {/* Display only obtained furniture */}
@@ -153,7 +153,7 @@ const styles = StyleSheet.create({
   back: { fontSize: 22, marginRight: 10 },
   title: {
     flex: 1,
-    fontSize: 18,
+    fontSize: 24,
     fontWeight: 'bold',
     textAlign: 'center',
   },
@@ -178,7 +178,7 @@ const styles = StyleSheet.create({
     maxHeight: 80,
     marginBottom: 6,
   },
-  label: { fontSize: 12 },
+  label: { fontSize: 16, fontWeight: 'bold' },
   tabBar: {
     flexDirection: 'row',
     justifyContent: 'space-around',
