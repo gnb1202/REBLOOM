@@ -1,4 +1,4 @@
-import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
+import { onAuthStateChanged } from 'firebase/auth';
 import React, { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 import { auth, getUserProfile, signInWithCustomId, signOutUser, signUpWithCustomId } from '../firebase.config';
 

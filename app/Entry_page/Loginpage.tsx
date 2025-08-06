@@ -76,6 +76,14 @@ export default function Loginpage() {
         )}
       </TouchableOpacity>
 
+      {/* 테스트 버튼 */}
+      <TouchableOpacity
+        style={styles.testButton}
+        onPress={() => router.push('/Exercise/ExerciseTestPage')}
+      >
+        <Text style={styles.testButtonText}>🧪 AI 운동 테스트</Text>
+      </TouchableOpacity>
+
       {/* 하단 메뉴 */}
       <View style={styles.linkContainer}>
         <TouchableOpacity onPress={() => router.push('/Entry_page/Signuppage')}>
@@ -121,6 +129,20 @@ const styles = StyleSheet.create({
   },
   loginButtonDisabled: {
     backgroundColor: '#ccc',
+  },
+  testButton: {
+    backgroundColor: '#FF6B35',
+    paddingVertical: 12,
+    borderRadius: 6,
+    alignItems: 'center',
+    marginBottom: 20,
+    borderWidth: 2,
+    borderColor: '#FF6B35',
+  },
+  testButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: 'bold',
   },
   linkContainer: {
     flexDirection: 'row',
