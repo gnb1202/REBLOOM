@@ -12,6 +12,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons'; // expo 내장 아이콘!
 import { useProgress } from '../../../context/ProgressContext';
 import ToastMessage from '../../../components/ToastMessage';
 
@@ -71,7 +72,6 @@ const scaledHeight = ORIGINAL_HEIGHT * minScale;
 
 export default function RoomModified() {
   const router = useRouter();
-  const { isRoomOnly } = useLocalSearchParams();
   const [selectedTab, setSelectedTab] = useState<'Background' | 'Flower' | 'Furniture'>('Background');
   const [flowers, setFlowers] = useState<{ x: number; y: number; id: string }[]>([]);
   const [furnitureItems, setFurnitureItems] = useState<{ x: number; y: number; id: string }[]>([]);
@@ -80,6 +80,8 @@ export default function RoomModified() {
   const [toastVisible, setToastVisible] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [toastType, setToastType] = useState<'success' | 'error'>('success');
+  const [isOverlayVisible, setIsOverlayVisible] = useState(false); // <- 오버레이 보이기/숨기기
+  const [isOverlayExpanded, setIsOverlayExpanded] = useState(true); // <- 확장 상태(기본 확장 true, 필요시 false)
 
   const containerRef = useRef(null);
 
@@ -214,7 +216,7 @@ export default function RoomModified() {
                     setFurnitureItems(updated);
                     setPlacedFurniture(updated);
                   }}
-                  style={[styles.placedImage, { left: item.x, top: item.y }]}
+                  style={[styles.placedFurnitureImage, { left: item.x, top: item.y }]}
                 >
                   <Image source={furnitureData.icon} style={{ width: 120, height: 120 }} />
                 </TouchableOpacity>
@@ -224,6 +226,7 @@ export default function RoomModified() {
         </ImageBackground>
       </ScrollView>
 
+      {/* 상단 오른쪽 기존 버튼 */}
       <View style={styles.topRightContainer}>
         <TouchableOpacity onPress={handleReturn}>
           <Image source={ModifiedButton} style={styles.modifiedImageButton} />
@@ -233,60 +236,90 @@ export default function RoomModified() {
         </TouchableOpacity>
       </View>
 
-      <View style={styles.overlay}>
-        <View style={styles.tabContainer}>
-          {['Background', 'Flower', 'Furniture'].map((tab) => (
-            <TouchableOpacity
-              key={tab}
-              style={[styles.tab, selectedTab === tab && styles.activeTab]}
-              onPress={() => {
-                setSelectedTab(tab as any);
-                setSelectedItemId(null);
-              }}
-            >
-              <Text style={selectedTab === tab ? styles.activeText : styles.inactiveText}>
-                {tab}
-              </Text>
-            </TouchableOpacity>
-          ))}
+      {/* 중앙 하단 확장/축소 버튼 */}
+      {!isOverlayVisible && (
+        <View style={styles.centerExpandButtonContainer}>
+          <TouchableOpacity
+            onPress={() => {
+              setIsOverlayVisible(true);
+              setIsOverlayExpanded(true); // 항상 확장된 상태로 시작
+            }}
+            style={styles.expandIconBox}
+          >
+            <Ionicons name="chevron-up" size={30} color="#5C7BEE" />
+          </TouchableOpacity>
         </View>
+      )}
 
-        <ScrollView horizontal contentContainerStyle={styles.itemScrollContainer}>
-          {selectedTab === 'Background' &&
-            roomList
-              .filter(room => room.id === 'default' || obtainedRooms.includes(room.id))
-              .map(room => (
-                <TouchableOpacity key={room.id} onPress={() => setTempSelectedRoom(room.id)}>
-                  <Image
-                    source={room.image}
-                    style={[
-                      styles.itemImage,
-                      tempSelectedRoom === room.id && { borderColor: '#5C7BEE', borderWidth: 2 },
-                    ]}
-                  />
-                </TouchableOpacity>
-              ))}
+      {/* 하단 오버레이 메뉴 */}
+      {isOverlayVisible && (
+        <View style={[styles.overlay, isOverlayExpanded && styles.overlayExpanded]}>
+          {/* 닫기 버튼 */}
+          <View style={styles.centerExpandButtonContainer}>
+            <TouchableOpacity
+              onPress={() => {
+                setIsOverlayVisible(false);
+              }}
+              style={styles.expandIconBox}
+            >
+              <Ionicons name="chevron-down" size={30} color="#5C7BEE" />
+            </TouchableOpacity>
+          </View>
+          <View style={styles.tabContainer}>
+            {['Background', 'Flower', 'Furniture'].map((tab) => (
+              <TouchableOpacity
+                key={tab}
+                style={[styles.tab, selectedTab === tab && styles.activeTab]}
+                onPress={() => {
+                  setSelectedTab(tab as any);
+                  setSelectedItemId(null);
+                }}
+              >
+                <Text style={selectedTab === tab ? styles.activeText : styles.inactiveText}>
+                  {tab}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+          <ScrollView horizontal contentContainerStyle={styles.itemScrollContainer}>
+            {selectedTab === 'Background' &&
+              roomList
+                .filter(room => room.id === 'default' || obtainedRooms.includes(room.id))
+                .map(room => (
+                  <TouchableOpacity key={room.id} onPress={() => setTempSelectedRoom(room.id)}>
+                    <Image
+                      source={room.image}
+                      style={[
+                        styles.itemImage,
+                        tempSelectedRoom === room.id && { borderColor: '#5C7BEE', borderWidth: 2 },
+                      ]}
+                    />
+                  </TouchableOpacity>
+                ))}
+            {selectedTab === 'Flower' &&
+              flowerList
+                .filter(f => obtainedFlowers.includes(f.id))
+                .map((flower) => (
+                  <TouchableOpacity key={flower.id} onPress={() => handleSelectItem(flower.id)}>
+                    <Image source={flower.image} style={styles.itemImage} />
+                  </TouchableOpacity>
+                ))}
+            {selectedTab === 'Furniture' &&
+              furnitureList
+                .filter(f => obtainedFurniture.includes(f.id))
+                .map(item => (
+                  <TouchableOpacity key={item.id} onPress={() => handleSelectItem(item.id)}>
+                    <Image source={item.icon} style={styles.itemImage} />
+                  </TouchableOpacity>
+                ))}
+          </ScrollView>
+          <View style={styles.expandedArea}>
+            <Text style={styles.expandedText}>
+            </Text>
+          </View>
+        </View>
+      )}
 
-          {selectedTab === 'Flower' &&
-            flowerList
-              .filter(f => obtainedFlowers.includes(f.id))
-              .map((flower) => (
-                <TouchableOpacity key={flower.id} onPress={() => handleSelectItem(flower.id)}>
-                  <Image source={flower.image} style={styles.itemImage} />
-                </TouchableOpacity>
-              ))}
-
-          {selectedTab === 'Furniture' &&
-            furnitureList
-              .filter(f => obtainedFurniture.includes(f.id))
-              .map(item => (
-                <TouchableOpacity key={item.id} onPress={() => handleSelectItem(item.id)}>
-                  <Image source={item.icon} style={styles.itemImage} />
-                </TouchableOpacity>
-              ))}
-        </ScrollView>
-      </View>
-      
       <ToastMessage
         message={toastMessage}
         type={toastType}
@@ -304,12 +337,18 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
   },
+  placedFurnitureImage: {
+    position: 'absolute',
+    width: 120,
+    height: 120,
+  },
   topRightContainer: {
     position: 'absolute',
     top: 100,
     right: 20,
     alignItems: 'center',
     gap: 10,
+    zIndex: 30,
   },
   modifiedImageButton: {
     width: 40,
@@ -326,20 +365,47 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: 'bold',
   },
+  // 중앙 하단에 화살표(확장/축소) 버튼
+  centerExpandButtonContainer: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 15,
+    alignItems: 'center',
+    zIndex: 20,
+  },
+  expandIconBox: {
+    backgroundColor: '#F0F1FF',
+    borderRadius: 16,
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 3,
+  },
   overlay: {
     position: 'absolute',
+    left: 0,
+    right: 0,
     bottom: 0,
-    width: '100%',
     backgroundColor: '#FFFFFFEE',
-    paddingTop: 12,
-    paddingBottom: 24,
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
+    zIndex: 20,
+    paddingBottom: 16,
+    paddingTop: 38, // 위 화살표 영역 공간 확보
+    minHeight: 180,
+    maxHeight: 240,
+    // 화면 크기에 맞춰 조정해도 됩니다!
+  },
+  overlayExpanded: {
+    // (여기선 overlay와 overlayExpanded가 동일하게 사용됨. 확장버튼만 바뀜)
   },
   tabContainer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     marginBottom: 10,
+    marginTop: 6,
   },
   tab: {
     paddingVertical: 8,
@@ -368,5 +434,14 @@ const styles = StyleSheet.create({
     height: 60,
     marginHorizontal: 8,
     borderRadius: 8,
+  },
+  expandedArea: {
+    marginTop: 12,
+    alignItems: 'center',
+  },
+  expandedText: {
+    fontSize: 13,
+    color: '#555',
+    textAlign: 'center',
   },
 });

@@ -177,7 +177,7 @@ export default function ExerciseListPage() {
         <TouchableOpacity onPress={() => router.back()}>
           <Text style={styles.backButton}>{'<'}</Text>
         </TouchableOpacity>
-        <Text style={styles.title}>운동 선택</Text>
+        <Text style={styles.title}>Select exercise</Text>
       </View>
 
       <ScrollView style={styles.exerciseList}>
