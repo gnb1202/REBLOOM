@@ -245,13 +245,16 @@ export default function ExplorePage() {
     return badgeEmojiMap[badgeId || ''] || '🏅';
   };
 
+
   const handleVisitRoom = (profile: UserProfile) => {
-    // 다른 사용자의 방을 구경하는 기능 (추후 구현)
-    Alert.alert(
-      `${profile.profile?.nickname || profile.nickname}'s Room`,
-      'Room visiting feature is in development.',
-      [{ text: 'OK' }]
-    );
+    // 실제 방 방문 기능 구현 (4단계에서 구현 예정)
+    router.push({
+      pathname: '/Travel/VisitedRoomPage',
+      params: { 
+        userId: profile.uid,
+        nickname: profile.profile?.nickname || profile.nickname
+      }
+    });
   };
 
   useEffect(() => {

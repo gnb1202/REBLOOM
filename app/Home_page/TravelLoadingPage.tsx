@@ -9,7 +9,7 @@ export default function TravelLoadingPage() {
 
   useEffect(() => {
     const timeout = setTimeout(() => {
-      router.replace('/Travel/TravelListPage');
+      router.replace('/Travel/ExplorePage');
     }, 2000);
 
     return () => clearTimeout(timeout);
@@ -19,7 +19,7 @@ export default function TravelLoadingPage() {
     <View style={styles.container}>
       <Image
         source={loadingGif}
-        style={styles.bottomRightImage}
+        style={styles.centerImage}
         resizeMode="contain"
       />
     </View>
@@ -30,12 +30,11 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  bottomRightImage: {
-    position: 'absolute',
+  centerImage: {
     width: 300,
     height: 300,
-    bottom: 30,
-    right: 20,
   },
 });

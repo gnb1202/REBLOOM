@@ -29,12 +29,12 @@ import { useProgress } from '../../context/ProgressContext';
 
 // 🌸 꽃 이미지 import
 import daisy from '../../assets/images/flowers/Display/daisy_display.png';
+import freesia from '../../assets/images/flowers/Display/freesia_display.png';
 import hydrangea from '../../assets/images/flowers/Display/hydrangea_display.png';
 import lavender from '../../assets/images/flowers/Display/lavender_display.png';
 import lily from '../../assets/images/flowers/Display/lily_display.png';
 import rose from '../../assets/images/flowers/Display/rose_display.png';
 import sunflower from '../../assets/images/flowers/Display/sunflower_display.png';
-import freesia from '../../assets/images/flowers/Display/freesia_display.png';
 import tulip from '../../assets/images/flowers/Display/tulip_display.png';
 
 const ORIGINAL_WIDTH = 2300;
@@ -151,6 +151,7 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
           resizeMode="cover"
         />
 
+        {/* 문 클릭 → 이동 */}
         <TouchableOpacity
           onPress={() => router.push('/Home_page/TravelLoadingPage')}
           style={{
@@ -179,6 +180,7 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
           <View style={{ flex: 1 }} />
         </TouchableOpacity>
 
+        {/* 가구 */}
         {placedFurniture.map((item, index) => {
           const data = furnitureList.find(f => f.id === item.id);
           if (!data) return null;
@@ -192,6 +194,7 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
           );
         })}
 
+        {/* 꽃 */}
         {placedFlowers.map((item, index) => {
           const flowerData = flowerList.find(f => f.id === item.id);
           if (!flowerData) return null;
@@ -214,7 +217,7 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
 
       {/* 메뉴 버튼 */}
       <View style={styles.rightCircleWrapper}>
-        <TouchableOpacity onPress={() => setShowDropdown(prev => !prev)}>
+        <TouchableOpacity onPress={() => setShowDropdown(true)}>
           <Image
             source={require('../../assets/images/Modifiy/modifiedbutton.png')}
             style={styles.modifiedImageButton}
@@ -223,15 +226,15 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
         </TouchableOpacity>
       </View>
 
-      {/* 드롭다운 메뉴를 Modal로 구현 */}
+      {/* 모달 드롭다운 메뉴 */}
       <Modal
-        visible={showDropdown}
         transparent
         animationType="fade"
+        visible={showDropdown}
         onRequestClose={() => setShowDropdown(false)}
       >
         <TouchableOpacity
-          style={styles.modalOverlay}
+          style={styles.dropdownOverlay}
           activeOpacity={1}
           onPressOut={() => setShowDropdown(false)}
         >
@@ -271,7 +274,7 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
           />
 
           <View style={styles.bottomButtonContainer}>
-            <TouchableOpacity style={styles.bottomButton} onPress={() => router.push('/Travel/TravelListPage')}>
+            <TouchableOpacity style={styles.bottomButton} onPress={() => router.push('/Travel/ExplorePage')}>
               <Text style={styles.bottomButtonText}>Explore</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.bottomButton} onPress={() => router.push('/Exercise/Explain')}>
@@ -323,23 +326,23 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: 'bold',
   },
-  modalOverlay: {
+  dropdownOverlay: {
     flex: 1,
-    backgroundColor: 'transparent',
+    backgroundColor: 'rgba(0,0,0,0.2)',
   },
   dropdownMenuModal: {
     position: 'absolute',
-    top: 100,
+    top: 120,
     right: 20,
     backgroundColor: '#fff',
     borderRadius: 8,
+    padding: 10,
+    zIndex: 999,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 4,
     elevation: 5,
-    padding: 10,
-    zIndex: 9999,
   },
   menuItem: {
     paddingVertical: 8,
