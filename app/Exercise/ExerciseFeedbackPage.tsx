@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ActivityIndicator, Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, StyleSheet, Text, TouchableOpacity, View, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../context/AuthContext';
@@ -15,7 +15,9 @@ export default function ExerciseFeedbackPage() {
   const { currentExercise, clearCurrentExercise, calculateRewards } = useExercise();
   const { user, refreshProfile } = useAuth();
 
-  const emojis = ['😀', '😐', '😣'];
+  // 웹 스타일 이모지(색 강조)
+  const emojis = ['😃', '😐', '😤'];
+  const labels = ['Easy', 'Normal', 'Hard'];
 
   const handleSubmit = async () => {
     if (selected === null) {
@@ -31,10 +33,7 @@ export default function ExerciseFeedbackPage() {
 
     setSaving(true);
     try {
-      // 피드백을 1-5 점수로 변환 (😀=5, 😐=3, 😣=1)
       const feedbackRating = selected === 0 ? 5 : selected === 1 ? 3 : 1;
-      
-      // Firebase에 운동 기록 저장
       await saveExerciseRecord(user.uid, {
         exerciseId: currentExercise.exerciseId,
         exerciseName: currentExercise.exerciseName,
@@ -45,17 +44,9 @@ export default function ExerciseFeedbackPage() {
           comment: selected === 0 ? 'Good' : selected === 1 ? 'Average' : 'Difficult'
         }
       });
-
-      // 기존 피드백 카운트 증가
       incrementFeedbackCount();
-      
-      // 사용자 프로필 새로고침 (업데이트된 게임 데이터 반영)
       await refreshProfile();
-      
-      // 현재 운동 정보 클리어
       clearCurrentExercise();
-
-      // 보상 정보 표시
       const rewards = calculateRewards();
       Alert.alert(
         'Exercise Complete! 🎉',
@@ -67,7 +58,6 @@ export default function ExerciseFeedbackPage() {
           }
         ]
       );
-
     } catch (error) {
       console.error('Failed to save exercise record:', error);
       Alert.alert('Error', 'Failed to save exercise record.');
@@ -78,28 +68,46 @@ export default function ExerciseFeedbackPage() {
 
   return (
     <View style={styles.container}>
+      {/* 중앙 헤더 */}
+      <Text style={styles.title}>How was today's workout?</Text>
+      <Text style={styles.subtitle}>Please rate the exercise intensity</Text>
+
+      {/* 이모지 카드 박스 */}
       <View style={styles.box}>
-        <Text style={styles.question}>How was the exercise intensity?</Text>
         <View style={styles.emojiRow}>
           {emojis.map((emoji, index) => (
             <TouchableOpacity
               key={index}
               onPress={() => setSelected(index)}
+              activeOpacity={0.8}
               style={[
                 styles.emojiWrapper,
                 selected === index && styles.selectedEmoji,
+                // 선택된 이모지는 elevation, 그림자 더 강조
               ]}
             >
               <Text style={styles.emoji}>{emoji}</Text>
+              <Text style={[
+                styles.emojiLabel,
+                selected === index && styles.emojiLabelSelected,
+              ]}>
+                {labels[index]}
+              </Text>
             </TouchableOpacity>
           ))}
         </View>
       </View>
 
-      <TouchableOpacity 
-        style={[styles.finishButton, saving && styles.finishButtonDisabled]} 
+      {/* Finish 버튼 */}
+      <TouchableOpacity
+        style={[
+          styles.finishButton,
+          saving && styles.finishButtonDisabled,
+          selected !== null && !saving && styles.finishButtonActive,
+        ]}
         onPress={handleSubmit}
         disabled={saving}
+        activeOpacity={0.85}
       >
         {saving ? (
           <ActivityIndicator color="#fff" />
@@ -107,63 +115,123 @@ export default function ExerciseFeedbackPage() {
           <Text style={styles.finishText}>Finish</Text>
         )}
       </TouchableOpacity>
-
-      {/* 개발용: 피드백 횟수 초기화 */}
-      <TouchableOpacity
-        onPress={async () => {
-          await AsyncStorage.removeItem('@exerciseFeedbackCount');
-          Alert.alert('Reset', 'Feedback count has been reset.');
-        }}
-      >
-        <Text style={{ marginTop: 20, color: '#888' }}>Reset Count</Text>
-      </TouchableOpacity>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff', justifyContent: 'center', alignItems: 'center' },
-  box: {
-    backgroundColor: '#ddd',
-    paddingVertical: 40,
-    paddingHorizontal: 24,
-    borderRadius: 16,
+  container: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
     alignItems: 'center',
+    paddingHorizontal: 20,
   },
-  question: {
-    fontSize: 20,
+  title: {
+    fontSize: 26,
     fontWeight: 'bold',
-    marginBottom: 24,
+    color: '#222',
+    marginTop: 20,
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  subtitle: {
+    fontSize: 16,
+    color: '#000000',
+    marginBottom: 28,
+    textAlign: 'center',
+  },
+  box: {
+    backgroundColor: '#fff',
+    borderRadius: 28,
+    paddingHorizontal: 30,
+    paddingVertical: 34,
+    marginBottom: 40,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.30,
+    shadowRadius: 18,
+    elevation: 5,
+    minWidth: 320,
   },
   emojiRow: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
-    width: '80%',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   emojiWrapper: {
-    marginHorizontal: 10,
-    padding: 10,
-    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginHorizontal: 14,
+    paddingHorizontal: 20,
+    paddingVertical: 22,
+    backgroundColor: '#F6F8FC',
+    borderRadius: 16,
+    minWidth: 80,
+    minHeight: 110,
+    borderWidth: 0,
+    shadowColor: '#E6ECFF',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    elevation: 1,
   },
   selectedEmoji: {
-    backgroundColor: '#B2B8FF',
+    backgroundColor: '#fff',
+    borderWidth: 2,
+    borderColor: '#B2B8FF',
+    elevation: 8,
+    shadowColor: '#A2B8FF',
+    shadowOpacity: 0.25,
+    shadowRadius: 18,
+    ...Platform.select({
+      web: {
+        boxShadow: '0 8px 24px 0 #A2B8FF30',
+      },
+      default: {},
+    }),
+    zIndex: 2,
   },
   emoji: {
-    fontSize: 32,
+    fontSize: 42,
+    marginBottom: 7,
+  },
+  emojiLabel: {
+    fontSize: 16,
+    color: '#999',
+    fontWeight: '500',
+    marginTop: 2,
+  },
+  emojiLabelSelected: {
+    color: '#5C7BEE',
+    fontWeight: 'bold',
   },
   finishButton: {
-    marginTop: 40,
+    marginTop: 14,
+    marginBottom: 10,
+    backgroundColor: '#789BFB',
+    paddingHorizontal: 50,
+    paddingVertical: 17,
+    borderRadius: 15,
+    minWidth: 220,
+    alignItems: 'center',
+    shadowColor: '#789BFB',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.22,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  finishButtonActive: {
     backgroundColor: '#5C7BEE',
-    paddingHorizontal: 32,
-    paddingVertical: 12,
-    borderRadius: 10,
   },
   finishButtonDisabled: {
     backgroundColor: '#ccc',
   },
   finishText: {
-    fontSize: 16,
+    fontSize: 22,
     fontWeight: 'bold',
     color: '#fff',
+    letterSpacing: 1,
   },
+
 });

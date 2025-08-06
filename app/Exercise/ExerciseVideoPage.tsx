@@ -161,7 +161,7 @@ export default function ExerciseVideoPage() {
           style={styles.endButton}
           onPress={() => router.push('/Exercise/ExerciseSummaryPage')}
         >
-          <Text style={styles.endButtonText}>운동 종료</Text>
+          <Text style={styles.endButtonText}>End</Text>
         </TouchableOpacity>
       )}
     </View>
