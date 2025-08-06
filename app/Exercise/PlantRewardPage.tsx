@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { View, Image, StyleSheet, Text } from 'react-native';
-import { useRouter } from 'expo-router';
+import { Image, StyleSheet, Text, View } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useProgress } from '../../context/ProgressContext'; // 전역 상태 접근
+import { useRouter } from 'expo-router';
+import { useProgress } from '../../context/ProgressContext';
 
 // 단계별 이미지 결정 함수
 function getStepImageName(flowerId: string, progress: number): string {

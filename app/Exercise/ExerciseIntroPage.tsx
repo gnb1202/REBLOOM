@@ -1,5 +1,5 @@
-import { useRouter } from 'expo-router';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useRouter } from 'expo-router';
 
 export default function ExerciseIntroPage() {
   const router = useRouter();

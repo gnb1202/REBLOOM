@@ -1,7 +1,6 @@
-import { useRouter } from 'expo-router';
 import { useEffect } from 'react';
 import { Dimensions, Image, Platform, StyleSheet, View } from 'react-native';
-
+import { useRouter } from 'expo-router';
 import loadingGif from '../../assets/images/animations/loading_animation_door.gif';
 
 export default function TravelLoadingPage() {

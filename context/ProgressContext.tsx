@@ -49,6 +49,9 @@ type ProgressContextType = {
   setPlacedFurniture: (items: { x: number; y: number; id: string }[]) => void;
   syncWithFirebase: (userId: string) => Promise<void>;
   loadFromFirebase: (userId: string) => Promise<void>;
+  updateProgress: (value: number) => void;
+  goToNextFlower: () => void;
+  isLast: boolean;
 };
 
 const ProgressContext = createContext<ProgressContextType>({
@@ -82,6 +85,9 @@ const ProgressContext = createContext<ProgressContextType>({
   setPlacedFurniture: () => {},
   syncWithFirebase: async () => {},
   loadFromFirebase: async () => {},
+  updateProgress: () => {},
+  goToNextFlower: () => {},
+  isLast: false,
 });
 
 export const ProgressProvider = ({ children }: { children: React.ReactNode }) => {
@@ -438,6 +444,16 @@ export const ProgressProvider = ({ children }: { children: React.ReactNode }) =>
         setPlacedFurniture,
         syncWithFirebase,
         loadFromFirebase,
+        updateProgress: setProgress,
+        goToNextFlower: () => {
+          const currentIndex = flowerOrder.indexOf(currentFlowerId);
+          if (currentIndex !== -1 && currentIndex < flowerOrder.length - 1) {
+            const nextFlower = flowerOrder[currentIndex + 1];
+            setCurrentFlowerId(nextFlower);
+            setProgress(0);
+          }
+        },
+        isLast: flowerOrder.indexOf(currentFlowerId) === flowerOrder.length - 1,
       }}
     >
       {children}

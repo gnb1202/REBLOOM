@@ -1,4 +1,4 @@
-import { onAuthStateChanged, User } from 'firebase/auth';
+import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
 import React, { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 import { auth, getUserProfile, signInWithCustomId, signOutUser, signUpWithCustomId } from '../firebase.config';
 
@@ -22,7 +22,7 @@ interface UserProfile {
 }
 
 interface AuthContextType {
-  user: User | null;
+  user: FirebaseUser | null;
   userProfile: UserProfile | null;
   loading: boolean;
   signIn: (userId: string, password: string) => Promise<void>;
@@ -49,13 +49,13 @@ interface AuthProviderProps {
 }
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<FirebaseUser | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [firestoreListeners, setFirestoreListeners] = useState<Array<() => void>>([]);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+    const unsubscribe = onAuthStateChanged(auth, async (user: FirebaseUser | null) => {
       setLoading(true);
       setUser(user);
       

@@ -1,5 +1,5 @@
-import { useRouter } from 'expo-router';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useRouter } from 'expo-router';
 import { useExercise } from '../../context/ExerciseContext';
 
 export default function WorkoutPage() {
