@@ -274,7 +274,7 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
           />
 
           <View style={styles.bottomButtonContainer}>
-            <TouchableOpacity style={styles.bottomButton} onPress={() => router.push('/Travel/ExplorePage')}>
+            <TouchableOpacity style={styles.bottomButton} onPress={() => router.push('/Home_page/TravelLoadingPage')}>
               <Text style={styles.bottomButtonText}>Explore</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.bottomButton} onPress={() => router.push('/Exercise/Explain')}>
