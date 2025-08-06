@@ -14,12 +14,13 @@ import { useAuth } from '../../../context/AuthContext';
 import { getShopItems, getUserInventory, saveUserInventory } from '../../../firebase.config';
 
 import mysteryIcon from '../../../assets/images/Shop/Item.png';
-import chairImage from '../../../assets/images/furnitures/whiteroundchair.png';
-import tableImage from '../../../assets/images/furnitures/yellowstand.png';
 import mailbox_A_black from '../../../assets/images/furnitures/mailbox/mailbox_A_black.png';
 import mailbox_A_blackwhite from '../../../assets/images/furnitures/mailbox/mailbox_A_blackwhite.png';
 import mailbox_A_white from '../../../assets/images/furnitures/mailbox/mailbox_A_white.png';
 import signboard from '../../../assets/images/furnitures/signboard/Standingboard.png';
+
+import sparkleGif from '../../../assets/images/decoration/BlackSparkle.gif';
+import deco1Gif from '../../../assets/images/decoration/BlackDecoration.gif';
 
 
 import { useProgress } from '../../../context/ProgressContext';
@@ -29,14 +30,10 @@ const categories = ['Room', 'Furniture', 'Decoration'];
 // Default shop items (fallback if Firebase loading fails)
 const defaultShopItems = {
   'Furniture': [
-    { id: 'whiteroundchair', name: 'White Chair', image: chairImage, price: 150, category: 'Furniture' },
-    { id: 'yellowstand', name: 'Yellow Stand', image: tableImage, price: 200, category: 'Furniture' },
     { id: 'mailbox_A_black', name: 'Black Mailbox', image: mailbox_A_black, price: 180, category: 'Furniture' },
     { id: 'mailbox_A_blackwhite', name: 'Black & White Mailbox', image: mailbox_A_blackwhite, price: 180, category: 'Furniture' },
     { id: 'mailbox_A_white', name: 'White Mailbox', image: mailbox_A_white, price: 180, category: 'Furniture' },
     { id: 'signboard', name: 'Standing Signboard', image: signboard, price: 220, category: 'Furniture' },
-    { id: 'furniture_desk', name: 'Desk', image: mysteryIcon, price: 300, category: 'Furniture' },
-    { id: 'furniture_lamp', name: 'Lamp', image: mysteryIcon, price: 120, category: 'Furniture' },
   ],
   'Room': [
     { id: 'room_cozy', name: 'Cozy Room', image: mysteryIcon, price: 500, category: 'Room' },
@@ -44,10 +41,9 @@ const defaultShopItems = {
     { id: 'room_garden', name: 'Garden Room', image: mysteryIcon, price: 1000, category: 'Room' },
   ],
   'Decoration': [
-    { id: 'deco_frame', name: 'Frame', image: mysteryIcon, price: 100, category: 'Decoration' },
-    { id: 'deco_vase', name: 'Vase', image: mysteryIcon, price: 90, category: 'Decoration' },
-    { id: 'deco_clock', name: 'Clock', image: mysteryIcon, price: 180, category: 'Decoration' },
-  ]
+      { id: 'DecorationBackground1', name: 'Animated Deco 1', image: deco1Gif, price: 100, category: 'Decoration' },
+      { id: 'DecorationBackgroundSparkle', name: 'Sparkle Animation', image: sparkleGif, price: 90, category: 'Decoration' },
+    ]
 };
 
 export default function ShopPage() {

@@ -161,7 +161,7 @@ export default function Collection() {
           <Text style={styles.tab}>Furniture</Text>
         </TouchableOpacity>
         <TouchableOpacity onPress={() => router.push('/Menu/BadgeCollection')}>
-          <Text style={styles.tab}>Badge</Text>
+          <Text style={styles.tab}>Decoration</Text>
         </TouchableOpacity>
       </View>
 

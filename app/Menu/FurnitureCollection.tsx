@@ -11,26 +11,12 @@ import {
 } from 'react-native';
 import { useProgress } from '../../context/ProgressContext';
 
-import chair1 from '../../assets/images/furnitures/whiteroundchair.png';
-import stand1 from '../../assets/images/furnitures/yellowstand.png';
 import mailbox_A_black from '../../assets/images/furnitures/mailbox/mailbox_A_black.png';
 import mailbox_A_blackwhite from '../../assets/images/furnitures/mailbox/mailbox_A_blackwhite.png';
 import mailbox_A_white from '../../assets/images/furnitures/mailbox/mailbox_A_white.png';
 import signboard from '../../assets/images/furnitures/signboard/Standingboard.png';
 
 const furnitureList = [
-  {
-    id: 'whiteroundchair',
-    name: 'White Round Chair',
-    desc: 'Simple and sturdy chair',
-    image: chair1,
-  },
-  {
-    id: 'yellowstand',
-    name: 'Yellow Stand',
-    desc: 'Comfortable design stand',
-    image: stand1,
-  },
   {
     id: 'mailbox_A_black',
     name: 'Black Mailbox',
@@ -132,7 +118,7 @@ export default function FurnitureCollection() {
         </TouchableOpacity>
         <Text style={[styles.tab, styles.activeTab]}>Furniture</Text>
         <TouchableOpacity onPress={() => router.push('/Menu/BadgeCollection')}>
-          <Text style={styles.tab}>Badge</Text>
+          <Text style={styles.tab}>Decoration</Text>
         </TouchableOpacity>
       </View>
     </View>

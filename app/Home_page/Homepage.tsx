@@ -30,7 +30,7 @@ import mailbox_A_blackwhite from '../../assets/images/furnitures/mailbox/mailbox
 import mailbox_A_white from '../../assets/images/furnitures/mailbox/mailbox_A_white.png';
 import signboard from '../../assets/images/furnitures/signboard/Standingboard.png';
 
-import LetItSnow from '../../assets/images/animations/Backgroundsnow.gif';
+import LetItSnow from '../../assets/images/decoration/DecorationBackground1.gif';
 
 import { useProgress } from '../../context/ProgressContext';
 
@@ -164,19 +164,35 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
         />
 
         {/* 눈 내리는 GIF 오버레이 */}
+        // 홈화면 render 부분에 추가
         <Image
-          source={LetItSnow}
+          source={LetItSnow} // 왼쪽 GIF
           style={{
             position: 'absolute',
             left: 0,
             top: 0,
-            width: imageScaledWidth,
+            width: imageScaledWidth / 2,
             height: imageScaledHeight,
-            zIndex: 2, // 배경 위에, 가구/꽃 아래
-            pointerEvents: 'none', // 드래그/터치 방해 안함
+            zIndex: 2,
+            pointerEvents: 'none',
           }}
           resizeMode="cover"
         />
+        <Image
+          source={LetItSnow} // 오른쪽 GIF, 파일이 다르면 source만 바꾸면 됨
+          style={{
+            position: 'absolute',
+            left: imageScaledWidth / 2,
+            top: 0,
+            width: imageScaledWidth / 2,
+            height: imageScaledHeight,
+            zIndex: 2,
+            pointerEvents: 'none',
+          }}
+          resizeMode="cover"
+        />
+
+
 
         {/* 문 클릭 → 이동 */}
         <TouchableOpacity
