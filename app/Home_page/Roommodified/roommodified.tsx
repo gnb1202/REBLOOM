@@ -13,6 +13,7 @@ import {
   View,
 } from 'react-native';
 import { useProgress } from '../../../context/ProgressContext';
+import ToastMessage from '../../../components/ToastMessage';
 
 import Background1 from '../../../assets/images/HomeBackgroundImages/Backgroundlevel1.png';
 import Background2 from '../../../assets/images/HomeBackgroundImages/Backgroundlevel2.png';
@@ -68,6 +69,9 @@ export default function RoomModified() {
   const [furnitureItems, setFurnitureItems] = useState<{ x: number; y: number; id: string }[]>([]);
   const [selectedItemId, setSelectedItemId] = useState<null | string>(null);
   const [tempSelectedRoom, setTempSelectedRoom] = useState<string>('default');
+  const [toastVisible, setToastVisible] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+  const [toastType, setToastType] = useState<'success' | 'error'>('success');
 
   const containerRef = useRef(null);
 
@@ -122,21 +126,33 @@ export default function RoomModified() {
 
     if (selectedItemId) {
       if (selectedTab === 'Flower' && obtainedFlowers.includes(selectedItemId)) {
-        setFlowers([...flowers, { x: adjustedX, y: adjustedY, id: selectedItemId }]);
+        const newFlowers = [...flowers, { x: adjustedX, y: adjustedY, id: selectedItemId }];
+        setFlowers(newFlowers);
+        setPlacedFlowers(newFlowers);
         setSelectedItemId(null);
       } else if (selectedTab === 'Furniture' && obtainedFurniture.includes(selectedItemId)) {
-        setFurnitureItems([...furnitureItems, { x: adjustedX, y: adjustedY, id: selectedItemId }]);
+        const newFurniture = [...furnitureItems, { x: adjustedX, y: adjustedY, id: selectedItemId }];
+        setFurnitureItems(newFurniture);
+        setPlacedFurniture(newFurniture);
         setSelectedItemId(null);
       }
     }
   };
 
   const handleSave = async () => {
-    await setPlacedFlowers(flowers);
-    await setPlacedFurniture(furnitureItems);
-    await setSelectedRoom(tempSelectedRoom);
-    Alert.alert('Save!');
-    router.push('/Home_page/Homepage');
+    try {
+      await setSelectedRoom(tempSelectedRoom);
+      setToastMessage('저장 완료!');
+      setToastType('success');
+      setToastVisible(true);
+      setTimeout(() => {
+        router.push('/Home_page/Homepage');
+      }, 2500);
+    } catch (error) {
+      setToastMessage('저장 실패!');
+      setToastType('error');
+      setToastVisible(true);
+    }
   };
 
   const backgroundImage = roomList.find(bg => bg.id === tempSelectedRoom)?.image || BaseBackground;
@@ -169,6 +185,7 @@ export default function RoomModified() {
                     const updated = [...flowers];
                     updated.splice(index, 1);
                     setFlowers(updated);
+                    setPlacedFlowers(updated);
                   }}
                   style={[styles.placedImage, { left: item.x, top: item.y }]}
                 >
@@ -187,6 +204,7 @@ export default function RoomModified() {
                     const updated = [...furnitureItems];
                     updated.splice(index, 1);
                     setFurnitureItems(updated);
+                    setPlacedFurniture(updated);
                   }}
                   style={[styles.placedImage, { left: item.x, top: item.y }]}
                 >
@@ -260,6 +278,13 @@ export default function RoomModified() {
               ))}
         </ScrollView>
       </View>
+      
+      <ToastMessage
+        message={toastMessage}
+        type={toastType}
+        visible={toastVisible}
+        onHide={() => setToastVisible(false)}
+      />
     </View>
   );
 }

@@ -1,16 +1,16 @@
-import React, { useRef, useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Platform,
-  BackHandler,
-} from 'react-native';
-import { useRouter } from 'expo-router';
-import { CameraView, useCameraPermissions } from 'expo-camera';
-import { Video } from 'expo-av';
 import Slider from '@react-native-community/slider';
+import { ResizeMode, Video } from 'expo-av';
+import { CameraView, useCameraPermissions } from 'expo-camera';
+import { useRouter } from 'expo-router';
+import { useEffect, useRef, useState } from 'react';
+import {
+  BackHandler,
+  Platform,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 
 export default function ExerciseVideoPage() {
   const router = useRouter();
@@ -91,7 +91,7 @@ export default function ExerciseVideoPage() {
           ref={videoRef}
           source={require('../../assets/images/animations/demo.mp4')}
           style={StyleSheet.absoluteFill}
-          resizeMode="cover"
+          resizeMode={ResizeMode.COVER}
           shouldPlay
           isLooping
           useNativeControls={false}

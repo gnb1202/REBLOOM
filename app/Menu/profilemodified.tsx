@@ -1,6 +1,6 @@
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
     Alert,
     Image,
@@ -12,15 +12,30 @@ import {
     View,
 } from 'react-native';
 import { useProgress } from '../../context/ProgressContext';
+import { useAuth } from '../../context/AuthContext';
+import { updateUserProfile } from '../../firebase.config';
 
 export default function ProfileModified() {
   const router = useRouter();
   const { completedChallenges, selectedBadges, setSelectedBadges } = useProgress();
+  const { user, userProfile, refreshProfile } = useAuth();
 
   const [image, setImage] = useState<string | null>(null);
+  const [bio, setBio] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [selected, setSelected] = useState<string[]>(selectedBadges || []);
+  const [saving, setSaving] = useState(false);
+
+  // 사용자 프로필 데이터로 초기값 설정
+  useEffect(() => {
+    if (userProfile) {
+      setBio(userProfile.profile?.bio || '');
+      if (userProfile.profile?.avatar) {
+        setImage(userProfile.profile.avatar);
+      }
+    }
+  }, [userProfile]);
 
   const pickImage = async () => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -49,7 +64,13 @@ export default function ProfileModified() {
     }
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
+    if (!user) {
+      Alert.alert('Error', 'User not authenticated.');
+      return;
+    }
+
+
     if (!password || !confirmPassword) {
       Alert.alert('Notice', 'Please enter your password.');
       return;
@@ -59,9 +80,32 @@ export default function ProfileModified() {
       return;
     }
 
-    setSelectedBadges(selected); // ✅ 선택한 뱃지 저장
-    Alert.alert('Success', 'Profile information has been saved.');
-    router.back();
+    setSaving(true);
+
+    try {
+      // Firebase에 프로필 업데이트
+      const profileUpdates = {
+        profile: {
+          bio: bio.trim(),
+          selectedBadge: selected[0] || null, // 첫 번째 선택한 뱃지를 대표 뱃지로 설정
+          avatar: image || null,
+        }
+      };
+
+      await updateUserProfile(user.uid, profileUpdates);
+      setSelectedBadges(selected); // 로컬 상태도 업데이트
+      
+      // 프로필 새로고침
+      await refreshProfile();
+
+      Alert.alert('Success', 'Profile information has been saved.');
+      router.back();
+    } catch (error) {
+      console.error('Profile update error:', error);
+      Alert.alert('Error', 'Failed to save profile. Please try again.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const badgeImages = {
@@ -97,19 +141,29 @@ export default function ProfileModified() {
 
         <View style={styles.profileRight}>
           <View style={styles.nicknameRow}>
-            <Text style={styles.nickname}>Nickname</Text>
-            <View style={styles.badgeRow}>
-              {selected.map(id => (
-                <Image
-                  key={id}
-                  source={badgeImages[id]}
-                  style={styles.badgeIcon}
-                />
-              ))}
-            </View>
+            <Text style={styles.nicknameLabel}>Nickname:</Text>
+            <Text style={styles.nicknameDisplay}>
+              {userProfile?.profile?.nickname || userProfile?.nickname || 'No nickname set'}
+            </Text>
           </View>
-          <Text style={styles.bio}>Self Introduction</Text>
-          <Text style={styles.bio}>Tell us about yourself</Text>
+          <View style={styles.badgeRow}>
+            {selected.map(id => (
+              <Image
+                key={id}
+                source={badgeImages[id]}
+                style={styles.badgeIcon}
+              />
+            ))}
+          </View>
+          <TextInput
+            style={styles.bioInput}
+            value={bio}
+            onChangeText={setBio}
+            placeholder="Tell us about yourself"
+            multiline
+            numberOfLines={2}
+            maxLength={100}
+          />
         </View>
       </View>
 
@@ -147,8 +201,12 @@ export default function ProfileModified() {
       </View>
 
       {/* 저장 버튼 */}
-      <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
-        <Text style={styles.saveText}>Save</Text>
+      <TouchableOpacity 
+        style={[styles.saveButton, saving && styles.saveButtonDisabled]} 
+        onPress={handleSave}
+        disabled={saving}
+      >
+        <Text style={styles.saveText}>{saving ? 'Saving...' : 'Save'}</Text>
       </TouchableOpacity>
     </ScrollView>
   );
@@ -207,10 +265,17 @@ const styles = StyleSheet.create({
     marginBottom: 6,
     flexWrap: 'wrap',
   },
-  nickname: {
-    fontSize: 16,
+  nicknameLabel: {
+    fontSize: 14,
     fontWeight: 'bold',
     marginRight: 6,
+    width: 70,
+  },
+  nicknameDisplay: {
+    flex: 1,
+    fontSize: 14,
+    color: '#333',
+    fontWeight: '600',
   },
   badgeRow: {
     flexDirection: 'row',
@@ -221,10 +286,16 @@ const styles = StyleSheet.create({
     height: 20,
     marginLeft: 4,
   },
-  bio: {
+  bioInput: {
     fontSize: 12,
     color: '#333',
-    textDecorationLine: 'underline',
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 4,
+    padding: 8,
+    backgroundColor: '#fff',
+    marginTop: 6,
+    textAlignVertical: 'top',
   },
   input: {
     width: '85%',
@@ -261,14 +332,18 @@ const styles = StyleSheet.create({
     height: 40,
   },
   saveButton: {
-    backgroundColor: '#ddd',
+    backgroundColor: '#5C7BEE',
     paddingVertical: 12,
     paddingHorizontal: 50,
     borderRadius: 6,
     marginTop: 40,
   },
+  saveButtonDisabled: {
+    backgroundColor: '#ddd',
+  },
   saveText: {
     fontSize: 16,
     fontWeight: 'bold',
+    color: '#fff',
   },
 });
