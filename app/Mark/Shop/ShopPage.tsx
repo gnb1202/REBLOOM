@@ -16,6 +16,11 @@ import { getShopItems, getUserInventory, saveUserInventory } from '../../../fire
 import mysteryIcon from '../../../assets/images/Shop/Item.png';
 import chairImage from '../../../assets/images/furnitures/whiteroundchair.png';
 import tableImage from '../../../assets/images/furnitures/yellowstand.png';
+import mailbox_A_black from '../../../assets/images/furnitures/mailbox/mailbox_A_black.png';
+import mailbox_A_blackwhite from '../../../assets/images/furnitures/mailbox/mailbox_A_blackwhite.png';
+import mailbox_A_white from '../../../assets/images/furnitures/mailbox/mailbox_A_white.png';
+import signboard from '../../../assets/images/furnitures/signboard/Standingboard.png';
+
 
 import { useProgress } from '../../../context/ProgressContext';
 
@@ -26,6 +31,10 @@ const defaultShopItems = {
   'Furniture': [
     { id: 'whiteroundchair', name: 'White Chair', image: chairImage, price: 150, category: 'Furniture' },
     { id: 'yellowstand', name: 'Yellow Stand', image: tableImage, price: 200, category: 'Furniture' },
+    { id: 'mailbox_A_black', name: 'Black Mailbox', image: mailbox_A_black, price: 180, category: 'Furniture' },
+    { id: 'mailbox_A_blackwhite', name: 'Black & White Mailbox', image: mailbox_A_blackwhite, price: 180, category: 'Furniture' },
+    { id: 'mailbox_A_white', name: 'White Mailbox', image: mailbox_A_white, price: 180, category: 'Furniture' },
+    { id: 'signboard', name: 'Standing Signboard', image: signboard, price: 220, category: 'Furniture' },
     { id: 'furniture_desk', name: 'Desk', image: mysteryIcon, price: 300, category: 'Furniture' },
     { id: 'furniture_lamp', name: 'Lamp', image: mysteryIcon, price: 120, category: 'Furniture' },
   ],

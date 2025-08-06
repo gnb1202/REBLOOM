@@ -22,6 +22,10 @@ import BaseBackground from '../../../assets/images/HomeBackgroundImages/BasicHom
 import ModifiedButton from '../../../assets/images/Modifiy/modifiedbutton.png';
 import ChairIcon from '../../../assets/images/furnitures/whiteroundchair.png';
 import StandIcon from '../../../assets/images/furnitures/yellowstand.png';
+import mailbox_A_black from '../../../assets/images/furnitures/mailbox/mailbox_A_black.png';
+import mailbox_A_blackwhite from '../../../assets/images/furnitures/mailbox/mailbox_A_blackwhite.png';
+import mailbox_A_white from '../../../assets/images/furnitures/mailbox/mailbox_A_white.png';
+import signboard from '../../../assets/images/furnitures/signboard/Standingboard.png';
 
 import daisy from '../../../assets/images/flowers/Display/daisy_display.png';
 import hydrangea from '../../../assets/images/flowers/Display/hydrangea_display.png';
@@ -46,6 +50,10 @@ const flowerList = [
 const furnitureList = [
   { id: 'whiteroundchair', icon: ChairIcon },
   { id: 'yellowstand', icon: StandIcon },
+  { id: 'mailbox_A_black', icon: mailbox_A_black },
+  { id: 'mailbox_A_blackwhite', icon: mailbox_A_blackwhite },
+  { id: 'mailbox_A_white', icon: mailbox_A_white },
+  { id: 'signboard', icon: signboard },
 ];
 
 const roomList = [
@@ -208,7 +216,7 @@ export default function RoomModified() {
                   }}
                   style={[styles.placedImage, { left: item.x, top: item.y }]}
                 >
-                  <Image source={furnitureData.icon} style={{ width: 60, height: 60 }} />
+                  <Image source={furnitureData.icon} style={{ width: 120, height: 120 }} />
                 </TouchableOpacity>
               );
             })}

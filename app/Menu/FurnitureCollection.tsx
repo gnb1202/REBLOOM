@@ -13,6 +13,10 @@ import { useProgress } from '../../context/ProgressContext';
 
 import chair1 from '../../assets/images/furnitures/whiteroundchair.png';
 import stand1 from '../../assets/images/furnitures/yellowstand.png';
+import mailbox_A_black from '../../assets/images/furnitures/mailbox/mailbox_A_black.png';
+import mailbox_A_blackwhite from '../../assets/images/furnitures/mailbox/mailbox_A_blackwhite.png';
+import mailbox_A_white from '../../assets/images/furnitures/mailbox/mailbox_A_white.png';
+import signboard from '../../assets/images/furnitures/signboard/Standingboard.png';
 
 const furnitureList = [
   {
@@ -27,7 +31,32 @@ const furnitureList = [
     desc: 'Comfortable design stand',
     image: stand1,
   },
+  {
+    id: 'mailbox_A_black',
+    name: 'Black Mailbox',
+    desc: 'A classic black mailbox for your room.',
+    image: mailbox_A_black,
+  },
+  {
+    id: 'mailbox_A_blackwhite',
+    name: 'Black & White Mailbox',
+    desc: 'A stylish black and white mailbox.',
+    image: mailbox_A_blackwhite,
+  },
+  {
+    id: 'mailbox_A_white',
+    name: 'White Mailbox',
+    desc: 'A modern white mailbox for clean interiors.',
+    image: mailbox_A_white,
+  },
+  {
+    id: 'signboard',
+    name: 'Standing Signboard',
+    desc: 'A decorative standing signboard for your space.',
+    image: signboard,
+  },
 ];
+
 
 export default function FurnitureCollection() {
   const router = useRouter();

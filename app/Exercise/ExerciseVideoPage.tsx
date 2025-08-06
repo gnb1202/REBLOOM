@@ -70,14 +70,14 @@ export default function ExerciseVideoPage() {
     return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
   };
 
-  if (!permission) return <Text>카메라 권한 요청 중...</Text>;
+  if (!permission) return <Text>Requesting camera permissions...</Text>;
 
   if (!permission.granted) {
     return (
       <View style={styles.container}>
-        <Text style={styles.message}>카메라 권한이 필요합니다.</Text>
+        <Text style={styles.message}>Camera permission is required.</Text>
         <TouchableOpacity onPress={requestPermission} style={styles.endButton}>
-          <Text style={styles.endButtonText}>권한 허용</Text>
+          <Text style={styles.endButtonText}>Allow permission</Text>
         </TouchableOpacity>
       </View>
     );
@@ -98,7 +98,7 @@ export default function ExerciseVideoPage() {
           onPlaybackStatusUpdate={status => setVideoStatus(status)}
         />
         <View style={styles.previewOverlay}>
-          <Text style={styles.previewText}>시범영상</Text>
+          <Text style={styles.previewText}>demonstration video</Text>
         </View>
 
         {/* ✅ 슬라이더 or 시간 */}
@@ -129,10 +129,10 @@ export default function ExerciseVideoPage() {
         <View style={styles.mainVideoBox}>
           <CameraView style={StyleSheet.absoluteFill} facing={cameraType} />
           <View style={styles.overlay}>
-            <Text style={styles.mainText}>본 영상</Text>
-            <Text style={styles.subInfo}>본 영상 화면에서{"\n"}횟수 / 자세정확도 등 표시</Text>
+            <Text style={styles.mainText}>video</Text>
+            <Text style={styles.subInfo}>{"\n"}number of times / posture accuracy, etc</Text>
             <TouchableOpacity onPress={toggleCamera}>
-              <Text style={styles.toggleButton}>🔄 전면/후면 전환</Text>
+              <Text style={styles.toggleButton}>Front/Back Transition</Text>
             </TouchableOpacity>
           </View>
         </View>

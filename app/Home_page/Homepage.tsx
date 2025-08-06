@@ -25,6 +25,11 @@ import ChairIcon from '../../assets/images/furnitures/whiteroundchair.png';
 import StandIcon from '../../assets/images/furnitures/yellowstand.png';
 import ProfileCard from '../../components/ProfileCard';
 import ProfileModal from '../../components/ProfileModal';
+import mailbox_A_black from '../../assets/images/furnitures/mailbox/mailbox_A_black.png';
+import mailbox_A_blackwhite from '../../assets/images/furnitures/mailbox/mailbox_A_blackwhite.png';
+import mailbox_A_white from '../../assets/images/furnitures/mailbox/mailbox_A_white.png';
+import signboard from '../../assets/images/furnitures/signboard/Standingboard.png';
+
 import { useProgress } from '../../context/ProgressContext';
 
 // 🌸 꽃 이미지 import
@@ -43,7 +48,12 @@ const ORIGINAL_HEIGHT = 1518;
 const furnitureList = [
   { id: 'whiteroundchair', overlay: ChairIcon, style: { width: 150, height: 150 } },
   { id: 'yellowstand', overlay: StandIcon, style: { width: 200, height: 250 } },
+  { id: 'mailbox_A_black', overlay: mailbox_A_black, style: { width: 120, height: 120 } },
+  { id: 'mailbox_A_blackwhite', overlay: mailbox_A_blackwhite, style: { width: 120, height: 120 } },
+  { id: 'mailbox_A_white', overlay: mailbox_A_white, style: { width: 120, height: 120 } },
+  { id: 'signboard', overlay: signboard, style: { width: 160, height: 140 } },
 ];
+
 
 const flowerList = [
   { id: 'daisy', image: daisy },
