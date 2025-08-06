@@ -5,6 +5,7 @@ import {
   Alert,
   Dimensions,
   Image,
+  Modal,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -150,7 +151,6 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
           resizeMode="cover"
         />
 
-        {/* 왼쪽 분홍 문 클릭 → Explore로 이동 */}
         <TouchableOpacity
           onPress={() => router.push('/Home_page/TravelLoadingPage')}
           style={{
@@ -165,7 +165,6 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
           <View style={{ flex: 1 }} />
         </TouchableOpacity>
 
-        {/* 오른쪽 문 클릭 → Exercise로 이동 */}
         <TouchableOpacity
           onPress={() => router.push('/Home_page/ExerciseLoadingPage')}
           style={{
@@ -180,8 +179,6 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
           <View style={{ flex: 1 }} />
         </TouchableOpacity>
 
-
-        {/* 가구 렌더링 */}
         {placedFurniture.map((item, index) => {
           const data = furnitureList.find(f => f.id === item.id);
           if (!data) return null;
@@ -195,7 +192,6 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
           );
         })}
 
-        {/* 꽃 렌더링 */}
         {placedFlowers.map((item, index) => {
           const flowerData = flowerList.find(f => f.id === item.id);
           if (!flowerData) return null;
@@ -225,8 +221,21 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
             resizeMode="contain"
           />
         </TouchableOpacity>
-        {showDropdown && (
-          <View style={styles.dropdownMenu}>
+      </View>
+
+      {/* 드롭다운 메뉴를 Modal로 구현 */}
+      <Modal
+        visible={showDropdown}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowDropdown(false)}
+      >
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPressOut={() => setShowDropdown(false)}
+        >
+          <View style={styles.dropdownMenuModal}>
             <TouchableOpacity onPress={() => { setShowDropdown(false); setShowShop(true); }}>
               <Text style={styles.menuItem}>Shop</Text>
             </TouchableOpacity>
@@ -243,8 +252,8 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
               <Text style={styles.menuItem}>Main Menu</Text>
             </TouchableOpacity>
           </View>
-        )}
-      </View>
+        </TouchableOpacity>
+      </Modal>
 
       {!isRoomOnly && (
         <>
@@ -314,10 +323,14 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: 'bold',
   },
-  dropdownMenu: {
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'transparent',
+  },
+  dropdownMenuModal: {
     position: 'absolute',
-    top: 50,
-    right: 0,
+    top: 100,
+    right: 20,
     backgroundColor: '#fff',
     borderRadius: 8,
     shadowColor: '#000',
@@ -325,14 +338,14 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 4,
     elevation: 5,
-    zIndex: 20,
     padding: 10,
+    zIndex: 9999,
   },
   menuItem: {
     paddingVertical: 8,
     paddingHorizontal: 12,
     fontSize: 14,
     color: '#000',
-    fontWeight:'bold',
+    fontWeight: 'bold',
   },
 });
