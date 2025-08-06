@@ -1,54 +1,65 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
 import { useRouter } from 'expo-router';
+
+const { width } = Dimensions.get('window');
 
 export default function Mainmenu() {
   const router = useRouter();
 
+  // 메뉴 정보 리스트
+  const menuList = [
+    {
+      title: 'Edit Profile',
+      color: ['#E5F7FF', '#f57c00'],
+      onPress: () => router.push('/Menu/profilemodified'),
+    },
+    {
+      title: 'Health Report',
+      color: ['#E5F7FF', '#388e3c'],
+      onPress: () => router.push('/Menu/Report'),
+    },
+    {
+      title: 'Flower Management',
+      color: ['#E5F7FF', '#7b1fa2'],
+      onPress: () => router.push('/Menu/Flowermanage'),
+    },
+    {
+      title: 'Collection View',
+      color: ['#E5F7FF', '#0097a7'],
+      onPress: () => router.push('/Menu/Collection'),
+    },
+  ];
+
   return (
     <View style={styles.container}>
-      {/* 🔙 뒤로가기 버튼 */}
-      <TouchableOpacity
-        style={styles.backButton}
-        onPress={() => router.replace('/Home_page/Homepage')}
-      >
-        <Text style={styles.backButtonText}>← Back</Text>
-      </TouchableOpacity>
-
-      <Text style={styles.header}>Main Menu</Text>
-
-      <TouchableOpacity
-        style={[styles.menuButton, { borderColor: '#FFA500' }]}
-        onPress={() => router.push('/Menu/profilemodified')}
-      >
-        <Text>Edit Profile</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        style={[styles.menuButton, { borderColor: '#32CD32' }]}
-        onPress={() => router.push('/Menu/Report')}
-      >
-        <Text>Health Report</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        style={[styles.menuButton, { borderColor: '#9370DB' }]}
-        onPress={() => router.push('/Menu/Flowermanage')}
-      >
-        <Text>Flower Management</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        style={[styles.menuButton, { borderColor: '#00CED1' }]}
-        onPress={() => router.push('/Menu/Collection')}
-      >
-        <Text>Collection View</Text>
-      </TouchableOpacity>
-
-      <View style={styles.bottomBar}>
-        <Text style={styles.bottomText}>Explore</Text>
-        <Text style={styles.bottomText}>Exercise</Text>
+      {/* 상단바 */}
+      <View style={styles.headerBar}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => router.replace('/Home_page/Homepage')}
+        >
+          <Text style={styles.backButtonText}>←</Text>
+        </TouchableOpacity>
+        <Text style={styles.header}>Main Menu</Text>
       </View>
+
+      {/* 메뉴 리스트 */}
+      {menuList.map((item) => (
+        <TouchableOpacity
+          key={item.title}
+          style={[
+            styles.menuButton,
+            { borderColor: item.color[0] }
+          ]}
+          onPress={item.onPress}
+          activeOpacity={0.85}
+        >
+          <Text style={[styles.menuTitle, { color: item.color[1] }]}>
+            {item.title}
+          </Text>
+        </TouchableOpacity>
+      ))}
     </View>
   );
 }
@@ -56,45 +67,53 @@ export default function Mainmenu() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: 60,
+    paddingTop: 80,
     alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: '#FFFFFF',
+  },
+  headerBar: {
+    width: '100%',
+    height: 42,
+    marginBottom: 38,
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
   },
   backButton: {
     position: 'absolute',
-    top: 20,
-    left: 20,
-    padding: 10,
+    left: 60,
+    top: 0,
+    padding: 6,
     zIndex: 10,
   },
   backButtonText: {
-    fontSize: 16,
-    color: '#007AFF',
+    fontSize: 25,
+    color: '#4a90e2',
+    fontWeight: '500',
   },
   header: {
-    fontSize: 18,
+    fontSize: 30,
     fontWeight: 'bold',
-    marginBottom: 24,
+    color: '#333',
+    letterSpacing: 1,
+    textAlign: 'center',
+    width: '100%',
   },
   menuButton: {
-    width: '80%',
-    paddingVertical: 14,
-    borderWidth: 2,
-    borderRadius: 10,
+    width: width * 0.84,
+    paddingVertical: 18,
+    paddingHorizontal: 20,
+    borderWidth: 2.5,
+    borderRadius: 16,
+    backgroundColor: '#fff',
+    marginVertical: 10,
     alignItems: 'center',
-    marginVertical: 8,
+    justifyContent: 'center',
+    elevation: 3,
   },
-  bottomBar: {
-    position: 'absolute',
-    bottom: 0,
-    width: '100%',
-    backgroundColor: '#5C7BEE',
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingVertical: 12,
-  },
-  bottomText: {
-    color: '#fff',
-    fontSize: 14,
+  menuTitle: {
+    fontSize: 19,
+    fontWeight: '700',
+    letterSpacing: 0.5,
   },
 });

@@ -128,6 +128,7 @@ export default function Flowermanage() {
           <Text style={styles.back}>{'←'}</Text>
         </TouchableOpacity>
         <Text style={styles.title}>Flower Management</Text>
+        <View style={{ width: 32 }} /> {/* 오른쪽 여백용 View(타이틀 중앙정렬 유지) */}
       </View>
 
       <View style={styles.progressContainer}>
@@ -153,25 +154,30 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
     position: 'absolute',
     top: 40,
     left: 16,
     right: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
     paddingBottom: 10,
     borderBottomWidth: 1,
     borderBottomColor: '#000',
   },
   backButton: {
     paddingRight: 10,
+    minWidth: 32, // 최소 너비로 타이틀 중앙정렬 유지
+    alignItems: 'flex-start',
   },
   back: {
     fontSize: 20,
   },
   title: {
+    flex: 1,
     fontSize: 18,
     fontWeight: 'bold',
+    textAlign: 'center',
   },
   progressContainer: {
     width: '80%',

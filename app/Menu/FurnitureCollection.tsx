@@ -42,10 +42,11 @@ export default function FurnitureCollection() {
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
+        <TouchableOpacity onPress={() => router.replace('/Menu/Menupage')}>
           <Text style={styles.back}>{'\u2190'}</Text>
         </TouchableOpacity>
         <Text style={styles.title}>Furniture Collection</Text>
+        <View style={{ width: 32 }} /> {/* 오른쪽 여백 */}
       </View>
 
       {/* Display only obtained furniture */}
@@ -121,7 +122,12 @@ const styles = StyleSheet.create({
     borderBottomColor: '#000',
   },
   back: { fontSize: 22, marginRight: 10 },
-  title: { fontSize: 18, fontWeight: 'bold' },
+  title: {
+    flex: 1,
+    fontSize: 18,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',

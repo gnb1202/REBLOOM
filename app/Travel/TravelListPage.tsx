@@ -279,7 +279,7 @@ export default function ExplorePage() {
     <View style={styles.container}>
       {/* 상단 바 */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
+        <TouchableOpacity onPress={() => router.replace('/Home_page/Homepage')}>
           <Text style={styles.back}>{'<'}</Text>
         </TouchableOpacity>
         <Text style={styles.title}>Explore</Text>

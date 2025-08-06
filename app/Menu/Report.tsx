@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useRouter } from 'expo-router';
 import { useAuth } from '../../context/AuthContext';
 import { generateWeeklyReport, getWeeklyReport } from '../../firebase.config';
 
 export default function Report() {
+  const router = useRouter();
   const { user } = useAuth();
   const [reportData, setReportData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -18,14 +20,11 @@ export default function Report() {
       setLoading(false);
       return;
     }
-
     try {
-      // 먼저 기존 리포트가 있는지 확인
       const existingReport = await getWeeklyReport(user.uid);
       if (existingReport) {
         setReportData(existingReport);
       } else {
-        // 리포트가 없으면 자동 생성
         await generateNewReport();
       }
     } catch (error) {
@@ -38,7 +37,6 @@ export default function Report() {
 
   const generateNewReport = async () => {
     if (!user) return;
-
     setGenerating(true);
     try {
       const newReport = await generateWeeklyReport(user.uid);
@@ -76,8 +74,8 @@ export default function Report() {
     return (
       <View style={[styles.container, styles.centerContent]}>
         <Text style={styles.noDataText}>No report data available.</Text>
-        <TouchableOpacity 
-          style={styles.generateButton} 
+        <TouchableOpacity
+          style={styles.generateButton}
           onPress={generateNewReport}
           disabled={generating}
         >
@@ -92,78 +90,87 @@ export default function Report() {
   }
 
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Weekly Health Report 📊</Text>
-        <Text style={styles.dateRange}>
-          {formatDate(reportData.weekStart)} - {formatDate(reportData.weekEnd)}
-        </Text>
-        <TouchableOpacity 
-          style={styles.refreshButton} 
-          onPress={generateNewReport}
-          disabled={generating}
-        >
-          <Text style={styles.refreshButtonText}>
-            {generating ? 'Generating...' : 'Refresh'}
+    <View style={{ flex: 1 }}>
+      <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 90 }}>
+        <View style={styles.header}>
+          <Text style={styles.title}>Weekly Health Report 📊</Text>
+          <Text style={styles.dateRange}>
+            {formatDate(reportData.weekStart)} - {formatDate(reportData.weekEnd)}
           </Text>
-        </TouchableOpacity>
-      </View>
+          <TouchableOpacity
+            style={styles.refreshButton}
+            onPress={generateNewReport}
+            disabled={generating}
+          >
+            <Text style={styles.refreshButtonText}>
+              {generating ? 'Generating...' : 'Refresh'}
+            </Text>
+          </TouchableOpacity>
+        </View>
 
-      {/* Health Check Status */}
-      <View style={styles.section}>
-        <Text style={styles.subtitle}>💊 Health Check Status</Text>
-        <Text style={styles.text}>Total Check-ins: {reportData.healthMetrics.totalCheckins} times</Text>
-        <Text style={styles.text}>Average Condition: {reportData.healthMetrics.averageCondition}/5</Text>
-        <Text style={styles.text}>Average Swelling: {reportData.healthMetrics.averageSwelling}/5</Text>
-        
-        {reportData.healthMetrics.commonPainAreas.length > 0 && (
-          <View style={styles.subSection}>
-            <Text style={styles.subTitle}>Main Pain Areas:</Text>
-            {reportData.healthMetrics.commonPainAreas.map((item: any, index: number) => (
-              <Text key={index} style={styles.text}>• {item.area} ({item.count} times)</Text>
+        {/* Health Check Status */}
+        <View style={styles.section}>
+          <Text style={styles.subtitle}>💊 Health Check Status</Text>
+          <Text style={styles.text}>Total Check-ins: {reportData.healthMetrics.totalCheckins} times</Text>
+          <Text style={styles.text}>Average Condition: {reportData.healthMetrics.averageCondition}/5</Text>
+          <Text style={styles.text}>Average Swelling: {reportData.healthMetrics.averageSwelling}/5</Text>
+
+          {reportData.healthMetrics.commonPainAreas.length > 0 && (
+            <View style={styles.subSection}>
+              <Text style={styles.subTitle}>Main Pain Areas:</Text>
+              {reportData.healthMetrics.commonPainAreas.map((item: any, index: number) => (
+                <Text key={index} style={styles.text}>• {item.area} ({item.count} times)</Text>
+              ))}
+            </View>
+          )}
+        </View>
+
+        {/* Exercise Performance */}
+        <View style={styles.section}>
+          <Text style={styles.subtitle}>💪 Exercise Performance</Text>
+          <Text style={styles.text}>Total Exercises: {reportData.exerciseMetrics.totalExercises} times</Text>
+          <Text style={styles.text}>Total Exercise Time: {formatDuration(reportData.exerciseMetrics.totalDuration)}</Text>
+          <Text style={styles.text}>Exercise Completion Rate: {reportData.exerciseMetrics.completionRate}%</Text>
+          <Text style={styles.text}>Average Satisfaction: {reportData.exerciseMetrics.averageFeedback}/5</Text>
+        </View>
+
+        {/* Game Progress */}
+        <View style={styles.section}>
+          <Text style={styles.subtitle}>🎮 Game Progress</Text>
+          <Text style={styles.text}>Current Level: {reportData.gameProgress.currentLevel}</Text>
+          <Text style={styles.text}>Coins Owned: {reportData.gameProgress.totalCurrency} coins</Text>
+          <Text style={styles.text}>Total Exercises: {reportData.gameProgress.totalExercises} times</Text>
+          <Text style={styles.text}>Consecutive Exercises: {reportData.gameProgress.consecutiveExercises} times</Text>
+        </View>
+
+        {/* Key Achievements */}
+        {reportData.achievements.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.subtitle}>🏆 Key Achievements</Text>
+            {reportData.achievements.map((achievement: string, index: number) => (
+              <Text key={index} style={styles.achievementText}>• {achievement}</Text>
             ))}
           </View>
         )}
-      </View>
 
-      {/* Exercise Performance */}
-      <View style={styles.section}>
-        <Text style={styles.subtitle}>💪 Exercise Performance</Text>
-        <Text style={styles.text}>Total Exercises: {reportData.exerciseMetrics.totalExercises} times</Text>
-        <Text style={styles.text}>Total Exercise Time: {formatDuration(reportData.exerciseMetrics.totalDuration)}</Text>
-        <Text style={styles.text}>Exercise Completion Rate: {reportData.exerciseMetrics.completionRate}%</Text>
-        <Text style={styles.text}>Average Satisfaction: {reportData.exerciseMetrics.averageFeedback}/5</Text>
-      </View>
-
-      {/* Game Progress */}
-      <View style={styles.section}>
-        <Text style={styles.subtitle}>🎮 Game Progress</Text>
-        <Text style={styles.text}>Current Level: {reportData.gameProgress.currentLevel}</Text>
-        <Text style={styles.text}>Coins Owned: {reportData.gameProgress.totalCurrency} coins</Text>
-        <Text style={styles.text}>Total Exercises: {reportData.gameProgress.totalExercises} times</Text>
-        <Text style={styles.text}>Consecutive Exercises: {reportData.gameProgress.consecutiveExercises} times</Text>
-      </View>
-
-      {/* Key Achievements */}
-      {reportData.achievements.length > 0 && (
-        <View style={styles.section}>
-          <Text style={styles.subtitle}>🏆 Key Achievements</Text>
-          {reportData.achievements.map((achievement: string, index: number) => (
-            <Text key={index} style={styles.achievementText}>• {achievement}</Text>
-          ))}
-        </View>
-      )}
-
-      {/* Improvement Recommendations */}
-      {reportData.recommendations.length > 0 && (
-        <View style={styles.section}>
-          <Text style={styles.subtitle}>💡 Improvement Recommendations</Text>
-          {reportData.recommendations.map((recommendation: string, index: number) => (
-            <Text key={index} style={styles.recommendationText}>• {recommendation}</Text>
-          ))}
-        </View>
-      )}
-    </ScrollView>
+        {/* Improvement Recommendations */}
+        {reportData.recommendations.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.subtitle}>💡 Improvement Recommendations</Text>
+            {reportData.recommendations.map((recommendation: string, index: number) => (
+              <Text key={index} style={styles.recommendationText}>• {recommendation}</Text>
+            ))}
+          </View>
+        )}
+      </ScrollView>
+      {/* Check 버튼 (하단 고정) */}
+      <TouchableOpacity
+        style={styles.checkButton}
+        onPress={() => router.push('/Menu/Menupage')}
+      >
+        <Text style={styles.checkButtonText}>Check</Text>
+      </TouchableOpacity>
+    </View>
   );
 }
 
@@ -275,5 +282,23 @@ const styles = StyleSheet.create({
     color: '#FF6B35',
     marginBottom: 4,
     lineHeight: 20,
+  },
+  checkButton: {
+    position: 'absolute',
+    bottom: 32,
+    left: 32,
+    right: 32,
+    backgroundColor: '#3F5C45',
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 13,
+    elevation: 4,
+  },
+  checkButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+    letterSpacing: 1.2,
   },
 });
