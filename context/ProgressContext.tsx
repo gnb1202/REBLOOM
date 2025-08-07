@@ -58,6 +58,8 @@ type ProgressContextType = {
   placedDecorations: { x: number; y: number; id: string }[];
   setPlacedDecorations: (items: { x: number; y: number; id: string }[]) => void;
   setPlacedDecorationsLocal: (items: { x: number; y: number; id: string }[]) => void;
+  selectedDecoration: string | null;
+  setSelectedDecoration: (id: string | null) => void
 };
 
 const defaultProgressContext: ProgressContextType = {
@@ -99,6 +101,8 @@ const defaultProgressContext: ProgressContextType = {
   placedDecorations: [],
   setPlacedDecorations: () => {},
   setPlacedDecorationsLocal: () => {},
+  selectedDecoration: null,
+  setSelectedDecoration: () => {},
 };
 
 const ProgressContext = createContext<ProgressContextType>(defaultProgressContext);
@@ -120,9 +124,9 @@ export const ProgressProvider = ({ children }: { children: React.ReactNode }) =>
   const [exerciseFeedbackCount, setExerciseFeedbackCount] = useState(0);
   const [placedFlowers, setPlacedFlowersState] = useState<{ x: number; y: number; id: string }[]>([]);
   const [placedFurniture, setPlacedFurnitureState] = useState<{ x: number; y: number; id: string }[]>([]);
-  // Decoration state
   const [obtainedDecorationsState, setObtainedDecorationsState] = useState<string[]>([]);
   const [placedDecorationsState, setPlacedDecorationsState] = useState<{ x: number; y: number; id: string }[]>([]);
+  const [selectedDecorationState, setSelectedDecorationState] = useState<string | null>(null);
 
   useEffect(() => {
     const loadData = async () => {
@@ -143,6 +147,8 @@ export const ProgressProvider = ({ children }: { children: React.ReactNode }) =>
         const savedPlacedFurniture = await AsyncStorage.getItem('@placedFurniture');
         const savedObtainedDecorations = await AsyncStorage.getItem('@obtainedDecorations');
         const savedPlacedDecorations = await AsyncStorage.getItem('@placedDecorations');
+        const savedSelectedDecoration = await AsyncStorage.getItem('@selectedDecoration');
+
 
         if (savedRooms !== null) setObtainedRoomsState(JSON.parse(savedRooms));
         if (savedSelectedRoom !== null) setSelectedRoomState(savedSelectedRoom);
@@ -159,6 +165,8 @@ export const ProgressProvider = ({ children }: { children: React.ReactNode }) =>
         if (savedPlacedFurniture !== null) setPlacedFurnitureState(JSON.parse(savedPlacedFurniture));
         if (savedObtainedDecorations !== null) setObtainedDecorationsState(JSON.parse(savedObtainedDecorations));
         if (savedPlacedDecorations !== null) setPlacedDecorationsState(JSON.parse(savedPlacedDecorations));
+        if (savedSelectedDecoration !== null) setSelectedDecorationState(savedSelectedDecoration);
+
 
         if (savedFlowerId !== null) {
           setCurrentFlowerIdState(savedFlowerId);
@@ -179,6 +187,16 @@ export const ProgressProvider = ({ children }: { children: React.ReactNode }) =>
     };
     loadData();
   }, [user]);
+
+  const setSelectedDecoration = async (id: string | null) => {
+      setSelectedDecorationState(id);
+      if (id) {
+        await AsyncStorage.setItem('@selectedDecoration', id);
+      } else {
+        await AsyncStorage.removeItem('@selectedDecoration');
+      }
+      if (user && isLoaded) setTimeout(autoSyncToFirebase, 100);
+    };
 
   // 데코레이션 획득 함수 (중복X, 저장/동기화)
   const addObtainedDecoration = async (id: string) => {
@@ -412,6 +430,7 @@ export const ProgressProvider = ({ children }: { children: React.ReactNode }) =>
         exerciseFeedbackCount: exerciseFeedbackCount,
         decorations: placedDecorationsState,
         obtainedDecorations: obtainedDecorationsState,
+        selectedDecoration: selectedDecorationState,
       });
     } catch (error) {
       console.error('Firebase 동기화 실패:', error);
@@ -492,6 +511,8 @@ export const ProgressProvider = ({ children }: { children: React.ReactNode }) =>
         placedDecorations: placedDecorationsState,
         setPlacedDecorations,
         setPlacedDecorationsLocal,
+        selectedDecoration: selectedDecorationState,
+        setSelectedDecoration,
       }}
     >
       {children}
