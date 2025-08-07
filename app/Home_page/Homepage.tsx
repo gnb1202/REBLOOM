@@ -173,9 +173,6 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
           resizeMode="cover"
         />
 
-        {/* 눈 내리는 GIF 오버레이 */}
-        {/* 홈화면 render 부분에 추가 */}
-
         {/* 문 클릭 → 이동 */}
         <TouchableOpacity
           onPress={() => router.push('/Home_page/TravelLoadingPage')}

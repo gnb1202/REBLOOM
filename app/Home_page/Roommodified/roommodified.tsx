@@ -91,6 +91,7 @@ export default function RoomModified() {
   const [selectedTab, setSelectedTab] = useState<'Background' | 'Flower' | 'Furniture' | 'Decoration'>('Background');
   const [flowers, setFlowers] = useState<{ x: number; y: number; id: string }[]>([]);
   const [furnitureItems, setFurnitureItems] = useState<{ x: number; y: number; id: string }[]>([]);
+  const [decorations, setDecorations] = useState<{ x: number; y: number; id: string }[]>([]);
   const [selectedItemId, setSelectedItemId] = useState<null | string>(null);
   const [tempSelectedRoom, setTempSelectedRoom] = useState<string>('default');
   const [toastVisible, setToastVisible] = useState(false);
@@ -105,20 +106,23 @@ export default function RoomModified() {
     obtainedFlowers,
     obtainedFurniture,
     obtainedRooms,
-    obtainedDecorations,   // 👈 데코레이션 획득 목록
+    obtainedDecorations,
     selectedRoom,
     setSelectedRoom,
     placedFlowers,
     placedFurniture,
+    placedDecorations,
     setPlacedFlowers,
     setPlacedFurniture,
+    setPlacedDecorations,
   } = useProgress();
 
   useEffect(() => {
     setFlowers(placedFlowers);
     setFurnitureItems(placedFurniture);
+    setDecorations(placedDecorations);
     setTempSelectedRoom(selectedRoom || 'default');
-  }, [placedFlowers, placedFurniture, selectedRoom]);
+  }, [placedFlowers, placedFurniture, placedDecorations, selectedRoom]);
 
   const handleReturn = () => {
     router.push('/Home_page/Homepage');
@@ -162,8 +166,13 @@ export default function RoomModified() {
         setFurnitureItems(newFurniture);
         setPlacedFurniture(newFurniture);
         setSelectedItemId(null);
+      } else if (selectedTab === 'Decoration' && obtainedDecorations.includes(selectedItemId)) {
+        // ⭐ Decoration 배치
+        const newDecorations = [...decorations, { x: adjustedX, y: adjustedY, id: selectedItemId }];
+        setDecorations(newDecorations);
+        setPlacedDecorations(newDecorations);
+        setSelectedItemId(null);
       }
-      // Decoration 기능은 아직 미구현
     }
   };
 
@@ -293,6 +302,7 @@ export default function RoomModified() {
             style={StyleSheet.absoluteFill}
             onPress={handleTouch}
           >
+            {/* 꽃 */}
             {flowers.map((item, index) => {
               const flowerData = flowerList.find(f => f.id === item.id);
               if (!flowerData) return null;
@@ -316,10 +326,10 @@ export default function RoomModified() {
                     resizeMode="contain"
                   />
                 </TouchableOpacity>
-
               );
             })}
 
+            {/* 가구 */}
             {furnitureItems.map((item, index) => {
               const furnitureData = furnitureList.find(f => f.id === item.id);
               if (!furnitureData) return null;
@@ -335,6 +345,30 @@ export default function RoomModified() {
                   style={[styles.placedFurnitureImage, { left: item.x, top: item.y }]}
                 >
                   <Image source={furnitureData.icon} style={{ width: 120, height: 120 }} />
+                </TouchableOpacity>
+              );
+            })}
+
+            {/* 데코레이션 ⭐ 추가 */}
+            {decorations.map((item, index) => {
+              const decoData = decorationList.find(d => d.id === item.id);
+              if (!decoData) return null;
+              return (
+                <TouchableOpacity
+                  key={`deco-${index}`}
+                  onLongPress={() => {
+                    const updated = [...decorations];
+                    updated.splice(index, 1);
+                    setDecorations(updated);
+                    setPlacedDecorations(updated);
+                  }}
+                  style={[styles.placedImage, { left: item.x, top: item.y }]}
+                >
+                  <Image
+                    source={decoData.image}
+                    style={{ width: 70, height: 70 }}
+                    resizeMode="contain"
+                  />
                 </TouchableOpacity>
               );
             })}

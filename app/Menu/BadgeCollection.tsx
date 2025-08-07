@@ -1,6 +1,8 @@
 import { useRouter } from 'expo-router';
+import React, { useState } from 'react';
 import {
     Image,
+    Modal,
     ScrollView,
     StyleSheet,
     Text,
@@ -13,7 +15,6 @@ import { useProgress } from '../../context/ProgressContext';
 import sparkleGif from '../../assets/images/decoration/DecorationBackgroundSparkle.gif';
 import deco1Gif from '../../assets/images/decoration/DecorationBackground1.gif';
 
-// 실제 Shop과 동일하게 구성
 const decorationList = [
   { id: 'DecorationBackground1', name: 'Animated Deco 1', image: deco1Gif },
   { id: 'DecorationBackgroundSparkle', name: 'Sparkle Animation', image: sparkleGif },
@@ -26,6 +27,22 @@ export default function DecorationCollection() {
 
   // 실제로 소유한 데코만 필터링
   const obtainedDecorationsList = decorationList.filter(item => obtainedDecorations?.includes(item.id));
+
+  // 🔥 추가: 모달 상태
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedDeco, setSelectedDeco] = useState<any>(null);
+
+  // 데코 클릭 핸들러
+  const handlePress = (item: any) => {
+    setSelectedDeco(item);
+    setModalVisible(true);
+  };
+
+  // 모달 닫기
+  const handleClose = () => {
+    setModalVisible(false);
+    setSelectedDeco(null);
+  };
 
   return (
     <View style={styles.container}>
@@ -43,13 +60,44 @@ export default function DecorationCollection() {
           <Text style={styles.emptyText}>No Decoration obtained yet.</Text>
         ) : (
           obtainedDecorationsList.map((item) => (
-            <View key={item.id} style={styles.item}>
+            <TouchableOpacity
+              key={item.id}
+              style={styles.item}
+              onPress={() => handlePress(item)}
+              activeOpacity={0.7}
+            >
               <Image source={item.image} style={styles.image} resizeMode="contain" />
               <Text style={styles.label}>{item.name}</Text>
-            </View>
+            </TouchableOpacity>
           ))
         )}
       </ScrollView>
+
+      {/* 확대 모달 */}
+      <Modal
+        visible={modalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={handleClose}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <TouchableOpacity style={styles.closeBtn} onPress={handleClose}>
+              <Text style={{ fontSize: 22, color: '#333' }}>×</Text>
+            </TouchableOpacity>
+            {selectedDeco && (
+              <>
+                <Image
+                  source={selectedDeco.image}
+                  style={styles.modalImage}
+                  resizeMode="contain"
+                />
+                <Text style={styles.modalLabel}>{selectedDeco.name}</Text>
+              </>
+            )}
+          </View>
+        </View>
+      </Modal>
 
       {/* Tab Bar */}
       <View style={styles.tabBar}>
@@ -135,5 +183,38 @@ const styles = StyleSheet.create({
     backgroundColor: '#C6D3FF',
     paddingHorizontal: 12,
     borderRadius: 4,
+  },
+  // ----------- Modal styles -----------
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.25)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    padding: 30,
+    alignItems: 'center',
+    minWidth: 250,
+    minHeight: 260,
+    elevation: 8,
+  },
+  closeBtn: {
+    position: 'absolute',
+    top: 8,
+    right: 12,
+    zIndex: 2,
+    padding: 6,
+  },
+  modalImage: {
+    width: 180,
+    height: 180,
+    marginBottom: 18,
+  },
+  modalLabel: {
+    fontSize: 19,
+    fontWeight: 'bold',
+    textAlign: 'center',
   },
 });

@@ -156,7 +156,7 @@ export default function ShopPage() {
           addObtainedRoom(itemId);
           break;
         case 'Decoration':
-          // Decoration items are managed separately
+          addObtainedDecoration(itemId);
           const newPurchased = [...purchasedItems, itemId];
           setPurchasedItems(newPurchased);
           break;
