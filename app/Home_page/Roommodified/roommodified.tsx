@@ -19,10 +19,18 @@ import ToastMessage from '../../../components/ToastMessage';
 import Background1 from '../../../assets/images/HomeBackgroundImages/Backgroundlevel1.png';
 import Background2 from '../../../assets/images/HomeBackgroundImages/Backgroundlevel2.png';
 import BaseBackground from '../../../assets/images/HomeBackgroundImages/BasicHomepage.png';
+import BasicHomepage from '../../../assets/images/HomeBackgroundImages/BasicHomepage.png';
+import Blue1 from '../../../assets/images/HomeBackgroundImages/blue_1.jpg';
+import Blue2 from '../../../assets/images/HomeBackgroundImages/blue_2.jpg';
+import Green1 from '../../../assets/images/HomeBackgroundImages/green_1.jpg';
+import Green2 from '../../../assets/images/HomeBackgroundImages/green_2.jpg';
+import Pink1 from '../../../assets/images/HomeBackgroundImages/pink_1.jpg';
+import Pink2 from '../../../assets/images/HomeBackgroundImages/pink_2.jpg';
+
+
+
 
 import ModifiedButton from '../../../assets/images/Modifiy/modifiedbutton.png';
-import ChairIcon from '../../../assets/images/furnitures/whiteroundchair.png';
-import StandIcon from '../../../assets/images/furnitures/yellowstand.png';
 import mailbox_A_black from '../../../assets/images/furnitures/mailbox/mailbox_A_black.png';
 import mailbox_A_blackwhite from '../../../assets/images/furnitures/mailbox/mailbox_A_blackwhite.png';
 import mailbox_A_white from '../../../assets/images/furnitures/mailbox/mailbox_A_white.png';
@@ -49,8 +57,6 @@ const flowerList = [
 ];
 
 const furnitureList = [
-  { id: 'whiteroundchair', icon: ChairIcon },
-  { id: 'yellowstand', icon: StandIcon },
   { id: 'mailbox_A_black', icon: mailbox_A_black },
   { id: 'mailbox_A_blackwhite', icon: mailbox_A_blackwhite },
   { id: 'mailbox_A_white', icon: mailbox_A_white },
@@ -59,9 +65,14 @@ const furnitureList = [
 
 const roomList = [
   { id: 'default', image: BaseBackground },
-  { id: 'room1', image: Background1 },
-  { id: 'room2', image: Background2 },
+  { id: 'blue_1', image: Blue1 },
+  { id: 'blue_2', image: Blue2 },
+  { id: 'green_1', image: Green1 },
+  { id: 'green_2', image: Green2 },
+  { id: 'pink_1', image: Pink1 },
+  { id: 'pink_2', image: Pink2 },
 ];
+
 
 const ORIGINAL_WIDTH = 2300;
 const ORIGINAL_HEIGHT = 1518;

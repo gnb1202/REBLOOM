@@ -10,29 +10,47 @@ import {
     View,
 } from 'react-native';
 
-import Backgroundlevel1 from '../../assets/images/HomeBackgroundImages/Backgroundlevel1.png';
-import Backgroundlevel2 from '../../assets/images/HomeBackgroundImages/Backgroundlevel2.png';
-import FirstBaseBackground from '../../assets/images/HomeBackgroundImages/FirstBaseBackground.png';
+import Blue1 from '../../assets/images/HomeBackgroundImages/blue_1.jpg';
+import Blue2 from '../../assets/images/HomeBackgroundImages/blue_2.jpg';
+import Green1 from '../../assets/images/HomeBackgroundImages/green_1.jpg';
+import Green2 from '../../assets/images/HomeBackgroundImages/green_2.jpg';
+import Pink1 from '../../assets/images/HomeBackgroundImages/pink_1.jpg';
+import Pink2 from '../../assets/images/HomeBackgroundImages/pink_2.jpg';
 import { useProgress } from '../../context/ProgressContext';
 
-
 const backgroundList = [
-    {
-        id: 'default',
-        desc: 'Default background',
-        image: FirstBaseBackground,
+  {
+    id: 'blue_1',
+    desc: 'Blue Room 1 - Clear sky morning',
+    image: Blue1,
   },
   {
-    id: 'room1',
-    desc: 'Clear and cool sky scenery',
-    image: Backgroundlevel1,
+    id: 'blue_2',
+    desc: 'Blue Room 2 - Blue dusk ambience',
+    image: Blue2,
   },
   {
-    id: 'room2',
-    desc: 'Lush natural forest',
-    image: Backgroundlevel2,
+    id: 'green_1',
+    desc: 'Green Room 1 - Early spring forest',
+    image: Green1,
+  },
+  {
+    id: 'green_2',
+    desc: 'Green Room 2 - Deep summer woods',
+    image: Green2,
+  },
+  {
+    id: 'pink_1',
+    desc: 'Pink Room 1 - Blush pink dream',
+    image: Pink1,
+  },
+  {
+    id: 'pink_2',
+    desc: 'Pink Room 2 - Pink sunset fantasy',
+    image: Pink2,
   },
 ];
+
 
 export default function BackgroundCollection() {
   const router = useRouter();
@@ -57,7 +75,6 @@ export default function BackgroundCollection() {
         <View style={{ width: 32 }} />
       </View>
 
-
       <ScrollView contentContainerStyle={styles.grid}>
         {visibleBackgrounds.map((item, idx) => (
           <TouchableOpacity
@@ -66,6 +83,10 @@ export default function BackgroundCollection() {
             onPress={() => setSelectedBackground(item)}
           >
             <Image source={item.image} style={styles.image} resizeMode="contain" />
+            {/* 이름 */}
+            <Text style={styles.itemName}>
+              {item.id.replace('_', ' ').toUpperCase()}
+            </Text>
           </TouchableOpacity>
         ))}
         {Array.from({ length: dummyCount }).map((_, i) => (
@@ -87,17 +108,6 @@ export default function BackgroundCollection() {
               resizeMode="contain"
             />
             <Text style={styles.modalDesc}>{selectedBackground?.desc}</Text>
-
-            <TouchableOpacity
-              onPress={async () => {
-                await setSelectedRoom(selectedBackground.id);
-                setSelectedBackground(null);
-                alert('Background applied!');
-              }}
-              style={[styles.modalClose, { backgroundColor: '#4D7CFE' }]}
-            >
-              <Text style={styles.modalCloseText}>Apply Background</Text>
-            </TouchableOpacity>
 
             <TouchableOpacity
               onPress={() => setSelectedBackground(null)}

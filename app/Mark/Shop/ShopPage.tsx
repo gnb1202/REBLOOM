@@ -22,6 +22,14 @@ import signboard from '../../../assets/images/furnitures/signboard/Standingboard
 import sparkleGif from '../../../assets/images/decoration/BlackSparkle.gif';
 import deco1Gif from '../../../assets/images/decoration/BlackDecoration.gif';
 
+//room
+import Blue1 from '../../../assets/images/HomeBackgroundImages/blue_1.jpg';
+import Blue2 from '../../../assets/images/HomeBackgroundImages/blue_2.jpg';
+import Green1 from '../../../assets/images/HomeBackgroundImages/green_1.jpg';
+import Green2 from '../../../assets/images/HomeBackgroundImages/green_2.jpg';
+import Pink1 from '../../../assets/images/HomeBackgroundImages/pink_1.jpg';
+import Pink2 from '../../../assets/images/HomeBackgroundImages/pink_2.jpg';
+
 
 import { useProgress } from '../../../context/ProgressContext';
 
@@ -36,9 +44,12 @@ const defaultShopItems = {
     { id: 'signboard', name: 'Standing Signboard', image: signboard, price: 220, category: 'Furniture' },
   ],
   'Room': [
-    { id: 'room_cozy', name: 'Cozy Room', image: mysteryIcon, price: 500, category: 'Room' },
-    { id: 'room_modern', name: 'Modern Room', image: mysteryIcon, price: 800, category: 'Room' },
-    { id: 'room_garden', name: 'Garden Room', image: mysteryIcon, price: 1000, category: 'Room' },
+    { id: 'blue_1', name: 'Blue Room 1', image: Blue1, price: 300, category: 'Room' },
+    { id: 'blue_2', name: 'Blue Room 2', image: Blue2, price: 320, category: 'Room' },
+    { id: 'green_1', name: 'Green Room 1', image: Green1, price: 340, category: 'Room' },
+    { id: 'green_2', name: 'Green Room 2', image: Green2, price: 340, category: 'Room' },
+    { id: 'pink_1', name: 'Pink Room 1', image: Pink1, price: 360, category: 'Room' },
+    { id: 'pink_2', name: 'Pink Room 2', image: Pink2, price: 380, category: 'Room' },
   ],
   'Decoration': [
       { id: 'DecorationBackground1', name: 'Animated Deco 1', image: deco1Gif, price: 100, category: 'Decoration' },
