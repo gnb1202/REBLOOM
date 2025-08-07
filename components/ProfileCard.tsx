@@ -25,16 +25,20 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ onPress }) => {
     return badgeEmojiMap[badgeId || ''] || '🏅';
   };
 
-  if (!userProfile) {
+  if (!userProfile?.gameData) {
     return (
       <TouchableOpacity style={styles.card} onPress={onPress}>
-        <Text style={styles.loadingText}>로딩중...</Text>
+        <Text style={styles.loadingText}>Loading...</Text>
       </TouchableOpacity>
     );
   }
 
+  // 필수 데이터 검증
+  const { level = 1, consecutiveExercises = 0, currency = 0 } = userProfile.gameData;
+  const { nickname: profileNickname, selectedBadge } = userProfile.profile || {};
+  const nickname = profileNickname || userProfile.nickname || 'User';
+
   const daysSinceSurgery = calculateDaysSinceSurgery();
-  const selectedBadge = userProfile.profile?.selectedBadge;
 
   return (
     <TouchableOpacity style={styles.card} onPress={onPress}>
@@ -49,13 +53,13 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ onPress }) => {
             </View>
           </View>
           <View style={styles.levelContainer}>
-            <Text style={styles.levelText}>Lv.{userProfile.gameData?.level || 1}</Text>
+            <Text style={styles.levelText}>Lv.{level}</Text>
           </View>
         </View>
 
         {/* 닉네임 */}
         <Text style={styles.nickname} numberOfLines={1}>
-          {userProfile.profile?.nickname || userProfile.nickname || '사용자'}
+          {nickname}
         </Text>
 
         {/* 수술 경과일 */}
@@ -65,9 +69,9 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ onPress }) => {
 
         {/* 연속 운동 횟수 */}
         <View style={styles.exerciseRow}>
-          <Text style={styles.exerciseLabel}>연속 운동</Text>
+          <Text style={styles.exerciseLabel}>Streak</Text>
           <Text style={styles.exerciseCount}>
-            {userProfile.gameData?.consecutiveExercises || 0}일
+            {consecutiveExercises} days
           </Text>
         </View>
 
@@ -75,7 +79,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ onPress }) => {
         <View style={styles.coinRow}>
           <Text style={styles.coinIcon}>💰</Text>
           <Text style={styles.coinAmount}>
-            {userProfile.gameData?.currency || 0}
+            {currency}
           </Text>
         </View>
       </View>

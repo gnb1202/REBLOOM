@@ -52,14 +52,17 @@ type ProgressContextType = {
   updateProgress: (value: number) => void;
   goToNextFlower: () => void;
   isLast: boolean;
-  // Decoration 구매 관련 추가
-  purchasedDecorations: string[];
-  addPurchasedDecoration: (id: string) => void;
+  // Decoration 관련 기능
+  obtainedDecorations: string[];
+  addObtainedDecoration: (id: string) => void;
+  placedDecorations: { x: number; y: number; id: string }[];
+  setPlacedDecorations: (items: { x: number; y: number; id: string }[]) => void;
+  setPlacedDecorationsLocal: (items: { x: number; y: number; id: string }[]) => void;
 };
 
-const ProgressContext = createContext<ProgressContextType>({
+const defaultProgressContext: ProgressContextType = {
   progress: 0,
-  currentFlowerId: '',
+  currentFlowerId: 'daisy',  // 기본 꽃 설정
   setProgress: () => {},
   setCurrentFlowerId: () => {},
   obtainedFlowers: [],
@@ -68,13 +71,13 @@ const ProgressContext = createContext<ProgressContextType>({
   addObtainedFurniture: () => {},
   obtainedRooms: [],
   addObtainedRoom: () => {},
-  selectedRoom: '',
+  selectedRoom: 'room1',  // 기본 방 설정
   setSelectedRoom: () => {},
   hasChair: false,
   setHasChair: () => {},
   hasStand: false,
   setHasStand: () => {},
-  coins: 0,
+  coins: 1000,  // 초기 코인 설정
   spendCoins: async () => false,
   isLoaded: false,
   flowerBadgeLevel: 0,
@@ -82,27 +85,32 @@ const ProgressContext = createContext<ProgressContextType>({
   completedChallenges: [],
   exerciseFeedbackCount: 0,
   incrementFeedbackCount: () => {},
-  placedFlowers: [],
+  placedFlowers: [],  // 빈 배열로 초기화
   setPlacedFlowers: () => {},
-  placedFurniture: [],
+  placedFurniture: [],  // 빈 배열로 초기화
   setPlacedFurniture: () => {},
   syncWithFirebase: async () => {},
   loadFromFirebase: async () => {},
   updateProgress: () => {},
   goToNextFlower: () => {},
   isLast: false,
-  purchasedDecorations: [],
-  addPurchasedDecoration: () => {},
-});
+  obtainedDecorations: [],
+  addObtainedDecoration: () => {},
+  placedDecorations: [],  // 빈 배열로 초기화
+  setPlacedDecorations: () => {},
+  setPlacedDecorationsLocal: () => {},
+};
+
+const ProgressContext = createContext<ProgressContextType>(defaultProgressContext);
 
 export const ProgressProvider = ({ children }: { children: React.ReactNode }) => {
   const { user } = useAuth();
   const [progress, setProgressState] = useState(0);
-  const [currentFlowerId, setCurrentFlowerIdState] = useState('');
+  const [currentFlowerId, setCurrentFlowerIdState] = useState(defaultProgressContext.currentFlowerId);
   const [obtainedFlowersState, setObtainedFlowersState] = useState<string[]>([]);
   const [obtainedFurnitureState, setObtainedFurnitureState] = useState<string[]>([]);
   const [obtainedRoomsState, setObtainedRoomsState] = useState<string[]>([]);
-  const [selectedRoom, setSelectedRoomState] = useState('');
+  const [selectedRoom, setSelectedRoomState] = useState(defaultProgressContext.selectedRoom);
   const [hasChair, setHasChairState] = useState(false);
   const [hasStand, setHasStandState] = useState(false);
   const [coins, setCoins] = useState(1000);
@@ -113,7 +121,8 @@ export const ProgressProvider = ({ children }: { children: React.ReactNode }) =>
   const [placedFlowers, setPlacedFlowersState] = useState<{ x: number; y: number; id: string }[]>([]);
   const [placedFurniture, setPlacedFurnitureState] = useState<{ x: number; y: number; id: string }[]>([]);
   // 추가
-  const [purchasedDecorations, setPurchasedDecorations] = useState<string[]>([]);
+  const [obtainedDecorationsState, setObtainedDecorationsState] = useState<string[]>([]);
+  const [placedDecorationsState, setPlacedDecorationsState] = useState<{ x: number; y: number; id: string }[]>([]);
 
   useEffect(() => {
     const loadData = async () => {
@@ -132,7 +141,8 @@ export const ProgressProvider = ({ children }: { children: React.ReactNode }) =>
         const savedFeedbackCount = await AsyncStorage.getItem('@exerciseFeedbackCount');
         const savedPlacedFlowers = await AsyncStorage.getItem('@placedFlowers');
         const savedPlacedFurniture = await AsyncStorage.getItem('@placedFurniture');
-        const savedPurchasedDecorations = await AsyncStorage.getItem('@purchasedDecorations');
+        const savedObtainedDecorations = await AsyncStorage.getItem('@obtainedDecorations');
+        const savedPlacedDecorations = await AsyncStorage.getItem('@placedDecorations');
 
         if (savedRooms !== null) setObtainedRoomsState(JSON.parse(savedRooms));
         if (savedSelectedRoom !== null) setSelectedRoomState(savedSelectedRoom);
@@ -147,7 +157,8 @@ export const ProgressProvider = ({ children }: { children: React.ReactNode }) =>
         if (savedCompletedChallenges !== null) setCompletedChallenges(JSON.parse(savedCompletedChallenges));
         if (savedPlacedFlowers !== null) setPlacedFlowersState(JSON.parse(savedPlacedFlowers));
         if (savedPlacedFurniture !== null) setPlacedFurnitureState(JSON.parse(savedPlacedFurniture));
-        if (savedPurchasedDecorations !== null) setPurchasedDecorations(JSON.parse(savedPurchasedDecorations));
+        if (savedObtainedDecorations !== null) setObtainedDecorationsState(JSON.parse(savedObtainedDecorations));
+        if (savedPlacedDecorations !== null) setPlacedDecorationsState(JSON.parse(savedPlacedDecorations));
 
         if (savedFlowerId !== null) {
           setCurrentFlowerIdState(savedFlowerId);
@@ -366,17 +377,34 @@ export const ProgressProvider = ({ children }: { children: React.ReactNode }) =>
     }
   };
 
-  // Decoration 구매 로직 추가
-  const addPurchasedDecoration = async (id: string) => {
-    setPurchasedDecorations(prev => {
-      if (!prev.includes(id)) {
-        const updated = [...prev, id];
-        AsyncStorage.setItem('@purchasedDecorations', JSON.stringify(updated));
-        // TODO: Firebase에 저장 필요 시 여기에 추가
-        return updated;
+  const addObtainedDecoration = async (id: string) => {
+    try {
+      const updated = [...new Set([...obtainedDecorationsState, id])];
+      setObtainedDecorationsState(updated);
+      await AsyncStorage.setItem('@obtainedDecorations', JSON.stringify(updated));
+    } catch (e) {
+      console.error('수집 데코레이션 저장 실패:', e);
+    }
+  };
+
+  // 로컬 상태만 업데이트 (자동 저장 X)
+  const setPlacedDecorationsLocal = (items: { x: number; y: number; id: string }[]) => {
+    setPlacedDecorationsState(items);
+  };
+
+  // Firebase 및 AsyncStorage에 저장 (Save 버튼 클릭 시)
+  const setPlacedDecorations = async (items: { x: number; y: number; id: string }[]) => {
+    try {
+      setPlacedDecorationsState(items);
+      await AsyncStorage.setItem('@placedDecorations', JSON.stringify(items));
+      
+      if (user && isLoaded) {
+        console.log('데코레이션 배치 데이터 Firebase 동기화 시작...');
+        await syncWithFirebaseRetry(user.uid, 3);
       }
-      return prev;
-    });
+    } catch (e) {
+      console.error('데코레이션 위치 저장 실패:', e);
+    }
   };
 
   const syncWithFirebase = async (userId: string) => {
@@ -396,7 +424,8 @@ export const ProgressProvider = ({ children }: { children: React.ReactNode }) =>
         flowerBadgeLevel: flowerBadgeLevel,
         completedChallenges: completedChallenges,
         exerciseFeedbackCount: exerciseFeedbackCount,
-        purchasedDecorations: purchasedDecorations, // decoration도 함께 저장
+        decorations: placedDecorationsState,
+        obtainedDecorations: obtainedDecorationsState,
       });
       console.log('Firebase 동기화 완료');
     } catch (error) {
@@ -414,6 +443,8 @@ export const ProgressProvider = ({ children }: { children: React.ReactNode }) =>
         if (roomData.obtainedFlowers) setObtainedFlowersState(roomData.obtainedFlowers);
         if (roomData.obtainedFurniture) setObtainedFurnitureState(roomData.obtainedFurniture);
         if (roomData.obtainedRooms) setObtainedRoomsState(roomData.obtainedRooms);
+        if (roomData.decorations) setPlacedDecorationsState(roomData.decorations);
+        if (roomData.obtainedDecorations) setObtainedDecorationsState(roomData.obtainedDecorations);
         if (roomData.progress !== undefined) setProgressState(roomData.progress);
         if (roomData.currentFlowerId) setCurrentFlowerIdState(roomData.currentFlowerId);
         if (roomData.coins !== undefined) setCoins(roomData.coins);
@@ -473,8 +504,11 @@ export const ProgressProvider = ({ children }: { children: React.ReactNode }) =>
           }
         },
         isLast: flowerOrder.indexOf(currentFlowerId) === flowerOrder.length - 1,
-        purchasedDecorations,
-        addPurchasedDecoration,
+        obtainedDecorations: obtainedDecorationsState,
+        addObtainedDecoration,
+        placedDecorations: placedDecorationsState,
+        setPlacedDecorations,
+        setPlacedDecorationsLocal,
       }}
     >
       {children}

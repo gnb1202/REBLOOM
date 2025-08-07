@@ -319,13 +319,13 @@ export default function ExplorePage() {
                   </Text>
                 </View>
                 <View style={styles.levelBadge}>
-                  <Text style={styles.levelText}>Lv.{profile.gameData?.level || 1}</Text>
+                  <Text style={styles.levelText}>Lv.{profile?.gameData?.level ?? 1}</Text>
                 </View>
               </View>
 
               {/* 닉네임 */}
               <Text style={styles.nickname} numberOfLines={1}>
-                {profile.profile?.nickname || profile.nickname || 'Anonymous'}
+                {profile?.profile?.nickname ?? profile?.nickname ?? 'Anonymous'}
               </Text>
 
               {/* 수술 경과일 */}
@@ -335,9 +335,9 @@ export default function ExplorePage() {
 
               {/* 연속 운동 횟수 */}
               <View style={styles.exerciseInfo}>
-                <Text style={styles.exerciseLabel}>Consecutive Exercises</Text>
+                <Text style={styles.exerciseLabel}>Streak</Text>
                 <Text style={styles.exerciseCount}>
-                  {profile.gameData?.consecutiveExercises || 0} days
+                  {profile?.gameData?.consecutiveExercises ?? 0} days
                 </Text>
               </View>
 
@@ -345,7 +345,7 @@ export default function ExplorePage() {
               <View style={styles.coinInfo}>
                 <Text style={styles.coinIcon}>💰</Text>
                 <Text style={styles.coinAmount}>
-                  {profile.gameData?.currency || 0}
+                  {profile?.gameData?.currency ?? 0}
                 </Text>
               </View>
 
@@ -479,8 +479,8 @@ const styles = StyleSheet.create({
   },
   exerciseInfo: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    gap: 8,
     marginBottom: 6,
   },
   exerciseLabel: {
@@ -491,6 +491,7 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: 'bold',
     color: '#333',
+    marginLeft: 'auto',
   },
   coinInfo: {
     flexDirection: 'row',

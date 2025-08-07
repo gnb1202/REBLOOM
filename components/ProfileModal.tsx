@@ -172,7 +172,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ visible, onClose }) => {
 
               <View style={styles.infoRow}>
                 <Text style={styles.infoLabel}>Level</Text>
-                <Text style={styles.infoValue}>Lv.{userProfile.gameData?.level || 1}</Text>
+                <Text style={styles.infoValue}>Lv.{userProfile?.gameData?.level ?? 1}</Text>
               </View>
 
               <View style={styles.infoRow}>
@@ -188,21 +188,21 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ visible, onClose }) => {
               <View style={styles.infoRow}>
                 <Text style={styles.infoLabel}>Consecutive Exercises</Text>
                 <Text style={styles.infoValue}>
-                  {userProfile.gameData?.consecutiveExercises || 0} days
+                  {userProfile?.gameData?.consecutiveExercises ?? 0} days
                 </Text>
               </View>
 
               <View style={styles.infoRow}>
                 <Text style={styles.infoLabel}>Total Exercises</Text>
                 <Text style={styles.infoValue}>
-                  {userProfile.gameData?.totalExercises || 0} times
+                  {userProfile?.gameData?.totalExercises ?? 0} times
                 </Text>
               </View>
 
               <View style={styles.infoRow}>
                 <Text style={styles.infoLabel}>Currency</Text>
                 <Text style={styles.coinValue}>
-                  💰 {userProfile.gameData?.currency || 0}
+                  💰 {userProfile?.gameData?.currency ?? 0}
                 </Text>
               </View>
             </View>
@@ -294,9 +294,16 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 20,
     margin: 20,
-    maxHeight: '80%',
+    minHeight: '60%',
+    maxHeight: '85%',
     width: '90%',
     maxWidth: 400,
+    flexDirection: 'column',
+    elevation: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
   },
   modalHeader: {
     flexDirection: 'row',
@@ -319,9 +326,12 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     flex: 1,
+    minHeight: 300,
+    paddingBottom: 10,
   },
   infoSection: {
-    marginBottom: 24,
+    marginBottom: 16,
+    paddingBottom: 8,
   },
   sectionTitle: {
     fontSize: 16,
@@ -357,7 +367,8 @@ const styles = StyleSheet.create({
     color: '#f39c12',
   },
   badgeSection: {
-    marginBottom: 20,
+    marginBottom: 12,
+    minHeight: 120,
   },
   badgeGrid: {
     flexDirection: 'row',

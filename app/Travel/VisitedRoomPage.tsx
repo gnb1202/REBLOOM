@@ -187,8 +187,13 @@ export default function VisitedRoomPage() {
           cropHeight={dimensions.height}
           imageWidth={imageScaledWidth}
           imageHeight={imageScaledHeight}
+          panToMove={true}
+          pinchToZoom={false}
+          doubleClickZoom={false}
+          enableCenterFocus={false}
           minScale={minScale}
-          maxScale={minScale * 2}
+          maxScale={minScale}
+          useNativeDriver={true}
         >
           <View style={{ width: imageScaledWidth, height: imageScaledHeight, position: 'relative' }}>
             <Image

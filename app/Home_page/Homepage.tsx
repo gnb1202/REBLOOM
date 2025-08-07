@@ -1,15 +1,15 @@
 import { useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import {
-  ActivityIndicator,
-  Alert,
-  Dimensions,
-  Image,
-  Modal,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Alert,
+    Dimensions,
+    Image,
+    Modal,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 import ImageZoom from 'react-native-image-pan-zoom';
 
@@ -21,17 +21,18 @@ import Background1 from '../../assets/images/HomeBackgroundImages/Backgroundleve
 import Background2 from '../../assets/images/HomeBackgroundImages/Backgroundlevel2.png';
 import BaseBackground from '../../assets/images/HomeBackgroundImages/BasicHomepage.png';
 
-import ChairIcon from '../../assets/images/furnitures/whiteroundchair.png';
-import StandIcon from '../../assets/images/furnitures/yellowstand.png';
-import ProfileCard from '../../components/ProfileCard';
-import ProfileModal from '../../components/ProfileModal';
 import mailbox_A_black from '../../assets/images/furnitures/mailbox/mailbox_A_black.png';
 import mailbox_A_blackwhite from '../../assets/images/furnitures/mailbox/mailbox_A_blackwhite.png';
 import mailbox_A_white from '../../assets/images/furnitures/mailbox/mailbox_A_white.png';
 import signboard from '../../assets/images/furnitures/signboard/Standingboard.png';
+import ChairIcon from '../../assets/images/furnitures/whiteroundchair.png';
+import StandIcon from '../../assets/images/furnitures/yellowstand.png';
+import ProfileCard from '../../components/ProfileCard';
+import ProfileModal from '../../components/ProfileModal';
 
 import LetItSnow from '../../assets/images/decoration/DecorationBackground1.gif';
 
+import { useAuth } from '../../context/AuthContext';
 import { useProgress } from '../../context/ProgressContext';
 
 import daisy from '../../assets/images/flowers/Display/daisy_display.png';
@@ -89,6 +90,8 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
     setPlacedFurniture,
     selectedRoom,
   } = useProgress();
+  
+  const { userProfile } = useAuth();
 
   const minScale = dimensions.height / ORIGINAL_HEIGHT;
   const imageScaledWidth = ORIGINAL_WIDTH * minScale;
@@ -136,7 +139,7 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
   return (
     <View style={styles.container}>
       <ImageZoom
-        key={JSON.stringify({ placedFurniture, placedFlowers })}
+        key={`room-${placedFurniture?.length ?? 0}-${placedFlowers?.length ?? 0}`}
         ref={imageZoomRef}
         cropWidth={dimensions.width}
         cropHeight={dimensions.height}
@@ -164,9 +167,9 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
         />
 
         {/* 눈 내리는 GIF 오버레이 */}
-        // 홈화면 render 부분에 추가
+        {/* 홈화면 render 부분에 추가 */}
         <Image
-          source={LetItSnow} // 왼쪽 GIF
+          source={LetItSnow} /* 왼쪽 GIF */
           style={{
             position: 'absolute',
             left: 0,
@@ -179,7 +182,7 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
           resizeMode="cover"
         />
         <Image
-          source={LetItSnow} // 오른쪽 GIF, 파일이 다르면 source만 바꾸면 됨
+          source={LetItSnow} /* 오른쪽 GIF */
           style={{
             position: 'absolute',
             left: imageScaledWidth / 2,
@@ -224,9 +227,9 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
         </TouchableOpacity>
 
         {/* 가구 */}
-        {placedFurniture.map((item, index) => {
-          const data = furnitureList.find(f => f.id === item.id);
-          if (!data) return null;
+        {(placedFurniture || []).map((item, index) => {
+          const data = furnitureList.find(f => f.id === item?.id);
+          if (!data || !item) return null;
           return (
             <Image
               key={`furniture-${index}`}
@@ -238,9 +241,9 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
         })}
 
         {/* 꽃 */}
-        {placedFlowers.map((item, index) => {
-          const flowerData = flowerList.find(f => f.id === item.id);
-          if (!flowerData) return null;
+        {(placedFlowers || []).map((item, index) => {
+          const flowerData = flowerList.find(f => f.id === item?.id);
+          if (!flowerData || !item) return null;
           return (
             <Image
               key={`flower-${index}`}
@@ -289,7 +292,7 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
               <Text style={styles.menuItem}>Quest</Text>
             </TouchableOpacity>
             <TouchableOpacity onPress={() => { setShowDropdown(false); setShowDiary(true); }}>
-              <Text style={styles.menuItem}>Diary Check</Text>
+              <Text style={styles.menuItem}>Health Check</Text>
             </TouchableOpacity>
             <TouchableOpacity onPress={() => { setShowDropdown(false); router.push('/Home_page/Roommodified/roommodified'); }}>
               <Text style={styles.menuItem}>Room Modify</Text>
@@ -301,10 +304,12 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
         </TouchableOpacity>
       </Modal>
 
-      {!isRoomOnly && (
+      {!isRoomOnly && isLoaded && (
         <>
           <View style={styles.profileCardContainer}>
-            <ProfileCard onPress={() => setShowProfileModal(true)} />
+            {userProfile && (
+              <ProfileCard onPress={() => setShowProfileModal(true)} />
+            )}
           </View>
 
           {showQuest && <View style={styles.overlayPartial}><QuestPage /></View>}

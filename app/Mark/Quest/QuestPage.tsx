@@ -177,9 +177,6 @@ export default function QuestPage() {
       {badgeImage && (
         <View style={{ alignItems: 'center', marginTop: 10 }}>
           <Image source={badgeImage} style={{ width: 100, height: 100 }} />
-          <Text style={{ color: '#3F5C45', fontWeight: 'bold', marginTop: 6 }}>
-            🌸 You earned a Level {flowerBadgeLevel} flower badge!
-          </Text>
         </View>
       )}
 
