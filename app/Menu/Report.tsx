@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../context/AuthContext';
-import { generateWeeklyReport, getWeeklyReport } from '../../firebase.config';
+import { generateEnhancedWeeklyReportClient, getWeeklyReport } from '../../firebase.config';
 
 export default function Report() {
   const router = useRouter();
@@ -39,9 +39,12 @@ export default function Report() {
     if (!user) return;
     setGenerating(true);
     try {
-      const newReport = await generateWeeklyReport(user.uid);
+      const newReport = await generateEnhancedWeeklyReportClient(user.uid);
       setReportData(newReport);
-      Alert.alert('Complete', 'New weekly report has been generated! 📊');
+      const alertMessage = newReport?.isAIGenerated 
+        ? 'AI가 분석한 새로운 주간 리포트가 생성되었습니다! 🤖📊'
+        : 'New weekly report has been generated! 📊';
+      Alert.alert('Complete', alertMessage);
     } catch (error) {
       console.error('Failed to generate report:', error);
       Alert.alert('Error', 'Failed to generate report.');
@@ -107,6 +110,19 @@ export default function Report() {
             </Text>
           </TouchableOpacity>
         </View>
+
+        {/* AI Summary Section */}
+        {reportData.aiSummary && (
+          <View style={styles.section}>
+            <Text style={styles.subtitle}>🤖 AI Health Insights</Text>
+            <View style={styles.aiSummaryContainer}>
+              <Text style={styles.aiSummaryText}>{reportData.aiSummary}</Text>
+              {reportData.isAIGenerated && (
+                <Text style={styles.aiGeneratedBadge}>✨ AI 분석 생성</Text>
+              )}
+            </View>
+          </View>
+        )}
 
         {/* Health Check Status */}
         <View style={styles.section}>
@@ -300,5 +316,27 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     letterSpacing: 1.2,
+  },
+  aiSummaryContainer: {
+    backgroundColor: '#F8F9FF',
+    borderRadius: 10,
+    padding: 16,
+    borderLeftWidth: 4,
+    borderLeftColor: '#6366F1',
+    position: 'relative',
+  },
+  aiSummaryText: {
+    fontSize: 16,
+    color: '#374151',
+    lineHeight: 24,
+    fontWeight: '500',
+    marginBottom: 8,
+  },
+  aiGeneratedBadge: {
+    fontSize: 12,
+    color: '#6366F1',
+    fontWeight: '600',
+    textAlign: 'right',
+    opacity: 0.8,
   },
 });
