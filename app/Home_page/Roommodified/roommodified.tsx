@@ -19,6 +19,7 @@ import ToastMessage from '../../../components/ToastMessage';
 import Background1 from '../../../assets/images/HomeBackgroundImages/Backgroundlevel1.png';
 import Background2 from '../../../assets/images/HomeBackgroundImages/Backgroundlevel2.png';
 import BaseBackground from '../../../assets/images/HomeBackgroundImages/BasicHomepage.png';
+
 import BasicHomepage from '../../../assets/images/HomeBackgroundImages/BasicHomepage.png';
 import Blue1 from '../../../assets/images/HomeBackgroundImages/blue_1.jpg';
 import Blue2 from '../../../assets/images/HomeBackgroundImages/blue_2.jpg';
@@ -26,9 +27,6 @@ import Green1 from '../../../assets/images/HomeBackgroundImages/green_1.jpg';
 import Green2 from '../../../assets/images/HomeBackgroundImages/green_2.jpg';
 import Pink1 from '../../../assets/images/HomeBackgroundImages/pink_1.jpg';
 import Pink2 from '../../../assets/images/HomeBackgroundImages/pink_2.jpg';
-
-
-
 
 import ModifiedButton from '../../../assets/images/Modifiy/modifiedbutton.png';
 import mailbox_A_black from '../../../assets/images/furnitures/mailbox/mailbox_A_black.png';
@@ -44,6 +42,9 @@ import rose from '../../../assets/images/flowers/Display/rose_display.png';
 import sunflower from '../../../assets/images/flowers/Display/sunflower_display.png';
 import freesia from '../../../assets/images/flowers/Display/freesia_display.png';
 import tulip from '../../../assets/images/flowers/Display/tulip_display.png';
+
+import sparkleGif from '../../../assets/images/decoration/DecorationBackgroundSparkle.gif';
+import deco1Gif from '../../../assets/images/decoration/DecorationBackground1.gif';
 
 const flowerList = [
   { id: 'daisy', name: 'daisy', image: daisy },
@@ -73,6 +74,10 @@ const roomList = [
   { id: 'pink_2', image: Pink2 },
 ];
 
+const decorationList = [
+  { id: 'sparkle', name: 'Sparkle', image: sparkleGif },
+  { id: 'deco1', name: 'Decoration 1', image: deco1Gif },
+];
 
 const ORIGINAL_WIDTH = 2300;
 const ORIGINAL_HEIGHT = 1518;
@@ -83,7 +88,7 @@ const scaledHeight = ORIGINAL_HEIGHT * minScale;
 
 export default function RoomModified() {
   const router = useRouter();
-  const [selectedTab, setSelectedTab] = useState<'Background' | 'Flower' | 'Furniture'>('Background');
+  const [selectedTab, setSelectedTab] = useState<'Background' | 'Flower' | 'Furniture' | 'Decoration'>('Background');
   const [flowers, setFlowers] = useState<{ x: number; y: number; id: string }[]>([]);
   const [furnitureItems, setFurnitureItems] = useState<{ x: number; y: number; id: string }[]>([]);
   const [selectedItemId, setSelectedItemId] = useState<null | string>(null);
@@ -91,8 +96,8 @@ export default function RoomModified() {
   const [toastVisible, setToastVisible] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [toastType, setToastType] = useState<'success' | 'error'>('success');
-  const [isOverlayVisible, setIsOverlayVisible] = useState(false); // <- 오버레이 보이기/숨기기
-  const [isOverlayExpanded, setIsOverlayExpanded] = useState(true); // <- 확장 상태(기본 확장 true, 필요시 false)
+  const [isOverlayVisible, setIsOverlayVisible] = useState(false);
+  const [isOverlayExpanded, setIsOverlayExpanded] = useState(true);
 
   const containerRef = useRef(null);
 
@@ -100,6 +105,7 @@ export default function RoomModified() {
     obtainedFlowers,
     obtainedFurniture,
     obtainedRooms,
+    obtainedDecorations,   // 👈 데코레이션 획득 목록
     selectedRoom,
     setSelectedRoom,
     placedFlowers,
@@ -157,6 +163,7 @@ export default function RoomModified() {
         setPlacedFurniture(newFurniture);
         setSelectedItemId(null);
       }
+      // Decoration 기능은 아직 미구현
     }
   };
 
@@ -180,104 +187,20 @@ export default function RoomModified() {
 
   return (
     <View style={styles.fullScreen}>
-      <ScrollView
-        horizontal
-        contentContainerStyle={{ width: scaledWidth, height: scaledHeight }}
-        showsHorizontalScrollIndicator={false}
-        bounces={false}
-      >
-        <ImageBackground
-          source={backgroundImage}
-          style={{ width: scaledWidth, height: scaledHeight }}
-          resizeMode="cover"
-        >
-          <Pressable
-            ref={containerRef}
-            style={StyleSheet.absoluteFill}
-            onPress={handleTouch}
-          >
-            {flowers.map((item, index) => {
-              const flowerData = flowerList.find(f => f.id === item.id);
-              if (!flowerData) return null;
-              return (
-                <TouchableOpacity
-                  key={`flower-${index}`}
-                  onLongPress={() => {
-                    const updated = [...flowers];
-                    updated.splice(index, 1);
-                    setFlowers(updated);
-                    setPlacedFlowers(updated);
-                  }}
-                  style={[styles.placedImage, { left: item.x, top: item.y }]}
-                >
-                  <Image source={flowerData.image} style={{ width: 60, height: 60 }} />
-                </TouchableOpacity>
-              );
-            })}
-
-            {furnitureItems.map((item, index) => {
-              const furnitureData = furnitureList.find(f => f.id === item.id);
-              if (!furnitureData) return null;
-              return (
-                <TouchableOpacity
-                  key={`furniture-${index}`}
-                  onLongPress={() => {
-                    const updated = [...furnitureItems];
-                    updated.splice(index, 1);
-                    setFurnitureItems(updated);
-                    setPlacedFurniture(updated);
-                  }}
-                  style={[styles.placedFurnitureImage, { left: item.x, top: item.y }]}
-                >
-                  <Image source={furnitureData.icon} style={{ width: 120, height: 120 }} />
-                </TouchableOpacity>
-              );
-            })}
-          </Pressable>
-        </ImageBackground>
-      </ScrollView>
-
-      {/* 상단 오른쪽 기존 버튼 */}
-      <View style={styles.topRightContainer}>
-        <TouchableOpacity onPress={handleReturn}>
-          <Image source={ModifiedButton} style={styles.modifiedImageButton} />
-        </TouchableOpacity>
-        <TouchableOpacity onPress={handleSave} style={styles.saveButton}>
-          <Text style={styles.saveButtonText}>Save</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* 중앙 하단 확장/축소 버튼 */}
-      {!isOverlayVisible && (
-        <View style={styles.centerExpandButtonContainer}>
-          <TouchableOpacity
-            onPress={() => {
-              setIsOverlayVisible(true);
-              setIsOverlayExpanded(true); // 항상 확장된 상태로 시작
-            }}
-            style={styles.expandIconBox}
-          >
-            <Ionicons name="chevron-up" size={30} color="#5C7BEE" />
-          </TouchableOpacity>
-        </View>
-      )}
-
-      {/* 하단 오버레이 메뉴 */}
+      {/* === 상단 오버레이 메뉴 === */}
       {isOverlayVisible && (
-        <View style={[styles.overlay, isOverlayExpanded && styles.overlayExpanded]}>
-          {/* 닫기 버튼 */}
-          <View style={styles.centerExpandButtonContainer}>
+        <View style={[styles.overlayTop, isOverlayExpanded && styles.overlayExpanded]}>
+          {/* 닫기 버튼(상단 chevron-up) */}
+          <View style={styles.centerExpandButtonContainerTop}>
             <TouchableOpacity
-              onPress={() => {
-                setIsOverlayVisible(false);
-              }}
+              onPress={() => setIsOverlayVisible(false)}
               style={styles.expandIconBox}
             >
-              <Ionicons name="chevron-down" size={30} color="#5C7BEE" />
+              <Ionicons name="chevron-up" size={30} color="#5C7BEE" />
             </TouchableOpacity>
           </View>
           <View style={styles.tabContainer}>
-            {['Background', 'Flower', 'Furniture'].map((tab) => (
+            {['Background', 'Flower', 'Furniture', 'Decoration'].map((tab) => (
               <TouchableOpacity
                 key={tab}
                 style={[styles.tab, selectedTab === tab && styles.activeTab]}
@@ -323,13 +246,111 @@ export default function RoomModified() {
                     <Image source={item.icon} style={styles.itemImage} />
                   </TouchableOpacity>
                 ))}
+            {selectedTab === 'Decoration' &&
+              decorationList
+                .filter(deco => obtainedDecorations.includes(deco.id)) // 획득한 데코만 표시!
+                .map(deco => (
+                  <TouchableOpacity key={deco.id} onPress={() => handleSelectItem(deco.id)}>
+                    <Image source={deco.image} style={styles.itemImage} />
+                  </TouchableOpacity>
+                ))}
           </ScrollView>
           <View style={styles.expandedArea}>
-            <Text style={styles.expandedText}>
-            </Text>
+            <Text style={styles.expandedText}></Text>
           </View>
         </View>
       )}
+
+      {/* 상단 중앙에 확장(드롭) 버튼 (닫혀있을 때만 표시) */}
+      {!isOverlayVisible && (
+        <View style={styles.centerExpandButtonContainerTop}>
+          <TouchableOpacity
+            onPress={() => {
+              setIsOverlayVisible(true);
+              setIsOverlayExpanded(true);
+            }}
+            style={styles.expandIconBox}
+          >
+            <Ionicons name="chevron-down" size={30} color="#5C7BEE" />
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {/* 아래쪽에 기존 이미지 영역(그림 배치 영역) */}
+      <ScrollView
+        horizontal
+        contentContainerStyle={{ width: scaledWidth, height: scaledHeight }}
+        showsHorizontalScrollIndicator={false}
+        bounces={false}
+      >
+        <ImageBackground
+          source={backgroundImage}
+          style={{ width: scaledWidth, height: scaledHeight }}
+          resizeMode="cover"
+        >
+          <Pressable
+            ref={containerRef}
+            style={StyleSheet.absoluteFill}
+            onPress={handleTouch}
+          >
+            {flowers.map((item, index) => {
+              const flowerData = flowerList.find(f => f.id === item.id);
+              if (!flowerData) return null;
+              return (
+                <TouchableOpacity
+                  key={`flower-${index}`}
+                  onLongPress={() => {
+                    const updated = [...flowers];
+                    updated.splice(index, 1);
+                    setFlowers(updated);
+                    setPlacedFlowers(updated);
+                  }}
+                  style={[
+                    styles.placedImage,
+                    { left: item.x, top: item.y, overflow: 'visible' },
+                  ]}
+                >
+                  <Image
+                    source={flowerData.image}
+                    style={{ width: 70, height: 70 }}
+                    resizeMode="contain"
+                  />
+                </TouchableOpacity>
+
+              );
+            })}
+
+            {furnitureItems.map((item, index) => {
+              const furnitureData = furnitureList.find(f => f.id === item.id);
+              if (!furnitureData) return null;
+              return (
+                <TouchableOpacity
+                  key={`furniture-${index}`}
+                  onLongPress={() => {
+                    const updated = [...furnitureItems];
+                    updated.splice(index, 1);
+                    setFurnitureItems(updated);
+                    setPlacedFurniture(updated);
+                  }}
+                  style={[styles.placedFurnitureImage, { left: item.x, top: item.y }]}
+                >
+                  <Image source={furnitureData.icon} style={{ width: 120, height: 120 }} />
+                </TouchableOpacity>
+              );
+            })}
+          </Pressable>
+        </ImageBackground>
+      </ScrollView>
+
+      {/* 오른쪽 상단 기존 버튼 */}
+      <View style={styles.topRightContainer}>
+        <TouchableOpacity onPress={handleReturn}>
+          <Image source={ModifiedButton} style={styles.modifiedImageButton} />
+        </TouchableOpacity>
+        <TouchableOpacity onPress={handleSave} style={styles.saveButton}>
+          <Text style={styles.saveButtonText}>Save</Text>
+        </TouchableOpacity>
+      </View>
 
       <ToastMessage
         message={toastMessage}
@@ -376,15 +397,30 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: 'bold',
   },
-  // 중앙 하단에 화살표(확장/축소) 버튼
-  centerExpandButtonContainer: {
+  // === 상단 확장/축소 버튼 및 오버레이 ===
+  centerExpandButtonContainerTop: {
     position: 'absolute',
     left: 0,
     right: 0,
-    bottom: 15,
+    top: 10,
     alignItems: 'center',
-    zIndex: 20,
+    zIndex: 40,
   },
+  overlayTop: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    backgroundColor: '#FFFFFFEE',
+    borderBottomLeftRadius: 16,
+    borderBottomRightRadius: 16,
+    zIndex: 30,
+    paddingBottom: 16,
+    paddingTop: 38,
+    minHeight: 180,
+    maxHeight: 240,
+  },
+  overlayExpanded: {},
   expandIconBox: {
     backgroundColor: '#F0F1FF',
     borderRadius: 16,
@@ -393,24 +429,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     elevation: 3,
-  },
-  overlay: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: '#FFFFFFEE',
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
-    zIndex: 20,
-    paddingBottom: 16,
-    paddingTop: 38, // 위 화살표 영역 공간 확보
-    minHeight: 180,
-    maxHeight: 240,
-    // 화면 크기에 맞춰 조정해도 됩니다!
-  },
-  overlayExpanded: {
-    // (여기선 overlay와 overlayExpanded가 동일하게 사용됨. 확장버튼만 바뀜)
   },
   tabContainer: {
     flexDirection: 'row',
@@ -445,6 +463,7 @@ const styles = StyleSheet.create({
     height: 60,
     marginHorizontal: 8,
     borderRadius: 8,
+    resizeMode: 'contain',
   },
   expandedArea: {
     marginTop: 12,

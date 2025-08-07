@@ -21,16 +21,20 @@ import Background1 from '../../assets/images/HomeBackgroundImages/Backgroundleve
 import Background2 from '../../assets/images/HomeBackgroundImages/Backgroundlevel2.png';
 import BaseBackground from '../../assets/images/HomeBackgroundImages/BasicHomepage.png';
 
+import BasicHomepage from '../../assets/images/HomeBackgroundImages/BasicHomepage.png';
+import Blue1 from '../../assets/images/HomeBackgroundImages/blue_1.jpg';
+import Blue2 from '../../assets/images/HomeBackgroundImages/blue_2.jpg';
+import Green1 from '../../assets/images/HomeBackgroundImages/green_1.jpg';
+import Green2 from '../../assets/images/HomeBackgroundImages/green_2.jpg';
+import Pink1 from '../../assets/images/HomeBackgroundImages/pink_1.jpg';
+import Pink2 from '../../assets/images/HomeBackgroundImages/pink_2.jpg';
+
 import mailbox_A_black from '../../assets/images/furnitures/mailbox/mailbox_A_black.png';
 import mailbox_A_blackwhite from '../../assets/images/furnitures/mailbox/mailbox_A_blackwhite.png';
 import mailbox_A_white from '../../assets/images/furnitures/mailbox/mailbox_A_white.png';
 import signboard from '../../assets/images/furnitures/signboard/Standingboard.png';
-import ChairIcon from '../../assets/images/furnitures/whiteroundchair.png';
-import StandIcon from '../../assets/images/furnitures/yellowstand.png';
 import ProfileCard from '../../components/ProfileCard';
 import ProfileModal from '../../components/ProfileModal';
-
-import LetItSnow from '../../assets/images/decoration/DecorationBackground1.gif';
 
 import { useAuth } from '../../context/AuthContext';
 import { useProgress } from '../../context/ProgressContext';
@@ -48,8 +52,6 @@ const ORIGINAL_WIDTH = 2300;
 const ORIGINAL_HEIGHT = 1518;
 
 const furnitureList = [
-  { id: 'whiteroundchair', overlay: ChairIcon, style: { width: 150, height: 150 } },
-  { id: 'yellowstand', overlay: StandIcon, style: { width: 200, height: 250 } },
   { id: 'mailbox_A_black', overlay: mailbox_A_black, style: { width: 120, height: 120 } },
   { id: 'mailbox_A_blackwhite', overlay: mailbox_A_blackwhite, style: { width: 120, height: 120 } },
   { id: 'mailbox_A_white', overlay: mailbox_A_white, style: { width: 120, height: 120 } },
@@ -68,8 +70,13 @@ const flowerList = [
 ];
 
 const backgroundMap: { [key: string]: any } = {
-  room1: Background1,
-  room2: Background2,
+  default: BasicHomepage,
+  blue_1: Blue1,
+  blue_2: Blue2,
+  green_1: Green1,
+  green_2: Green2,
+  pink_1: Pink1,
+  pink_2: Pink2,
 };
 
 export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean }) {
@@ -168,34 +175,6 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
 
         {/* 눈 내리는 GIF 오버레이 */}
         {/* 홈화면 render 부분에 추가 */}
-        <Image
-          source={LetItSnow} /* 왼쪽 GIF */
-          style={{
-            position: 'absolute',
-            left: 0,
-            top: 0,
-            width: imageScaledWidth / 2,
-            height: imageScaledHeight,
-            zIndex: 2,
-            pointerEvents: 'none',
-          }}
-          resizeMode="cover"
-        />
-        <Image
-          source={LetItSnow} /* 오른쪽 GIF */
-          style={{
-            position: 'absolute',
-            left: imageScaledWidth / 2,
-            top: 0,
-            width: imageScaledWidth / 2,
-            height: imageScaledHeight,
-            zIndex: 2,
-            pointerEvents: 'none',
-          }}
-          resizeMode="cover"
-        />
-
-
 
         {/* 문 클릭 → 이동 */}
         <TouchableOpacity
