@@ -310,6 +310,16 @@ export const ProgressProvider = ({ children }: { children: React.ReactNode }) =>
     }
   };
 
+  const addObtainedDecoration = async (id: string) => {
+    try {
+      const updated = [...new Set([...obtainedDecorationsState, id])];
+      setObtainedDecorationsState(updated);
+      await AsyncStorage.setItem('@obtainedDecorations', JSON.stringify(updated));
+    } catch (e) {
+      console.error('수집 데코레이션 저장 실패:', e);
+    }
+  };
+
   // Firebase 동기화 재시도 로직
   const syncWithFirebaseRetry = async (userId: string, maxRetries: number = 3) => {
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
@@ -374,16 +384,6 @@ export const ProgressProvider = ({ children }: { children: React.ReactNode }) =>
       return true;
     } else {
       return false;
-    }
-  };
-
-  const addObtainedDecoration = async (id: string) => {
-    try {
-      const updated = [...new Set([...obtainedDecorationsState, id])];
-      setObtainedDecorationsState(updated);
-      await AsyncStorage.setItem('@obtainedDecorations', JSON.stringify(updated));
-    } catch (e) {
-      console.error('수집 데코레이션 저장 실패:', e);
     }
   };
 

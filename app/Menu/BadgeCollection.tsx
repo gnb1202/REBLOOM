@@ -20,11 +20,12 @@ const decorationList = [
   // 추가 Decoration 있으면 여기에!
 ];
 
-export default function BadgeCollection() {
+export default function DecorationCollection() {
   const router = useRouter();
-  const { purchasedDecorations } = useProgress();
+  const { obtainedDecorations } = useProgress();
 
-  const obtainedBadges = decorationList.filter(item => purchasedDecorations?.includes(item.id));
+  // 실제로 소유한 데코만 필터링
+  const obtainedDecorationsList = decorationList.filter(item => obtainedDecorations?.includes(item.id));
 
   return (
     <View style={styles.container}>
@@ -38,10 +39,10 @@ export default function BadgeCollection() {
       </View>
 
       <ScrollView contentContainerStyle={styles.grid}>
-        {obtainedBadges.length === 0 ? (
-          <Text style={styles.emptyText}>No Decoration badges obtained yet.</Text>
+        {obtainedDecorationsList.length === 0 ? (
+          <Text style={styles.emptyText}>No Decoration obtained yet.</Text>
         ) : (
-          obtainedBadges.map((item) => (
+          obtainedDecorationsList.map((item) => (
             <View key={item.id} style={styles.item}>
               <Image source={item.image} style={styles.image} resizeMode="contain" />
               <Text style={styles.label}>{item.name}</Text>
@@ -50,7 +51,7 @@ export default function BadgeCollection() {
         )}
       </ScrollView>
 
-      {/* Tab Bar (기존 코드 유지) */}
+      {/* Tab Bar */}
       <View style={styles.tabBar}>
         <TouchableOpacity onPress={() => router.push('/Menu/BackgroundCollection')}>
           <Text style={styles.tab}>Background</Text>

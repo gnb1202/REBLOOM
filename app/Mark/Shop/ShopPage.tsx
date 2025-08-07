@@ -52,7 +52,7 @@ const defaultShopItems = {
     { id: 'pink_2', name: 'Pink Room 2', image: Pink2, price: 380, category: 'Room' },
   ],
   'Decoration': [
-      { id: 'DecorationBackground1', name: 'Animated Deco 1', image: deco1Gif, price: 100, category: 'Decoration' },
+      { id: 'DecorationBackground1', name: 'Animated_Deco_1', image: deco1Gif, price: 100, category: 'Decoration' },
       { id: 'DecorationBackgroundSparkle', name: 'Sparkle Animation', image: sparkleGif, price: 90, category: 'Decoration' },
     ]
 };
