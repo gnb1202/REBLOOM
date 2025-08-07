@@ -62,7 +62,7 @@ type ProgressContextType = {
 
 const defaultProgressContext: ProgressContextType = {
   progress: 0,
-  currentFlowerId: 'daisy',  // 기본 꽃 설정
+  currentFlowerId: 'daisy',
   setProgress: () => {},
   setCurrentFlowerId: () => {},
   obtainedFlowers: [],
@@ -71,13 +71,13 @@ const defaultProgressContext: ProgressContextType = {
   addObtainedFurniture: () => {},
   obtainedRooms: [],
   addObtainedRoom: () => {},
-  selectedRoom: 'room1',  // 기본 방 설정
+  selectedRoom: 'room1',
   setSelectedRoom: () => {},
   hasChair: false,
   setHasChair: () => {},
   hasStand: false,
   setHasStand: () => {},
-  coins: 1000,  // 초기 코인 설정
+  coins: 1000,
   spendCoins: async () => false,
   isLoaded: false,
   flowerBadgeLevel: 0,
@@ -85,9 +85,9 @@ const defaultProgressContext: ProgressContextType = {
   completedChallenges: [],
   exerciseFeedbackCount: 0,
   incrementFeedbackCount: () => {},
-  placedFlowers: [],  // 빈 배열로 초기화
+  placedFlowers: [],
   setPlacedFlowers: () => {},
-  placedFurniture: [],  // 빈 배열로 초기화
+  placedFurniture: [],
   setPlacedFurniture: () => {},
   syncWithFirebase: async () => {},
   loadFromFirebase: async () => {},
@@ -96,7 +96,7 @@ const defaultProgressContext: ProgressContextType = {
   isLast: false,
   obtainedDecorations: [],
   addObtainedDecoration: () => {},
-  placedDecorations: [],  // 빈 배열로 초기화
+  placedDecorations: [],
   setPlacedDecorations: () => {},
   setPlacedDecorationsLocal: () => {},
 };
@@ -120,7 +120,7 @@ export const ProgressProvider = ({ children }: { children: React.ReactNode }) =>
   const [exerciseFeedbackCount, setExerciseFeedbackCount] = useState(0);
   const [placedFlowers, setPlacedFlowersState] = useState<{ x: number; y: number; id: string }[]>([]);
   const [placedFurniture, setPlacedFurnitureState] = useState<{ x: number; y: number; id: string }[]>([]);
-  // 추가
+  // Decoration state
   const [obtainedDecorationsState, setObtainedDecorationsState] = useState<string[]>([]);
   const [placedDecorationsState, setPlacedDecorationsState] = useState<{ x: number; y: number; id: string }[]>([]);
 
@@ -167,21 +167,36 @@ export const ProgressProvider = ({ children }: { children: React.ReactNode }) =>
           setCurrentFlowerIdState('daisy');
         }
 
-        // 2단계: Firebase에서 최신 데이터 로드 (사용자가 로그인한 경우)
+        // Firebase에서 최신 데이터 로드
         if (user) {
-          console.log('Firebase에서 최신 데이터 로딩 시작...');
           await loadFromFirebase(user.uid);
-          console.log('Firebase 데이터 로딩 완료');
         }
       } catch (e) {
         console.error('저장된 데이터 불러오기 실패:', e);
       } finally {
         setIsLoaded(true);
-        console.log('모든 데이터 로딩 완료, isLoaded: true');
       }
     };
     loadData();
   }, [user]);
+
+  // 데코레이션 획득 함수 (중복X, 저장/동기화)
+  const addObtainedDecoration = async (id: string) => {
+    try {
+      if (!obtainedDecorationsState.includes(id)) {
+        const updated = [...obtainedDecorationsState, id];
+        setObtainedDecorationsState(updated);
+        await AsyncStorage.setItem('@obtainedDecorations', JSON.stringify(updated));
+        if (user && isLoaded) {
+          setTimeout(autoSyncToFirebase, 100);
+        }
+      }
+    } catch (e) {
+      console.error('수집 데코레이션 저장 실패:', e);
+    }
+  };
+
+  // (이하 기존의 함수/로직들 동일하게 유지...)
 
   const completeChallenge = async (id: string) => {
     setCompletedChallenges((prev) => {
@@ -235,7 +250,6 @@ export const ProgressProvider = ({ children }: { children: React.ReactNode }) =>
         setProgressState(value);
         await AsyncStorage.setItem('@flowerProgress', JSON.stringify(value));
       }
-      // Firebase 자동 동기화
       setTimeout(autoSyncToFirebase, 100);
     } catch (e) {
       console.error('진행도 저장 실패:', e);
@@ -252,7 +266,6 @@ export const ProgressProvider = ({ children }: { children: React.ReactNode }) =>
   };
 
   const addObtainedFlower = async (id: string) => {
-    // 꽃은 상점에서 구매할 수 없으며, 오직 운동을 통해서만 획득 가능
     console.warn('꽃은 상점 구매가 불가능합니다. 운동을 통해서만 획득 가능합니다.');
     return;
   };
@@ -262,7 +275,6 @@ export const ProgressProvider = ({ children }: { children: React.ReactNode }) =>
       const updated = [...new Set([...obtainedFurnitureState, id])];
       setObtainedFurnitureState(updated);
       await AsyncStorage.setItem('@obtainedFurniture', JSON.stringify(updated));
-      // Firebase 자동 동기화
       setTimeout(autoSyncToFirebase, 100);
     } catch (e) {
       console.error('수집 가구 저장 실패:', e);
@@ -274,7 +286,6 @@ export const ProgressProvider = ({ children }: { children: React.ReactNode }) =>
       const updated = [...new Set([...obtainedRoomsState, id])];
       setObtainedRoomsState(updated);
       await AsyncStorage.setItem('@obtainedRooms', JSON.stringify(updated));
-      // Firebase 자동 동기화
       setTimeout(autoSyncToFirebase, 100);
     } catch (e) {
       console.error('수집 방 저장 실패:', e);
@@ -285,7 +296,6 @@ export const ProgressProvider = ({ children }: { children: React.ReactNode }) =>
     try {
       setSelectedRoomState(id);
       await AsyncStorage.setItem('@selectedRoom', id);
-      // Firebase 자동 동기화
       setTimeout(autoSyncToFirebase, 100);
     } catch (e) {
       console.error('선택된 방 저장 실패:', e);
@@ -310,36 +320,22 @@ export const ProgressProvider = ({ children }: { children: React.ReactNode }) =>
     }
   };
 
-  const addObtainedDecoration = async (id: string) => {
-    try {
-      const updated = [...new Set([...obtainedDecorationsState, id])];
-      setObtainedDecorationsState(updated);
-      await AsyncStorage.setItem('@obtainedDecorations', JSON.stringify(updated));
-    } catch (e) {
-      console.error('수집 데코레이션 저장 실패:', e);
-    }
-  };
-
   // Firebase 동기화 재시도 로직
   const syncWithFirebaseRetry = async (userId: string, maxRetries: number = 3) => {
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
         await syncWithFirebase(userId);
-        console.log(`Firebase 동기화 성공 (시도 ${attempt}/${maxRetries})`);
         return;
       } catch (error) {
-        console.error(`Firebase 동기화 실패 (시도 ${attempt}/${maxRetries}):`, error);
         if (attempt === maxRetries) {
           console.error('Firebase 동기화 최종 실패 - 모든 재시도 완료');
         } else {
-          // 재시도 전 대기 (지수 백오프)
           await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
         }
       }
     }
   };
 
-  // Firebase 자동 동기화 헬퍼 함수 (기존 코드 호환성 유지)
   const autoSyncToFirebase = async () => {
     if (user && isLoaded) {
       await syncWithFirebaseRetry(user.uid, 3);
@@ -350,10 +346,7 @@ export const ProgressProvider = ({ children }: { children: React.ReactNode }) =>
     try {
       setPlacedFlowersState(items);
       await AsyncStorage.setItem('@placedFlowers', JSON.stringify(items));
-      
-      // Firebase 즉시 동기화 (재시도 로직 포함)
       if (user && isLoaded) {
-        console.log('꽃 배치 데이터 Firebase 동기화 시작...');
         await syncWithFirebaseRetry(user.uid, 3);
       }
     } catch (e) {
@@ -365,10 +358,7 @@ export const ProgressProvider = ({ children }: { children: React.ReactNode }) =>
     try {
       setPlacedFurnitureState(items);
       await AsyncStorage.setItem('@placedFurniture', JSON.stringify(items));
-      
-      // Firebase 즉시 동기화 (재시도 로직 포함)
       if (user && isLoaded) {
-        console.log('가구 배치 데이터 Firebase 동기화 시작...');
         await syncWithFirebaseRetry(user.uid, 3);
       }
     } catch (e) {
@@ -387,19 +377,15 @@ export const ProgressProvider = ({ children }: { children: React.ReactNode }) =>
     }
   };
 
-  // 로컬 상태만 업데이트 (자동 저장 X)
   const setPlacedDecorationsLocal = (items: { x: number; y: number; id: string }[]) => {
     setPlacedDecorationsState(items);
   };
 
-  // Firebase 및 AsyncStorage에 저장 (Save 버튼 클릭 시)
   const setPlacedDecorations = async (items: { x: number; y: number; id: string }[]) => {
     try {
       setPlacedDecorationsState(items);
       await AsyncStorage.setItem('@placedDecorations', JSON.stringify(items));
-      
       if (user && isLoaded) {
-        console.log('데코레이션 배치 데이터 Firebase 동기화 시작...');
         await syncWithFirebaseRetry(user.uid, 3);
       }
     } catch (e) {
@@ -427,7 +413,6 @@ export const ProgressProvider = ({ children }: { children: React.ReactNode }) =>
         decorations: placedDecorationsState,
         obtainedDecorations: obtainedDecorationsState,
       });
-      console.log('Firebase 동기화 완료');
     } catch (error) {
       console.error('Firebase 동기화 실패:', error);
     }
@@ -453,8 +438,6 @@ export const ProgressProvider = ({ children }: { children: React.ReactNode }) =>
         if (roomData.flowerBadgeLevel !== undefined) setFlowerBadgeLevel(roomData.flowerBadgeLevel);
         if (roomData.completedChallenges) setCompletedChallenges(roomData.completedChallenges);
         if (roomData.exerciseFeedbackCount !== undefined) setExerciseFeedbackCount(roomData.exerciseFeedbackCount);
-
-        console.log('Firebase에서 방 데이터 로드 완료');
       }
     } catch (error) {
       console.error('Firebase에서 방 데이터 로드 실패:', error);
