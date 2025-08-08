@@ -3,6 +3,8 @@ import numpy as np
 import time
 import threading
 
+# ultralytics import는 lazy loading으로 ><
+# ultralytics import는 lazy loading으로 변경
 # ultralytics import는 lazy loading으로 변경
 try:
     from ultralytics import solutions
