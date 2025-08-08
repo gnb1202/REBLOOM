@@ -94,8 +94,15 @@ CRITICAL: Responses over 520 characters will be considered failed attempts. You 
 3. **Mandatory Structure**: greeting (2 sentences + \\n\\n), achievements (2-3 items), recommendations (2-3 items)
 4. **Mandatory Paragraphs**: You **MUST** use '\\n\\n' in greeting field. This is not optional.
 
-[SELF-CHECK PROCESS]
-After generating your response, count the total characters and if over 520, rewrite more concisely until under 520 characters.
+[SELF-CHECK PROCESS - TWO MANDATORY CHECKS]
+1. First, generate your draft response.
+2. **After creating the draft, you MUST check for two conditions:**
+   (A) Is the total character count over 520?
+   (B) Does the 'greeting' field contain the '\\n\\n' paragraph break characters?
+3. **If condition (A) is true OR condition (B) is false, you MUST rewrite your draft** until it is under 520 characters AND includes at least one '\\n\\n' paragraph break in the greeting.
+4. The final output MUST be the version that satisfies both rules perfectly.
+
+**CRITICAL**: Both conditions must be satisfied. Character count AND paragraph breaks are equally important.
 
 [PERFECT EXAMPLE - EXACTLY 520 CHARACTERS]
 {
@@ -183,8 +190,15 @@ CRITICAL: Responses over 520 characters will be considered failed attempts. You 
 3. **Mandatory Structure**: greeting (2 sentences + \\n\\n), achievements (2-3 items), recommendations (2-3 items)
 4. **Mandatory Paragraphs**: You **MUST** use '\\n\\n' in greeting field. This is not optional.
 
-[SELF-CHECK PROCESS]
-After generating your response, count the total characters and if over 520, rewrite more concisely until under 520 characters.
+[SELF-CHECK PROCESS - TWO MANDATORY CHECKS]
+1. First, generate your draft response.
+2. **After creating the draft, you MUST check for two conditions:**
+   (A) Is the total character count over 520?
+   (B) Does the 'greeting' field contain the '\\n\\n' paragraph break characters?
+3. **If condition (A) is true OR condition (B) is false, you MUST rewrite your draft** until it is under 520 characters AND includes at least one '\\n\\n' paragraph break in the greeting.
+4. The final output MUST be the version that satisfies both rules perfectly.
+
+**CRITICAL**: Both conditions must be satisfied. Character count AND paragraph breaks are equally important.
 
 [PERFECT EXAMPLE - EXACTLY 520 CHARACTERS]
 {
@@ -268,8 +282,15 @@ CRITICAL: Responses over 520 characters will be considered failed attempts. You 
 3. **Mandatory Structure**: greeting (2 sentences + \\n\\n), achievements (2-3 items), recommendations (2-3 items)
 4. **Mandatory Paragraphs**: You **MUST** use '\\n\\n' in greeting field. This is not optional.
 
-[SELF-CHECK PROCESS]
-After generating your response, count the total characters and if over 520, rewrite more concisely until under 520 characters.
+[SELF-CHECK PROCESS - TWO MANDATORY CHECKS]
+1. First, generate your draft response.
+2. **After creating the draft, you MUST check for two conditions:**
+   (A) Is the total character count over 520?
+   (B) Does the 'greeting' field contain the '\\n\\n' paragraph break characters?
+3. **If condition (A) is true OR condition (B) is false, you MUST rewrite your draft** until it is under 520 characters AND includes at least one '\\n\\n' paragraph break in the greeting.
+4. The final output MUST be the version that satisfies both rules perfectly.
+
+**CRITICAL**: Both conditions must be satisfied. Character count AND paragraph breaks are equally important.
 
 [PERFECT EXAMPLE - EXACTLY 520 CHARACTERS]
 {
