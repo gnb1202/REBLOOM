@@ -1,23 +1,24 @@
-import * as functions from 'firebase-functions';
-import * as admin from 'firebase-admin';
-import { GoogleGenerativeAI } from '@google/generative-ai';
 import { PubSub } from '@google-cloud/pubsub';
+import { GoogleGenerativeAI } from '@google/generative-ai';
+import * as admin from 'firebase-admin';
+import * as functions from 'firebase-functions';
+import { RehabilitationPromptGenerator } from './prompts/rehabilitationPrompts';
 
 // Firebase Admin 초기화
 admin.initializeApp();
 const db = admin.firestore();
 const pubsub = new PubSub();
 
-// Gemini AI 클라이언트 초기화 (secrets 사용)
+// Gemini AI 클라이언트 초기화
 let genAI: GoogleGenerativeAI;
 
 const initializeGemini = () => {
-  // Temporary hardcoded API key for testing
-  const apiKey = 'AIzaSyCizMY5FUSUusttLBVoIm-nm9SWNgkHBWA';
-  console.log('Using hardcoded API key for testing');
+  // 환경변수에서 API 키 읽기 (보안 강화)
+  const apiKey = process.env.GEMINI_API_KEY || functions.config().gemini?.api_key;
+  console.log('Gemini API key source:', process.env.GEMINI_API_KEY ? 'environment' : 'config');
   
   if (!apiKey) {
-    throw new Error('Gemini API key not configured');
+    throw new Error('Gemini API key not configured in environment or config');
   }
   genAI = new GoogleGenerativeAI(apiKey);
   console.log('Gemini API client initialized successfully');
@@ -174,9 +175,9 @@ async function collectWeeklyData(userId: string, startDate: string, endDate: str
   };
 }
 
-// Gemini AI 콘텐츠 생성
+// Gemini AI 콘텐츠 생성 (재활 특화)
 async function generateAIContent(weeklyData: any) {
-  console.log('Starting AI content generation...');
+  console.log('Starting AI content generation with rehabilitation focus...');
   
   try {
     if (!genAI) {
@@ -185,42 +186,23 @@ async function generateAIContent(weeklyData: any) {
       console.log('Gemini API initialized successfully');
     }
 
-    const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
     console.log('Gemini model acquired');
 
-  const prompt = `
-You are an empathetic health and fitness coach analyzing a user's weekly health data. 
-Generate insights in Korean language.
+    // 사용자 데이터 준비
+    const userData = {
+      level: weeklyData.userProfile?.gameData?.level || 1,
+      totalExercises: weeklyData.userProfile?.gameData?.totalExercises || 0,
+      consecutiveExercises: weeklyData.userProfile?.gameData?.consecutiveExercises || 0,
+      currency: weeklyData.userProfile?.gameData?.currency || 0
+    };
 
-Weekly Data Summary:
-${JSON.stringify({
-  healthCheckCount: weeklyData.healthChecks.length,
-  averageCondition: weeklyData.healthChecks.length > 0 
-    ? weeklyData.healthChecks.reduce((sum: number, check: any) => sum + check.condition, 0) / weeklyData.healthChecks.length
-    : 0,
-  exerciseCount: weeklyData.exercises.length,
-  totalExerciseDuration: weeklyData.exercises.reduce((sum: number, ex: any) => sum + ex.duration, 0),
-  userLevel: weeklyData.userProfile?.gameData?.level || 1,
-  painAreas: weeklyData.healthChecks.flatMap((check: any) => check.painAreas || [])
-})}
-
-Detailed Health Checks:
-${JSON.stringify(weeklyData.healthChecks.slice(0, 10), null, 2)}
-
-Detailed Exercises:
-${JSON.stringify(weeklyData.exercises.slice(0, 10), null, 2)}
-
-Please generate a JSON response with:
-{
-  "narrative": "2-3 sentence empathetic summary of the week's health journey in Korean",
-  "achievements": ["3-5 specific achievements based on actual data", "in Korean"],
-  "recommendations": ["3-5 actionable recommendations based on patterns", "in Korean"]
-}
-
-Focus on being encouraging, specific to the data, and actionable.
-`;
-
-    console.log('Sending prompt to Gemini:', prompt.substring(0, 200) + '...');
+    // 재활 특화 프롬프트 생성
+    const prompt = RehabilitationPromptGenerator.generatePrompt(userData, weeklyData);
+    
+    console.log('Using rehabilitation-focused prompt for breast cancer survivor support');
+    console.log('Prompt type selected based on user condition and progress');
+    
     const result = await model.generateContent(prompt);
     console.log('Received response from Gemini');
     
@@ -233,19 +215,32 @@ Focus on being encouraging, specific to the data, and actionable.
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (jsonMatch) {
       const parsed = JSON.parse(jsonMatch[0]);
-      console.log('Successfully parsed AI response');
-      return parsed;
+      console.log('Successfully parsed rehabilitation-focused AI response');
+      
+      // 새로운 JSON 구조를 기존 구조로 매핑 (호환성 유지)
+      return {
+        narrative: parsed.greeting || "Thank you for taking care of yourself this week.",
+        achievements: parsed.gentleAchievements || ["Your consistent efforts in self-care"],
+        recommendations: parsed.carefulRecommendations || ["Continue listening to your body's needs"],
+        // 추가 재활 특화 필드들
+        wellbeingCheck: parsed.wellbeingCheck || "",
+        supportMessage: parsed.supportMessage || "",
+        isRehabilitationFocused: true
+      };
     }
     
-    console.log('Failed to parse JSON from AI response, using fallback');
-    // 파싱 실패시 기본값
+    console.log('Failed to parse JSON from AI response, using rehabilitation fallback');
+    // 재활 특화 기본값
     return {
-      narrative: "이번 주의 건강 관리 여정을 AI가 분석하고 있습니다.",
-      achievements: ["꾸준한 건강 관리 노력"],
-      recommendations: ["규칙적인 운동 지속하기"]
+      narrative: "Thank you for your dedication to your recovery journey this week.",
+      achievements: ["Your commitment to daily self-care and body awareness"],
+      recommendations: ["Continue to honor your body's needs and celebrate small victories"],
+      wellbeingCheck: "Every step in your recovery journey matters.",
+      supportMessage: "You are doing beautifully, and your consistency shows real strength.",
+      isRehabilitationFocused: true
     };
   } catch (error) {
-    console.error('Gemini AI generation failed:', error);
+    console.error('Rehabilitation-focused AI generation failed:', error);
     throw error;
   }
 }
@@ -295,7 +290,7 @@ async function generateFallbackReport(userId: string, startDate: string, endDate
     weekStart: startDate,
     weekEnd: endDate,
     generatedAt: new Date(),
-    aiSummary: "이번 주의 건강 데이터를 바탕으로 기본 리포트를 생성했습니다.",
+    aiSummary: "Thank you for your dedication to tracking your health and recovery journey this week.",
     achievements: generateBasicAchievements(weeklyData),
     recommendations: generateBasicRecommendations(weeklyData),
     isAIGenerated: false
@@ -332,19 +327,23 @@ function generateBasicAchievements(weeklyData: any) {
   const { healthChecks, exercises, userProfile } = weeklyData;
   
   if (healthChecks.length >= 5) {
-    achievements.push('꾸준한 건강 체크 실천 🏆');
+    achievements.push('Consistent daily self-care check-ins 💙');
   }
   
   if (exercises.length >= 3) {
-    achievements.push('주간 운동 목표 달성 💪');
+    achievements.push('Gentle movement practice throughout the week 🌸');
   }
   
-  // 사용자 레벨 기반 성과 추가
+  if (healthChecks.length >= 3) {
+    achievements.push('Taking time to listen to your body each day 🤗');
+  }
+  
+  // Recovery journey level recognition
   if (userProfile?.gameData?.level >= 5) {
-    achievements.push('높은 레벨 달성 🌟');
+    achievements.push('Dedication to your recovery journey 🌟');
   }
   
-  return achievements.length > 0 ? achievements : ['건강 관리 노력을 인정합니다 👍'];
+  return achievements.length > 0 ? achievements : ['Your commitment to self-care and healing 💕'];
 }
 
 function generateBasicRecommendations(weeklyData: any) {
@@ -352,17 +351,25 @@ function generateBasicRecommendations(weeklyData: any) {
   const { healthChecks, exercises } = weeklyData;
   
   if (exercises.length < 3) {
-    recommendations.push('주 3회 이상 운동하는 것을 목표로 해보세요');
+    recommendations.push('Consider gentle movement when you feel comfortable - even 5 minutes counts');
   }
   
   if (healthChecks.length < 5) {
-    recommendations.push('매일 건강 상태를 체크하는 습관을 기르세요');
+    recommendations.push('Try checking in with yourself daily, honoring whatever you discover');
   }
   
-  return recommendations.length > 0 ? recommendations : ['꾸준한 건강 관리를 지속하세요'];
+  if (exercises.length === 0) {
+    recommendations.push('Rest is also healing - honor your body\'s need for gentle care');
+  }
+  
+  if (healthChecks.length >= 3) {
+    recommendations.push('Continue this beautiful practice of staying connected with your body');
+  }
+  
+  return recommendations.length > 0 ? recommendations : ['Keep honoring your healing journey with patience and love'];
 }
 
-// 수동 리포트 생성 트리거 (직접 AI 생성)
+// 수동 리포트 생성 트리거 (보안 강화된 환경변수 사용)
 export const triggerReportGeneration = functions
   .region('us-central1')
   .https
@@ -375,21 +382,30 @@ export const triggerReportGeneration = functions
     console.log(`Starting AI report generation for user: ${userId}`);
     
     try {
-      // Gemini AI 직접 초기화 및 호출
-      const genAI = new GoogleGenerativeAI('AIzaSyCizMY5FUSUusttLBVoIm-nm9SWNgkHBWA');
-      const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+      // 환경변수에서 API 키 읽기 (보안 강화)
+      const apiKey = process.env.GEMINI_API_KEY;
+      
+      if (!apiKey) {
+        console.error('GEMINI_API_KEY environment variable not set');
+        throw new functions.https.HttpsError('failed-precondition', 'API key not configured');
+      }
+      
+      console.log('Using API key from environment variable');
 
-      // 간단한 AI 프롬프트
-      const prompt = `Generate a health report summary in Korean for a user with excellent exercise performance: 19 exercises this week, 365-day streak, level 102. Be encouraging and specific.
+      // Gemini AI 직접 초기화 및 호출
+      const genAI = new GoogleGenerativeAI(apiKey);
+      const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+
+      const prompt = `You are a compassionate rehabilitation supporter for breast cancer survivors. Generate a supportive health summary in English for a user who has shown dedication to their recovery: gentle activities completed this week, consistent self-care journey. Be encouraging and focus on their healing journey.
 
       Provide JSON format:
       {
-        "narrative": "encouraging Korean summary",
-        "achievements": ["specific achievement 1", "achievement 2"],
-        "recommendations": ["recommendation 1", "recommendation 2"]
+        "narrative": "encouraging English summary focused on recovery and self-care", 
+        "achievements": ["specific recovery-focused achievement 1", "achievement 2"],
+        "recommendations": ["gentle recommendation 1", "recommendation 2"]
       }`;
 
-      console.log('Calling Gemini API...');
+      console.log('Calling Gemini API with rehabilitation-focused model: gemini-2.5-flash');
       const result = await model.generateContent(prompt);
       const response = await result.response;
       const text = response.text();
@@ -399,9 +415,9 @@ export const triggerReportGeneration = functions
       // JSON 파싱
       const jsonMatch = text.match(/\{[\s\S]*\}/);
       const aiContent = jsonMatch ? JSON.parse(jsonMatch[0]) : {
-        narrative: "AI 생성 테스트 성공! 이번 주 운동 성과가 정말 훌륭합니다.",
-        achievements: ["연속 365일 운동 달성! 🔥", "레벨 102 달성! 🌟"],
-        recommendations: ["현재 페이스 유지하기", "다양한 운동 추가해보기"]
+        narrative: "Thank you for your wonderful commitment to your recovery journey this week.",
+        achievements: ["Consistent self-care and body awareness 💙", "Dedication to your healing process 🌸"],
+        recommendations: ["Continue honoring your body's needs", "Celebrate every small step in your recovery"]
       };
 
       // Firestore에 저장
