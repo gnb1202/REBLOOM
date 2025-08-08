@@ -1,16 +1,19 @@
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { 
+import {
   Alert,
   Image,
-  StyleSheet, 
-  Text, 
-  TouchableOpacity, 
-  View 
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
 } from 'react-native';
 
-const BACKEND_URL = 'http://192.168.169.22:8888';
+const BACKEND_URL = 'http://127.0.0.1:8888';
+// const BACKEND_URL = 'http://127.0.0.1:8888';
+// const BACKEND_URL = 'http://127.0.0.1:8888';
+// const BACKEND_URL = 'http://127.0.0.1:8888';
 
 interface ExerciseData {
   is_active: boolean;
