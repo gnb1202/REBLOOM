@@ -59,7 +59,7 @@ type ProgressContextType = {
   setPlacedDecorations: (items: { x: number; y: number; id: string }[]) => void;
   setPlacedDecorationsLocal: (items: { x: number; y: number; id: string }[]) => void;
   selectedDecoration: string | null;
-  setSelectedDecoration: (id: string | null) => void
+  setSelectedDecoration: (id: string | null) => void;
 };
 
 const defaultProgressContext: ProgressContextType = {
@@ -73,7 +73,7 @@ const defaultProgressContext: ProgressContextType = {
   addObtainedFurniture: () => {},
   obtainedRooms: [],
   addObtainedRoom: () => {},
-  selectedRoom: 'room1',
+  selectedRoom: 'default',
   setSelectedRoom: () => {},
   hasChair: false,
   setHasChair: () => {},
@@ -149,6 +149,11 @@ export const ProgressProvider = ({ children }: { children: React.ReactNode }) =>
         const savedPlacedDecorations = await AsyncStorage.getItem('@placedDecorations');
         const savedSelectedDecoration = await AsyncStorage.getItem('@selectedDecoration');
 
+        console.log('[ProgressContext] 초기 로드', {
+          savedProgress, savedFlowerId, savedObtained, savedFurniture, savedRooms, savedSelectedRoom,
+          savedHasChair, savedHasStand, savedCoins, savedBadgeLevel, savedCompletedChallenges, savedFeedbackCount,
+          savedPlacedFlowers, savedPlacedFurniture, savedObtainedDecorations, savedPlacedDecorations, savedSelectedDecoration
+        });
 
         if (savedRooms !== null) setObtainedRoomsState(JSON.parse(savedRooms));
         if (savedSelectedRoom !== null) setSelectedRoomState(savedSelectedRoom);
@@ -167,7 +172,6 @@ export const ProgressProvider = ({ children }: { children: React.ReactNode }) =>
         if (savedPlacedDecorations !== null) setPlacedDecorationsState(JSON.parse(savedPlacedDecorations));
         if (savedSelectedDecoration !== null) setSelectedDecorationState(savedSelectedDecoration);
 
-
         if (savedFlowerId !== null) {
           setCurrentFlowerIdState(savedFlowerId);
         } else {
@@ -175,46 +179,45 @@ export const ProgressProvider = ({ children }: { children: React.ReactNode }) =>
           setCurrentFlowerIdState('daisy');
         }
 
-        // Firebase에서 최신 데이터 로드
         if (user) {
           await loadFromFirebase(user.uid);
         }
       } catch (e) {
-        console.error('저장된 데이터 불러오기 실패:', e);
+        console.error('[ProgressContext] 저장된 데이터 불러오기 실패:', e);
       } finally {
         setIsLoaded(true);
+        console.log('[ProgressContext] isLoaded → true');
       }
     };
     loadData();
   }, [user]);
 
   const setSelectedDecoration = async (id: string | null) => {
-      setSelectedDecorationState(id);
-      if (id) {
-        await AsyncStorage.setItem('@selectedDecoration', id);
-      } else {
-        await AsyncStorage.removeItem('@selectedDecoration');
-      }
-      if (user && isLoaded) setTimeout(autoSyncToFirebase, 100);
-    };
+    setSelectedDecorationState(id);
+    if (id) {
+      await AsyncStorage.setItem('@selectedDecoration', id);
+    } else {
+      await AsyncStorage.removeItem('@selectedDecoration');
+    }
+    console.log('[ProgressContext] setSelectedDecoration', id);
+    if (user && isLoaded) setTimeout(autoSyncToFirebase, 100);
+  };
 
-  // 데코레이션 획득 함수 (중복X, 저장/동기화)
   const addObtainedDecoration = async (id: string) => {
     try {
       if (!obtainedDecorationsState.includes(id)) {
         const updated = [...obtainedDecorationsState, id];
         setObtainedDecorationsState(updated);
         await AsyncStorage.setItem('@obtainedDecorations', JSON.stringify(updated));
+        console.log('[ProgressContext] addObtainedDecoration', updated);
         if (user && isLoaded) {
           setTimeout(autoSyncToFirebase, 100);
         }
       }
     } catch (e) {
-      console.error('수집 데코레이션 저장 실패:', e);
+      console.error('[ProgressContext] 수집 데코레이션 저장 실패:', e);
     }
   };
-
-  // (이하 기존의 함수/로직들 동일하게 유지...)
 
   const completeChallenge = async (id: string) => {
     setCompletedChallenges((prev) => {
@@ -231,6 +234,7 @@ export const ProgressProvider = ({ children }: { children: React.ReactNode }) =>
     const newCount = exerciseFeedbackCount + 1;
     setExerciseFeedbackCount(newCount);
     await AsyncStorage.setItem('@exerciseFeedbackCount', JSON.stringify(newCount));
+    console.log('[ProgressContext] incrementFeedbackCount', newCount);
 
     if (newCount === 3) await completeChallenge('feedback-3');
     else if (newCount === 5) await completeChallenge('feedback-5');
@@ -268,9 +272,10 @@ export const ProgressProvider = ({ children }: { children: React.ReactNode }) =>
         setProgressState(value);
         await AsyncStorage.setItem('@flowerProgress', JSON.stringify(value));
       }
+      console.log('[ProgressContext] setProgress', value);
       setTimeout(autoSyncToFirebase, 100);
     } catch (e) {
-      console.error('진행도 저장 실패:', e);
+      console.error('[ProgressContext] 진행도 저장 실패:', e);
     }
   };
 
@@ -278,8 +283,9 @@ export const ProgressProvider = ({ children }: { children: React.ReactNode }) =>
     try {
       await AsyncStorage.setItem('@currentFlowerId', id);
       setCurrentFlowerIdState(id);
+      console.log('[ProgressContext] setCurrentFlowerId', id);
     } catch (e) {
-      console.error('꽃 ID 저장 실패:', e);
+      console.error('[ProgressContext] 꽃 ID 저장 실패:', e);
     }
   };
 
@@ -293,9 +299,10 @@ export const ProgressProvider = ({ children }: { children: React.ReactNode }) =>
       const updated = [...new Set([...obtainedFurnitureState, id])];
       setObtainedFurnitureState(updated);
       await AsyncStorage.setItem('@obtainedFurniture', JSON.stringify(updated));
+      console.log('[ProgressContext] addObtainedFurniture', updated);
       setTimeout(autoSyncToFirebase, 100);
     } catch (e) {
-      console.error('수집 가구 저장 실패:', e);
+      console.error('[ProgressContext] 수집 가구 저장 실패:', e);
     }
   };
 
@@ -304,9 +311,10 @@ export const ProgressProvider = ({ children }: { children: React.ReactNode }) =>
       const updated = [...new Set([...obtainedRoomsState, id])];
       setObtainedRoomsState(updated);
       await AsyncStorage.setItem('@obtainedRooms', JSON.stringify(updated));
+      console.log('[ProgressContext] addObtainedRoom', updated);
       setTimeout(autoSyncToFirebase, 100);
     } catch (e) {
-      console.error('수집 방 저장 실패:', e);
+      console.error('[ProgressContext] 수집 방 저장 실패:', e);
     }
   };
 
@@ -314,9 +322,10 @@ export const ProgressProvider = ({ children }: { children: React.ReactNode }) =>
     try {
       setSelectedRoomState(id);
       await AsyncStorage.setItem('@selectedRoom', id);
+      console.log('[ProgressContext] setSelectedRoom', id);
       setTimeout(autoSyncToFirebase, 100);
     } catch (e) {
-      console.error('선택된 방 저장 실패:', e);
+      console.error('[ProgressContext] 선택된 방 저장 실패:', e);
     }
   };
 
@@ -324,8 +333,9 @@ export const ProgressProvider = ({ children }: { children: React.ReactNode }) =>
     try {
       setHasChairState(value);
       await AsyncStorage.setItem('@hasChair', JSON.stringify(value));
+      console.log('[ProgressContext] setHasChair', value);
     } catch (e) {
-      console.error('의자 상태 저장 실패:', e);
+      console.error('[ProgressContext] 의자 상태 저장 실패:', e);
     }
   };
 
@@ -333,12 +343,12 @@ export const ProgressProvider = ({ children }: { children: React.ReactNode }) =>
     try {
       setHasStandState(value);
       await AsyncStorage.setItem('@hasStand', JSON.stringify(value));
+      console.log('[ProgressContext] setHasStand', value);
     } catch (e) {
-      console.error('스탠드 상태 저장 실패:', e);
+      console.error('[ProgressContext] 스탠드 상태 저장 실패:', e);
     }
   };
 
-  // Firebase 동기화 재시도 로직
   const syncWithFirebaseRetry = async (userId: string, maxRetries: number = 3) => {
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
@@ -346,7 +356,7 @@ export const ProgressProvider = ({ children }: { children: React.ReactNode }) =>
         return;
       } catch (error) {
         if (attempt === maxRetries) {
-          console.error('Firebase 동기화 최종 실패 - 모든 재시도 완료');
+          console.error('[ProgressContext] Firebase 동기화 최종 실패 - 모든 재시도 완료');
         } else {
           await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
         }
@@ -364,11 +374,12 @@ export const ProgressProvider = ({ children }: { children: React.ReactNode }) =>
     try {
       setPlacedFlowersState(items);
       await AsyncStorage.setItem('@placedFlowers', JSON.stringify(items));
+      console.log('[ProgressContext] setPlacedFlowers', items);
       if (user && isLoaded) {
         await syncWithFirebaseRetry(user.uid, 3);
       }
     } catch (e) {
-      console.error('꽃 위치 저장 실패:', e);
+      console.error('[ProgressContext] 꽃 위치 저장 실패:', e);
     }
   };
 
@@ -376,11 +387,12 @@ export const ProgressProvider = ({ children }: { children: React.ReactNode }) =>
     try {
       setPlacedFurnitureState(items);
       await AsyncStorage.setItem('@placedFurniture', JSON.stringify(items));
+      console.log('[ProgressContext] setPlacedFurniture', items);
       if (user && isLoaded) {
         await syncWithFirebaseRetry(user.uid, 3);
       }
     } catch (e) {
-      console.error('가구 위치 저장 실패:', e);
+      console.error('[ProgressContext] 가구 위치 저장 실패:', e);
     }
   };
 
@@ -389,6 +401,7 @@ export const ProgressProvider = ({ children }: { children: React.ReactNode }) =>
       const updated = coins - amount;
       setCoins(updated);
       await AsyncStorage.setItem('@coins', JSON.stringify(updated));
+      console.log('[ProgressContext] spendCoins', updated);
       return true;
     } else {
       return false;
@@ -397,17 +410,19 @@ export const ProgressProvider = ({ children }: { children: React.ReactNode }) =>
 
   const setPlacedDecorationsLocal = (items: { x: number; y: number; id: string }[]) => {
     setPlacedDecorationsState(items);
+    console.log('[ProgressContext] setPlacedDecorationsLocal', items);
   };
 
   const setPlacedDecorations = async (items: { x: number; y: number; id: string }[]) => {
     try {
       setPlacedDecorationsState(items);
       await AsyncStorage.setItem('@placedDecorations', JSON.stringify(items));
+      console.log('[ProgressContext] setPlacedDecorations', items);
       if (user && isLoaded) {
         await syncWithFirebaseRetry(user.uid, 3);
       }
     } catch (e) {
-      console.error('데코레이션 위치 저장 실패:', e);
+      console.error('[ProgressContext] 데코레이션 위치 저장 실패:', e);
     }
   };
 
@@ -432,8 +447,9 @@ export const ProgressProvider = ({ children }: { children: React.ReactNode }) =>
         obtainedDecorations: obtainedDecorationsState,
         selectedDecoration: selectedDecorationState,
       });
+      console.log('[ProgressContext] syncWithFirebase 완료');
     } catch (error) {
-      console.error('Firebase 동기화 실패:', error);
+      console.error('[ProgressContext] Firebase 동기화 실패:', error);
     }
   };
 
@@ -457,11 +473,44 @@ export const ProgressProvider = ({ children }: { children: React.ReactNode }) =>
         if (roomData.flowerBadgeLevel !== undefined) setFlowerBadgeLevel(roomData.flowerBadgeLevel);
         if (roomData.completedChallenges) setCompletedChallenges(roomData.completedChallenges);
         if (roomData.exerciseFeedbackCount !== undefined) setExerciseFeedbackCount(roomData.exerciseFeedbackCount);
+        if (roomData.selectedDecoration !== undefined) setSelectedDecorationState(roomData.selectedDecoration);
+        console.log('[ProgressContext] loadFromFirebase', roomData);
       }
     } catch (error) {
-      console.error('Firebase에서 방 데이터 로드 실패:', error);
+      console.error('[ProgressContext] Firebase에서 방 데이터 로드 실패:', error);
     }
   };
+
+  // value 변화 추적용 로그 (디버깅에 매우 유용)
+  useEffect(() => {
+    if (isLoaded) {
+      console.log('[ProgressContext] Provider value', {
+        progress,
+        currentFlowerId,
+        obtainedFlowers: obtainedFlowersState,
+        obtainedFurniture: obtainedFurnitureState,
+        obtainedRooms: obtainedRoomsState,
+        selectedRoom,
+        hasChair,
+        hasStand,
+        coins,
+        isLoaded,
+        flowerBadgeLevel,
+        completedChallenges,
+        exerciseFeedbackCount,
+        placedFlowers,
+        placedFurniture,
+        obtainedDecorations: obtainedDecorationsState,
+        placedDecorations: placedDecorationsState,
+        selectedDecoration: selectedDecorationState,
+      });
+    }
+  }, [
+    progress, currentFlowerId, obtainedFlowersState, obtainedFurnitureState,
+    obtainedRoomsState, selectedRoom, hasChair, hasStand, coins, isLoaded,
+    flowerBadgeLevel, completedChallenges, exerciseFeedbackCount, placedFlowers,
+    placedFurniture, obtainedDecorationsState, placedDecorationsState, selectedDecorationState
+  ]);
 
   return (
     <ProgressContext.Provider

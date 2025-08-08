@@ -12,7 +12,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons'; // expo 내장 아이콘!
+import { Ionicons } from '@expo/vector-icons';
 import { useProgress } from '../../../context/ProgressContext';
 import ToastMessage from '../../../components/ToastMessage';
 
@@ -20,7 +20,6 @@ import Background1 from '../../../assets/images/HomeBackgroundImages/Backgroundl
 import Background2 from '../../../assets/images/HomeBackgroundImages/Backgroundlevel2.png';
 import BaseBackground from '../../../assets/images/HomeBackgroundImages/BasicHomepage.png';
 
-import BasicHomepage from '../../../assets/images/HomeBackgroundImages/BasicHomepage.png';
 import Blue1 from '../../../assets/images/HomeBackgroundImages/blue_1.jpg';
 import Blue2 from '../../../assets/images/HomeBackgroundImages/blue_2.jpg';
 import Green1 from '../../../assets/images/HomeBackgroundImages/green_1.jpg';
@@ -98,41 +97,67 @@ export default function RoomModified() {
   const [toastType, setToastType] = useState<'success' | 'error'>('success');
   const [isOverlayVisible, setIsOverlayVisible] = useState(false);
   const [isOverlayExpanded, setIsOverlayExpanded] = useState(true);
-  const [selectedDecoration, setSelectedDecoration] = useState<string | null>(null);
 
-  const containerRef = useRef(null);
-
+  // 데코레이션 선택 임시 상태
   const {
     obtainedFlowers,
     obtainedFurniture,
     obtainedRooms,
-    obtainedDecorations,   // 👈 데코레이션 획득 목록
+    obtainedDecorations,
     selectedRoom,
     setSelectedRoom,
     placedFlowers,
     placedFurniture,
     setPlacedFlowers,
     setPlacedFurniture,
+    selectedDecoration,
+    setSelectedDecoration,
   } = useProgress();
+  const [tempSelectedDecoration, setTempSelectedDecoration] = useState<string | null>(selectedDecoration);
+
+  const containerRef = useRef(null);
+
+  // [로그] 모든 상태 변화 추적
+  useEffect(() => {
+    console.log('[RoomModified] obtainedFlowers:', obtainedFlowers);
+    console.log('[RoomModified] obtainedFurniture:', obtainedFurniture);
+    console.log('[RoomModified] obtainedRooms:', obtainedRooms);
+    console.log('[RoomModified] obtainedDecorations:', obtainedDecorations);
+    console.log('[RoomModified] selectedRoom:', selectedRoom);
+    console.log('[RoomModified] selectedDecoration:', selectedDecoration);
+    console.log('[RoomModified] placedFlowers:', placedFlowers);
+    console.log('[RoomModified] placedFurniture:', placedFurniture);
+    console.log('[RoomModified] (local) flowers:', flowers);
+    console.log('[RoomModified] (local) furnitureItems:', furnitureItems);
+    console.log('[RoomModified] tempSelectedRoom:', tempSelectedRoom);
+    console.log('[RoomModified] tempSelectedDecoration:', tempSelectedDecoration);
+  }, [
+    obtainedFlowers, obtainedFurniture, obtainedRooms, obtainedDecorations,
+    selectedRoom, selectedDecoration, placedFlowers, placedFurniture,
+    flowers, furnitureItems, tempSelectedRoom, tempSelectedDecoration
+  ]);
 
   useEffect(() => {
     setFlowers(placedFlowers);
     setFurnitureItems(placedFurniture);
     setTempSelectedRoom(selectedRoom || 'default');
-  }, [placedFlowers, placedFurniture, selectedRoom]);
+    setTempSelectedDecoration(selectedDecoration ?? null);
+    console.log('[RoomModified] useEffect - placedFlowers:', placedFlowers, 'placedFurniture:', placedFurniture, 'selectedRoom:', selectedRoom, 'selectedDecoration:', selectedDecoration);
+  }, [placedFlowers, placedFurniture, selectedRoom, selectedDecoration]);
 
   const handleReturn = () => {
+    console.log('[RoomModified] handleReturn()');
     router.push('/Home_page/Homepage');
   };
 
   const handleSelectItem = (itemId: string) => {
+    console.log('[RoomModified] handleSelectItem:', itemId);
     setSelectedItemId(itemId);
   };
 
   // 터치로 꽃/가구만 배치(Decoration은 배치 X)
   const handleTouch = (event: any) => {
     let x = 0, y = 0;
-
     if (event.nativeEvent.locationX !== undefined && event.nativeEvent.locationY !== undefined) {
       x = event.nativeEvent.locationX;
       y = event.nativeEvent.locationY;
@@ -149,18 +174,20 @@ export default function RoomModified() {
       x = event.nativeEvent.clientX - rect.left;
       y = event.nativeEvent.clientY - rect.top;
     }
-
     const adjustedX = x - 30;
     const adjustedY = y - 30;
+    console.log('[RoomModified] handleTouch:', { x, y, adjustedX, adjustedY, selectedItemId, selectedTab });
 
     if (selectedItemId) {
       if (selectedTab === 'Flower' && obtainedFlowers.includes(selectedItemId)) {
         const newFlowers = [...flowers, { x: adjustedX, y: adjustedY, id: selectedItemId }];
+        console.log('[RoomModified] Flower placed:', newFlowers);
         setFlowers(newFlowers);
         setPlacedFlowers(newFlowers);
         setSelectedItemId(null);
       } else if (selectedTab === 'Furniture' && obtainedFurniture.includes(selectedItemId)) {
         const newFurniture = [...furnitureItems, { x: adjustedX, y: adjustedY, id: selectedItemId }];
+        console.log('[RoomModified] Furniture placed:', newFurniture);
         setFurnitureItems(newFurniture);
         setPlacedFurniture(newFurniture);
         setSelectedItemId(null);
@@ -169,19 +196,24 @@ export default function RoomModified() {
     }
   };
 
+  // 저장버튼: 데코도 저장
   const handleSave = async () => {
     try {
+      console.log('[RoomModified] handleSave() START', { tempSelectedRoom, tempSelectedDecoration });
       await setSelectedRoom(tempSelectedRoom);
+      await setSelectedDecoration(tempSelectedDecoration);
       setToastMessage('저장 완료!');
       setToastType('success');
       setToastVisible(true);
       setTimeout(() => {
-        router.push('/Home_page/Homepage');
-      }, 2500);
+        console.log('[RoomModified] handleSave() ROUTE TO HOMEPAGE');
+        router.replace('/Home_page/Homepage'); // replace 사용시 뒤로가기도 깔끔
+      }, 2000);
     } catch (error) {
       setToastMessage('저장 실패!');
       setToastType('error');
       setToastVisible(true);
+      console.error('[RoomModified] handleSave() ERROR:', error);
     }
   };
 
@@ -195,7 +227,10 @@ export default function RoomModified() {
           {/* 닫기 버튼(상단 chevron-up) */}
           <View style={styles.centerExpandButtonContainerTop}>
             <TouchableOpacity
-              onPress={() => setIsOverlayVisible(false)}
+              onPress={() => {
+                console.log('[RoomModified] Overlay 닫힘');
+                setIsOverlayVisible(false);
+              }}
               style={styles.expandIconBox}
             >
               <Ionicons name="chevron-up" size={30} color="#5C7BEE" />
@@ -207,6 +242,7 @@ export default function RoomModified() {
                 key={tab}
                 style={[styles.tab, selectedTab === tab && styles.activeTab]}
                 onPress={() => {
+                  console.log('[RoomModified] Tab 변경:', tab);
                   setSelectedTab(tab as any);
                   setSelectedItemId(null);
                 }}
@@ -222,7 +258,10 @@ export default function RoomModified() {
               roomList
                 .filter(room => room.id === 'default' || obtainedRooms.includes(room.id))
                 .map(room => (
-                  <TouchableOpacity key={room.id} onPress={() => setTempSelectedRoom(room.id)}>
+                  <TouchableOpacity key={room.id} onPress={() => {
+                    console.log('[RoomModified] Background 선택:', room.id);
+                    setTempSelectedRoom(room.id);
+                  }}>
                     <Image
                       source={room.image}
                       style={[
@@ -248,17 +287,20 @@ export default function RoomModified() {
                     <Image source={item.icon} style={styles.itemImage} />
                   </TouchableOpacity>
                 ))}
-            {selectedTab === 'Decoration' &&
+            {selectedTab === 'Decoration' && (
               <>
                 {decorationList
                   .filter(deco => obtainedDecorations.includes(deco.id))
                   .map(deco => (
                     <TouchableOpacity
                       key={deco.id}
-                      onPress={() => setSelectedDecoration(deco.id)}
+                      onPress={() => {
+                        console.log('[RoomModified] Decoration 선택:', deco.id);
+                        setTempSelectedDecoration(deco.id);
+                      }}
                       style={[
                         styles.itemImage,
-                        selectedDecoration === deco.id && { borderColor: '#5C7BEE', borderWidth: 2 },
+                        tempSelectedDecoration === deco.id && { borderColor: '#5C7BEE', borderWidth: 2 },
                       ]}
                     >
                       <Image source={deco.image} style={styles.itemImage} />
@@ -266,16 +308,19 @@ export default function RoomModified() {
                   ))}
                 {/* "선택안함" 버튼 */}
                 <TouchableOpacity
-                  onPress={() => setSelectedDecoration(null)}
+                  onPress={() => {
+                    console.log('[RoomModified] Decoration 선택 해제');
+                    setTempSelectedDecoration(null);
+                  }}
                   style={[
                     styles.itemImage,
-                    !selectedDecoration && { borderColor: '#5C7BEE', borderWidth: 2, justifyContent: 'center', alignItems: 'center' }
+                    !tempSelectedDecoration && { borderColor: '#5C7BEE', borderWidth: 2, justifyContent: 'center', alignItems: 'center' }
                   ]}
                 >
                   <Text style={{ color: '#999', fontSize: 13, textAlign: 'center', flex: 1, textAlignVertical: 'center' }}>None</Text>
                 </TouchableOpacity>
               </>
-            }
+            )}
           </ScrollView>
           <View style={styles.expandedArea}>
             <Text style={styles.expandedText}></Text>
@@ -288,6 +333,7 @@ export default function RoomModified() {
         <View style={styles.centerExpandButtonContainerTop}>
           <TouchableOpacity
             onPress={() => {
+              console.log('[RoomModified] Overlay 열림');
               setIsOverlayVisible(true);
               setIsOverlayExpanded(true);
             }}
@@ -310,9 +356,9 @@ export default function RoomModified() {
           style={{ width: scaledWidth, height: scaledHeight }}
           resizeMode="cover"
         >
-          {/* 데코 오버레이 */}
-          {selectedDecoration && (() => {
-            const decoData = decorationList.find(d => d.id === selectedDecoration);
+          {/* 데코 오버레이 (미리보기: tempSelectedDecoration 사용) */}
+          {tempSelectedDecoration && (() => {
+            const decoData = decorationList.find(d => d.id === tempSelectedDecoration);
             return decoData ? (
               <Image
                 source={decoData.image}
@@ -345,6 +391,7 @@ export default function RoomModified() {
                     updated.splice(index, 1);
                     setFlowers(updated);
                     setPlacedFlowers(updated);
+                    console.log('[RoomModified] Flower 삭제:', updated);
                   }}
                   style={[
                     styles.placedImage,
@@ -371,6 +418,7 @@ export default function RoomModified() {
                     updated.splice(index, 1);
                     setFurnitureItems(updated);
                     setPlacedFurniture(updated);
+                    console.log('[RoomModified] Furniture 삭제:', updated);
                   }}
                   style={[styles.placedFurnitureImage, { left: item.x, top: item.y }]}
                 >
@@ -399,8 +447,8 @@ export default function RoomModified() {
         onHide={() => setToastVisible(false)}
       />
     </View>
-  );
-}
+   );
+ }
 
 const styles = StyleSheet.create({
   fullScreen: { flex: 1, backgroundColor: '#fff' },
@@ -437,7 +485,6 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: 'bold',
   },
-  // === 상단 확장/축소 버튼 및 오버레이 ===
   centerExpandButtonContainerTop: {
     position: 'absolute',
     left: 0,

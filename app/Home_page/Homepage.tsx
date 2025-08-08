@@ -17,10 +17,6 @@ import DiaryCheckPage from '../Mark/Check/DiaryCheckPage';
 import QuestPage from '../Mark/Quest/QuestPage';
 import ShopPage from '../Mark/Shop/ShopPage';
 
-import Background1 from '../../assets/images/HomeBackgroundImages/Backgroundlevel1.png';
-import Background2 from '../../assets/images/HomeBackgroundImages/Backgroundlevel2.png';
-import BaseBackground from '../../assets/images/HomeBackgroundImages/BasicHomepage.png';
-
 import BasicHomepage from '../../assets/images/HomeBackgroundImages/BasicHomepage.png';
 import Blue1 from '../../assets/images/HomeBackgroundImages/blue_1.jpg';
 import Blue2 from '../../assets/images/HomeBackgroundImages/blue_2.jpg';
@@ -48,6 +44,9 @@ import rose from '../../assets/images/flowers/Display/rose_display.png';
 import sunflower from '../../assets/images/flowers/Display/sunflower_display.png';
 import tulip from '../../assets/images/flowers/Display/tulip_display.png';
 
+import sparkleGif from '../../assets/images/decoration/DecorationBackgroundSparkle.gif';
+import deco1Gif from '../../assets/images/decoration/DecorationBackground1.gif';
+
 const ORIGINAL_WIDTH = 2300;
 const ORIGINAL_HEIGHT = 1518;
 
@@ -67,6 +66,11 @@ const flowerList = [
   { id: 'sunflower', image: sunflower },
   { id: 'freesia', image: freesia },
   { id: 'tulip', image: tulip },
+];
+
+const decorationList = [
+  { id: 'DecorationBackgroundSparkle', image: sparkleGif },
+  { id: 'DecorationBackground1', image: deco1Gif },
 ];
 
 const backgroundMap: { [key: string]: any } = {
@@ -96,13 +100,53 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
     placedFlowers,
     setPlacedFurniture,
     selectedRoom,
+    selectedDecoration,
   } = useProgress();
-  
+
+  console.log('[Homepage] isLoaded:', isLoaded);
+  console.log('[Homepage] selectedRoom:', selectedRoom);
+  console.log('[Homepage] selectedDecoration:', selectedDecoration);
+
+  useEffect(() => {
+    console.log('[Homepage] useEffect selectedRoom:', selectedRoom);
+  }, [selectedRoom]);
+
+  useEffect(() => {
+    if (isLoaded) {
+      console.log('[Homepage] isLoaded:', isLoaded);
+      console.log('[Homepage] selectedRoom:', selectedRoom);
+      console.log('[Homepage] selectedDecoration:', selectedDecoration);
+      console.log('[Homepage] placedFurniture:', placedFurniture);
+      console.log('[Homepage] placedFlowers:', placedFlowers);
+    }
+  }, [isLoaded, selectedRoom, selectedDecoration, placedFurniture, placedFlowers]);
+
   const { userProfile } = useAuth();
 
   const minScale = dimensions.height / ORIGINAL_HEIGHT;
   const imageScaledWidth = ORIGINAL_WIDTH * minScale;
   const imageScaledHeight = ORIGINAL_HEIGHT * minScale;
+
+  // ---- 로그용 useEffect ----
+  useEffect(() => {
+    console.log('isLoaded changed:', isLoaded);
+  }, [isLoaded]);
+  useEffect(() => {
+    console.log('selectedRoom changed:', selectedRoom);
+  }, [selectedRoom]);
+  useEffect(() => {
+    console.log('selectedDecoration changed:', selectedDecoration);
+  }, [selectedDecoration]);
+  useEffect(() => {
+    console.log('placedFurniture changed:', placedFurniture);
+  }, [placedFurniture]);
+  useEffect(() => {
+    console.log('placedFlowers changed:', placedFlowers);
+  }, [placedFlowers]);
+  useEffect(() => {
+    console.log('dimensions changed:', dimensions);
+  }, [dimensions]);
+  // ----
 
   useEffect(() => {
     const subscription = Dimensions.addEventListener('change', ({ window }) => {
@@ -110,13 +154,11 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
       setTimeout(centerImage, 100);
     });
     return () => subscription?.remove?.();
-    // eslint-disable-next-line
   }, []);
 
   const centerImage = () => {
     const offsetX = (imageScaledWidth - dimensions.width) / 2;
     const offsetY = (imageScaledHeight - dimensions.height) / 2;
-
     imageZoomRef.current?.centerOn?.({
       x: -offsetX,
       y: -offsetY,
@@ -125,15 +167,23 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
     });
   };
 
-  const handlePlaceFurniture = (id: string, x: number, y: number) => {
-    const alreadyPlaced = placedFurniture.some(item => item.id === id);
-    if (alreadyPlaced) {
-      Alert.alert('Already Placed', 'This furniture is already placed in the room.');
-      return;
-    }
-    const newItem = { id, x, y };
-    setPlacedFurniture([...placedFurniture, newItem]);
-  };
+  // [핵심] selectedRoom이 isLoaded 후에만 backgroundMap 사용
+  let roomBgKey = 'default';
+  if (isLoaded && selectedRoom && backgroundMap[selectedRoom]) {
+    roomBgKey = selectedRoom;
+  }
+  const backgroundImage = backgroundMap[roomBgKey];
+
+  // ---- 렌더링 직전 상태 로그 ----
+  console.log('Homepage Render', {
+    isLoaded,
+    selectedRoom,
+    selectedDecoration,
+    roomBgKey,
+    backgroundImage,
+    placedFurniture,
+    placedFlowers,
+  });
 
   if (!isLoaded) {
     return (
@@ -146,7 +196,7 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
   return (
     <View style={styles.container}>
       <ImageZoom
-        key={`room-${placedFurniture?.length ?? 0}-${placedFlowers?.length ?? 0}`}
+        key={`room-${placedFurniture?.length ?? 0}-${placedFlowers?.length ?? 0}-${roomBgKey}-${selectedDecoration || ''}`}
         ref={imageZoomRef}
         cropWidth={dimensions.width}
         cropHeight={dimensions.height}
@@ -168,10 +218,30 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
       >
         {/* 배경 */}
         <Image
-          source={backgroundMap[selectedRoom] || BaseBackground}
+          source={backgroundImage}
           style={{ width: imageScaledWidth, height: imageScaledHeight }}
           resizeMode="cover"
         />
+
+        {/* 데코레이션 오버레이 */}
+        {selectedDecoration && (() => {
+          const decoData = decorationList.find(d => d.id === selectedDecoration);
+          return decoData ? (
+            <Image
+              source={decoData.image}
+              style={{
+                position: 'absolute',
+                left: 0,
+                top: 0,
+                width: imageScaledWidth,
+                height: imageScaledHeight,
+                zIndex: 5,
+                pointerEvents: 'none',
+              }}
+              resizeMode="cover"
+            />
+          ) : null;
+        })()}
 
         {/* 문 클릭 → 이동 */}
         <TouchableOpacity
