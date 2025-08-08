@@ -3,13 +3,14 @@ import { useEffect, useRef, useState } from 'react';
 import {
   Alert,
   Image,
+  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
 
-const BACKEND_URL = 'http://192.168.169.22:8888';
+const BACKEND_URL = 'http://127.0.0.1:8890';
 
 interface ExerciseData {
   is_active: boolean;
@@ -19,12 +20,59 @@ interface ExerciseData {
   exercise_type: string;
 }
 
+interface ExerciseConfig {
+  kpts: number[];
+  up_angle: number;
+  down_angle: number;
+  exercise_type: string;
+}
+
 export default function ExerciseTestPage() {
   const router = useRouter();
   const [isExerciseActive, setIsExerciseActive] = useState(false);
   const [exerciseData, setExerciseData] = useState<ExerciseData | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // 운동 타입 관련 상태
+  const [availableExercises, setAvailableExercises] = useState<string[]>([]);
+  const [selectedExercise, setSelectedExercise] = useState<string>('shoulder_flexion');
+  const [currentConfig, setCurrentConfig] = useState<ExerciseConfig | null>(null);
+
+  // 사용 가능한 운동 타입 불러오기
+  const fetchAvailableExercises = async () => {
+    try {
+      const response = await fetch(`${BACKEND_URL}/exercise/config`);
+      if (response.ok) {
+        const data = await response.json();
+        setAvailableExercises(data.available_exercises);
+        setCurrentConfig(data.current_config);
+        // 첫 번째 운동을 기본으로 선택
+        if (data.available_exercises.length > 0) {
+          setSelectedExercise(data.available_exercises[0]);
+        }
+      }
+    } catch (error) {
+      console.log('운동 타입 불러오기 실패:', error);
+    }
+  };
+
+  // 운동 타입 변경
+  const changeExerciseType = async (exerciseType: string) => {
+    try {
+      const response = await fetch(`${BACKEND_URL}/exercise/configure?exercise_type=${exerciseType}`, {
+        method: 'POST',
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setCurrentConfig(data.config);
+        setSelectedExercise(exerciseType);
+        Alert.alert('설정 변경', `운동 타입이 ${exerciseType}로 변경되었습니다.`);
+      }
+    } catch (error) {
+      console.log('운동 타입 변경 실패:', error);
+    }
+  };
 
   // 서버 연결 상태 확인
   const checkServerConnection = async () => {
@@ -32,6 +80,8 @@ export default function ExerciseTestPage() {
       const response = await fetch(`${BACKEND_URL}/health`);
       if (response.ok) {
         setIsConnected(true);
+        // 연결 성공 시 운동 타입도 불러오기
+        await fetchAvailableExercises();
         return true;
       }
     } catch (error) {
@@ -64,13 +114,14 @@ export default function ExerciseTestPage() {
     }
 
     try {
-      const response = await fetch(`${BACKEND_URL}/exercise/start?exercise_type=arm_raise`, {
+      const response = await fetch(`${BACKEND_URL}/exercise/start?exercise_type=${selectedExercise}`, {
         method: 'POST',
       });
       
       if (response.ok) {
+        const result = await response.json();
         setIsExerciseActive(true);
-        Alert.alert('성공', '운동이 시작되었습니다!');
+        Alert.alert('성공', `${selectedExercise} 운동이 시작되었습니다!`);
         
         // 데이터 폴링 시작
         intervalRef.current = setInterval(pollExerciseData, 1000);
@@ -134,7 +185,7 @@ export default function ExerciseTestPage() {
   };
 
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.container}>
       {/* 헤더 */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
@@ -151,6 +202,41 @@ export default function ExerciseTestPage() {
             {isConnected ? '연결됨' : '연결 안됨'}
           </Text>
         </View>
+      </View>
+
+      {/* 운동 타입 선택 */}
+      <View style={styles.exerciseSelector}>
+        <Text style={styles.selectorTitle}>운동 타입 선택</Text>
+        <View style={styles.exerciseGrid}>
+          {availableExercises.map((exercise, index) => (
+            <TouchableOpacity
+              key={exercise}
+              style={[
+                styles.exerciseButton,
+                selectedExercise === exercise && styles.selectedExerciseButton
+              ]}
+              onPress={() => changeExerciseType(exercise)}
+              disabled={isExerciseActive}
+            >
+              <Text style={[
+                styles.exerciseButtonText,
+                selectedExercise === exercise && styles.selectedExerciseButtonText
+              ]}>
+                {exercise.replace(/_/g, ' ')}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+        
+        {/* 현재 설정 표시 */}
+        {currentConfig && (
+          <View style={styles.configDisplay}>
+            <Text style={styles.configTitle}>현재 설정:</Text>
+            <Text style={styles.configText}>키포인트: {currentConfig.kpts.join(', ')}</Text>
+            <Text style={styles.configText}>Up Angle: {currentConfig.up_angle}°</Text>
+            <Text style={styles.configText}>Down Angle: {currentConfig.down_angle}°</Text>
+          </View>
+        )}
       </View>
 
       {/* AI 비디오 스트림 표시 영역 */}
@@ -218,12 +304,14 @@ export default function ExerciseTestPage() {
         <Text style={styles.infoText}>
           💡 테스트 방법:{'\n'}
           1. 백엔드 서버가 실행 중인지 확인{'\n'}
-          2. 운동 시작 버튼 클릭{'\n'}
-          3. 카메라 앞에서 팔 올리기 운동 수행{'\n'}
-          4. 실시간 데이터 확인
+          2. 원하는 운동 타입 선택 (10가지 운동 중){'\n'}
+          3. 운동 시작 버튼 클릭{'\n'}
+          4. 카메라 앞에서 선택한 운동 수행{'\n'}
+          5. 실시간 데이터 및 AI 분석 확인{'\n'}
+          6. 다른 운동 타입으로 변경하여 테스트
         </Text>
       </View>
-    </View>
+    </ScrollView>
   );
 }
 
@@ -354,5 +442,64 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#1976d2',
     lineHeight: 20,
+  },
+  exerciseSelector: {
+    backgroundColor: '#fff',
+    padding: 16,
+    borderRadius: 8,
+    marginBottom: 16,
+  },
+  selectorTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 12,
+    color: '#333',
+  },
+  exerciseGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 12,
+  },
+  exerciseButton: {
+    backgroundColor: '#f0f0f0',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    marginRight: 8,
+    marginBottom: 8,
+  },
+  selectedExerciseButton: {
+    backgroundColor: '#4CAF50',
+    borderColor: '#4CAF50',
+  },
+  exerciseButtonText: {
+    fontSize: 12,
+    color: '#666',
+    textAlign: 'center',
+  },
+  selectedExerciseButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+  configDisplay: {
+    backgroundColor: '#f8f9fa',
+    padding: 12,
+    borderRadius: 6,
+    borderLeftWidth: 3,
+    borderLeftColor: '#007AFF',
+  },
+  configTitle: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 6,
+  },
+  configText: {
+    fontSize: 12,
+    color: '#666',
+    marginBottom: 2,
   },
 });

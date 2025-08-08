@@ -29,41 +29,61 @@ class ExerciseAI:
             "kpts": [7, 5, 11],  # 기본: 왼쪽 키포인트 (어깨-팔꿈치-손목)
             "up_angle": 130,     # 기본: 팔을 든 상태 각도
             "down_angle": 90,    # 기본: 팔을 내린 상태 각도
-            "exercise_type": "arm_raise"
+            "exercise_type": "shoulder_flexion"
         }
         
         # 운동별 사전 정의된 설정
         self.predefined_configs = {
-            "arm_raise": {
+            "shoulder_flexion": {
                 "kpts": [7, 5, 11],  # 왼쪽 어깨-팔꿈치-손목
                 "up_angle": 130,
                 "down_angle": 90
             },
-            "arm_raise_right": {
+            "shoulder_abduction_1": {
                 "kpts": [8, 6, 12],  # 오른쪽 어깨-팔꿈치-손목  
                 "up_angle": 130,
                 "down_angle": 90
             },
-            "squat": {
+            "shoulder_abduction_2": {
                 "kpts": [11, 13, 15],  # 왼쪽 엉덩이-무릎-발목
                 "up_angle": 160,
                 "down_angle": 90
             },
-            "pushup": {
+            "shoulder_external_rotation_1": {
                 "kpts": [7, 5, 11],   # 왼쪽 어깨-팔꿈치-손목
                 "up_angle": 160,
                 "down_angle": 90
             },
-            "pullup": {
+            "shoulder_external_rotation_2": {
                 "kpts": [7, 5, 11],   # 왼쪽 어깨-팔꿈치-손목
                 "up_angle": 90,
                 "down_angle": 160
             },
-            "jumping_jacks": {
+            "shoulder_external_rotation": {
                 "kpts": [7, 5, 11],   # 왼쪽 어깨-팔꿈치-손목
                 "up_angle": 160,
                 "down_angle": 30
-            }
+            },
+            "shoulder_abduction_3": {
+                "kpts": [7, 5, 11],   # 왼쪽 어깨-팔꿈치-손목
+                "up_angle": 160,
+                "down_angle": 30
+            },
+            "side_stretch": {
+                "kpts": [7, 5, 11],   # 왼쪽 어깨-팔꿈치-손목
+                "up_angle": 160,
+                "down_angle": 30
+            },
+            "elbow_exercise": {
+                "kpts": [7, 5, 11],   # 왼쪽 어깨-팔꿈치-손목
+                "up_angle": 160,
+                "down_angle": 30
+            },
+            "shoulder_joint": {
+                "kpts": [7, 5, 11],   # 왼쪽 어깨-팔꿈치-손목
+                "up_angle": 160,
+                "down_angle": 30
+            },
         }
         
         # AI Gym 초기화는 지연로딩
