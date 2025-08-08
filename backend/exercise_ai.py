@@ -23,8 +23,87 @@ class ExerciseAI:
         }
         self.lock = threading.Lock()
         self.count_simulation = 0  # 시뮬레이션용 카운터
+        
+        # 운동 설정 파라미터 (기본값)
+        self.exercise_config = {
+            "kpts": [7, 5, 11],  # 기본: 왼쪽 키포인트 (어깨-팔꿈치-손목)
+            "up_angle": 130,     # 기본: 팔을 든 상태 각도
+            "down_angle": 90,    # 기본: 팔을 내린 상태 각도
+            "exercise_type": "arm_raise"
+        }
+        
+        # 운동별 사전 정의된 설정
+        self.predefined_configs = {
+            "arm_raise": {
+                "kpts": [7, 5, 11],  # 왼쪽 어깨-팔꿈치-손목
+                "up_angle": 130,
+                "down_angle": 90
+            },
+            "arm_raise_right": {
+                "kpts": [8, 6, 12],  # 오른쪽 어깨-팔꿈치-손목  
+                "up_angle": 130,
+                "down_angle": 90
+            },
+            "squat": {
+                "kpts": [11, 13, 15],  # 왼쪽 엉덩이-무릎-발목
+                "up_angle": 160,
+                "down_angle": 90
+            },
+            "pushup": {
+                "kpts": [7, 5, 11],   # 왼쪽 어깨-팔꿈치-손목
+                "up_angle": 160,
+                "down_angle": 90
+            },
+            "pullup": {
+                "kpts": [7, 5, 11],   # 왼쪽 어깨-팔꿈치-손목
+                "up_angle": 90,
+                "down_angle": 160
+            },
+            "jumping_jacks": {
+                "kpts": [7, 5, 11],   # 왼쪽 어깨-팔꿈치-손목
+                "up_angle": 160,
+                "down_angle": 30
+            }
+        }
+        
         # AI Gym 초기화는 지연로딩
         print("ExerciseAI 인스턴스 생성 완료")
+    
+    def configure_exercise(self, exercise_type=None, kpts=None, up_angle=None, down_angle=None):
+        """운동 설정을 동적으로 구성"""
+        # 기존 AI Gym 인스턴스 제거 (새로운 설정 적용을 위해)
+        if self.gym:
+            self.gym = None
+            print("기존 AI Gym 인스턴스 제거")
+        
+        # 사전 정의된 운동 타입 확인
+        if exercise_type and exercise_type in self.predefined_configs:
+            config = self.predefined_configs[exercise_type]
+            self.exercise_config.update(config)
+            self.exercise_config["exercise_type"] = exercise_type
+            print(f"사전 정의된 운동 설정 적용: {exercise_type}")
+        
+        # 개별 파라미터 오버라이드
+        if kpts is not None:
+            self.exercise_config["kpts"] = kpts
+            print(f"키포인트 설정: {kpts}")
+        if up_angle is not None:
+            self.exercise_config["up_angle"] = up_angle
+            print(f"상단 각도 설정: {up_angle}")
+        if down_angle is not None:
+            self.exercise_config["down_angle"] = down_angle
+            print(f"하단 각도 설정: {down_angle}")
+        
+        print(f"최종 운동 설정: {self.exercise_config}")
+        return self.exercise_config.copy()
+    
+    def get_exercise_config(self):
+        """현재 운동 설정 반환"""
+        return self.exercise_config.copy()
+    
+    def get_available_exercises(self):
+        """사용 가능한 운동 타입 목록 반환"""
+        return list(self.predefined_configs.keys())
     
     def setup_ai_gym(self):
         """AI Gym 인스턴스 설정 - 지연 초기화"""
@@ -35,14 +114,16 @@ class ExerciseAI:
         try:
             if self.gym is None:
                 print("AI Gym 초기화 시작...")
+                print(f"사용 중인 설정: kpts={self.exercise_config['kpts']}, up_angle={self.exercise_config['up_angle']}, down_angle={self.exercise_config['down_angle']}")
+                
                 self.gym = solutions.AIGym(
                     line_width=2,
                     show=False,  # 서버에서는 화면 표시 안함
-                    kpts=[7, 5, 11],  # 왼쪽 키포인트 (어깨-팔꿈치-손목)
-                    up_angle=130,     # 팔을 든 상태 각도
-                    down_angle=90,    # 팔을 내린 상태 각도
+                    kpts=self.exercise_config["kpts"],
+                    up_angle=self.exercise_config["up_angle"],
+                    down_angle=self.exercise_config["down_angle"],
                 )
-                print("AI Gym 초기화 완료")
+                print(f"AI Gym 초기화 완료 - 운동 타입: {self.exercise_config['exercise_type']}")
                 return True
         except Exception as e:
             print(f"AI Gym 초기화 실패: {e}")
@@ -168,10 +249,10 @@ class ExerciseAI:
                            (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0, 255, 0), 3)
                 cv2.putText(dummy_frame, f"Accuracy: {self.current_data['accuracy']}%", 
                            (10, 100), cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0, 255, 0), 3)
+                cv2.putText(dummy_frame, f"Exercise: {self.exercise_config['exercise_type']}", 
+                           (10, 150), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 255), 2)
                 cv2.putText(dummy_frame, "Simulation Mode", 
-                           (10, 150), cv2.FONT_HERSHEY_SIMPLEX, 1.2, (255, 0, 0), 3)
-                cv2.putText(dummy_frame, "Exercise Session Active", 
-                           (10, 200), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 255), 2)
+                           (10, 200), cv2.FONT_HERSHEY_SIMPLEX, 1.2, (255, 0, 0), 3)
                 cv2.putText(dummy_frame, "No Camera Available", 
                            (10, 250), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (128, 128, 128), 2)
             else:
@@ -266,10 +347,10 @@ class ExerciseAI:
                                (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
                     cv2.putText(frame, f"Accuracy: {self.current_data['accuracy']}%", 
                                (10, 70), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+                    cv2.putText(frame, f"Exercise: {self.exercise_config['exercise_type']}", 
+                               (10, 110), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 255), 2)
                     cv2.putText(frame, status_text, 
-                               (10, 110), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
-                    cv2.putText(frame, "Exercise Session Active", 
-                               (10, 150), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 255), 2)
+                               (10, 150), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
                 
                 except Exception as e:
                     print(f"프레임 처리 오류: {e}")

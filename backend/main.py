@@ -54,19 +54,52 @@ def video_stream():
 def ai_video_stream():
     return StreamingResponse(ai_video_streaming(), media_type="multipart/x-mixed-replace; boundary=frame")
 
+# 운동 설정 구성
+@app.post("/exercise/configure")
+async def configure_exercise(exercise_type: str = None, kpts: list = None, up_angle: int = None, down_angle: int = None):
+    try:
+        config = exercise_ai.configure_exercise(
+            exercise_type=exercise_type,
+            kpts=kpts,
+            up_angle=up_angle,
+            down_angle=down_angle
+        )
+        return {"status": "configured", "config": config}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Configuration error: {str(e)}")
+
+# 운동 설정 조회
+@app.get("/exercise/config")
+async def get_exercise_config():
+    config = exercise_ai.get_exercise_config()
+    available_exercises = exercise_ai.get_available_exercises()
+    return {
+        "current_config": config,
+        "available_exercises": available_exercises
+    }
+
 # 운동 세션 시작
 @app.post("/exercise/start")
-async def start_exercise(exercise_type: str = "arm_raise"):
+async def start_exercise(exercise_type: str = "arm_raise", kpts: list = None, up_angle: int = None, down_angle: int = None):
+    # 운동 설정 적용
+    if exercise_type or kpts or up_angle or down_angle:
+        exercise_ai.configure_exercise(
+            exercise_type=exercise_type,
+            kpts=kpts,
+            up_angle=up_angle,
+            down_angle=down_angle
+        )
+    
     exercise_session.is_active = True
     exercise_session.count = 0
     exercise_session.accuracy = 0
     exercise_session.start_time = time.time()
-    exercise_session.exercise_type = exercise_type
+    exercise_session.exercise_type = exercise_type or exercise_ai.get_exercise_config()["exercise_type"]
     
     # AI 모델 초기화
     exercise_ai.reset_session()
     
-    return {"status": "started", "exercise_type": exercise_type}
+    return {"status": "started", "exercise_type": exercise_session.exercise_type, "config": exercise_ai.get_exercise_config()}
 
 # 운동 데이터 조회
 @app.get("/exercise/data")
