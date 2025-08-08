@@ -149,7 +149,7 @@ export default function Report() {
         {/* 성취 사항 (AI 기반) */}
         {reportData.achievements && reportData.achievements.length > 0 && (
           <View style={styles.achievementCard}>
-            <Text style={styles.cardTitle}>🌸 Celebrating Your Efforts</Text>
+            <Text style={styles.cardTitle}>🌸 Your Weekly Highlights</Text>
             <View style={styles.achievementList}>
               {reportData.achievements.map((achievement: string, index: number) => (
                 <View key={index} style={styles.achievementItem}>

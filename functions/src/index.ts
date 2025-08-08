@@ -217,8 +217,8 @@ async function generateAIContent(weeklyData: any) {
       const parsed = JSON.parse(jsonMatch[0]);
       console.log('Successfully parsed rehabilitation-focused AI response');
       
-      // 새로운 JSON 구조를 기존 구조로 매핑 (호환성 유지)
-      return {
+      // 새로운 JSON 구조를 기존 구조로 매핑 (호환성 유지, 520자 목표)
+      const mappedResponse = {
         narrative: parsed.greeting || "Thank you for taking care of yourself this week.",
         achievements: parsed.gentleAchievements || ["Your consistent efforts in self-care"],
         recommendations: parsed.carefulRecommendations || ["Continue listening to your body's needs"],
@@ -227,18 +227,30 @@ async function generateAIContent(weeklyData: any) {
         supportMessage: parsed.supportMessage || "",
         isRehabilitationFocused: true
       };
+      
+      // 응답 길이 모니터링 (520자 목표)
+      const totalChars = JSON.stringify(mappedResponse).length;
+      console.log(`Response length: ${totalChars} characters (target: ~520)`);
+      
+      return mappedResponse;
     }
     
     console.log('Failed to parse JSON from AI response, using rehabilitation fallback');
-    // 재활 특화 기본값
-    return {
-      narrative: "Thank you for your dedication to your recovery journey this week.",
-      achievements: ["Your commitment to daily self-care and body awareness"],
-      recommendations: ["Continue to honor your body's needs and celebrate small victories"],
-      wellbeingCheck: "Every step in your recovery journey matters.",
-      supportMessage: "You are doing beautifully, and your consistency shows real strength.",
+    // 재활 특화 기본값 (520자 목표)
+    const fallbackResponse = {
+      narrative: "Thank you for your dedication to your recovery journey this week.\n\nYour consistent self-care efforts are truly meaningful.",
+      achievements: ["Your commitment to daily body awareness", "Courage in continuing your healing journey"],
+      recommendations: ["Honor your body's needs each day", "Celebrate every small step forward", "Rest when you need to rest"],
+      wellbeingCheck: "Every moment of self-care matters in your recovery.",
+      supportMessage: "You are doing beautifully. Your consistency shows real strength.",
       isRehabilitationFocused: true
     };
+    
+    // 폴백 응답 길이 모니터링
+    const fallbackChars = JSON.stringify(fallbackResponse).length;
+    console.log(`Fallback response length: ${fallbackChars} characters (target: ~520)`);
+    
+    return fallbackResponse;
   } catch (error) {
     console.error('Rehabilitation-focused AI generation failed:', error);
     throw error;

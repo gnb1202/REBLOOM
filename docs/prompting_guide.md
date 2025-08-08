@@ -1,81 +1,129 @@
-# AI Prompt Design Guide: Post-Rehabilitation Support System
+# Prompt Engineering Guide: Implementing Content and Readability Constraints
 
 ## 1. Overview
 
-This document provides a comprehensive guide for designing and implementing advanced AI prompts for the rehabilitation support program. The primary goal is to create an AI persona that is not just a feature, but a trusted, empathetic companion for the target users: **40-60 year old female breast cancer survivors.**
+This document provides actionable guidelines for refining the AI prompt to control a-d-a p-t content length, structure, and readability. The following instructions are based on the decision to target a more concise and structured output for the weekly user report.
 
-The core principle is to balance **clinical awareness** with **deep empathy**, ensuring every interaction is safe, supportive, and meaningful.
-
----
-
-## 2. Core Principles of Empathetic Prompting
-
-### 2.1. Redefining the AI Persona
-
-The AI's role must be more specific than a generic "fitness coach." It needs to embody the qualities of a specialist who understands the user's unique journey.
-
-* **From**: "An empathetic health and fitness coach."
-* **To**: **"A compassionate and knowledgeable rehabilitation supporter specializing in post-mastectomy care for breast cancer survivors."**
-
-This persona should understand challenges like pain, swelling (lymphedema), and fatigue, and its language must reflect this deep understanding.
-
-### 2.2. Shifting the Focus: Effort and Well-being over Performance
-
-For users in recovery, quantitative metrics (like exercise count) are secondary to their daily well-being and consistent effort. The AI's analysis must reflect this priority.
-
-* **Praise Effort**: Acknowledge that any activity, even just checking in, is a significant achievement.
-* **Validate Feelings**: Always address reports of pain or swelling first, before offering any advice.
-* **Gentle Language**: Avoid aggressive fitness clichés. Use gentle, invitational language.
-* **Prioritize Safety**: The primary recommendation for persistent pain must always be to consult a healthcare professional.
+The goal is to implement three specific constraints:
+1.  A target character limit of approximately 520 characters.
+2.  Clear paragraph breaks for improved readability.
+3.  A clarification on implementing optimal line length.
 
 ---
 
-## 3. The Complete Prompt Template (English Output)
+## 2. Method 1: Implementing a Character Limit (Target: ~520 Chars)
 
-This template integrates the core principles and is structured for clarity and optimal performance with the Gemini model.
+To control the overall length of the AI's response, we will add a direct and explicit instruction to the prompt.
+
+### Implementation
+
+Add the following rule to the `CRITICAL SAFETY & QUALITY GUIDELINES` section of your prompt.
+
+**Prompt Snippet to Add:**
+
+Conciseness: The total length of all text in the final JSON response should be around 520 characters. The response must be concise yet impactful.
+
+
+**Important Note:** AI models are excellent at following guidelines, but they are not perfect character counters. This instruction will reliably produce a response that is significantly shorter than the previous ~650 character version and very close to your 520-character target. Treat it as a strong guideline for the model, not a strict, unbreakable rule.
+
+---
+
+## 3. Method 2: Enforcing Paragraph Structure
+
+Forcing the AI to create short, digestible paragraphs is crucial for scannability. The most reliable method is to instruct the AI to use a specific formatting character (`\n\n`) and to demonstrate this in the few-shot example.
+
+### Implementation Steps
+
+**Step 1: Add a Structural Instruction**
+
+In the prompt section that defines the JSON output, add a clear instruction for the `narrative` field.
+
+**Prompt Snippet to Add:**
 
 ```javascript
-const generatePromptTemplate = (userData, weeklyData, options = {}) => {
-  const {
-    language = "English",
-  } = options;
-
-  // Dynamically adjust the role based on user's current state
-  const avgCondition = calculateAverage(weeklyData.healthChecks, 'condition'); // Assuming lower is worse
-  let role = "a compassionate rehabilitation supporter specializing in post-mastectomy care.";
-  if (avgCondition <= 2.5) { // If condition is poor
-    role = "a gentle and caring rehabilitation supporter focused on navigating a challenging week.";
-  } else if (userData.level > 50) {
-    role = "an expert wellness mentor for a high-achieving breast cancer survivor.";
-  }
-
-  return `
-You are ${role} Your audience is 40-60 year old female breast cancer survivors.
-Your tone must be exceptionally gentle, positive, and trustworthy.
-Generate a personalized report in ${language}.
-
-USER CONTEXT:
-- User is on Level: ${userData.level}.
-- Current consecutive exercise streak: ${userData.currentStreak || 0} days.
-
-WEEKLY DATA:
-${JSON.stringify({ /* ... summarized data ... */ }, null, 2)}
-
-DETAILED RECORDS:
-${JSON.stringify(weeklyData.healthChecks.slice(0, 7), null, 2)}
-${JSON.stringify(weeklyData.exercises.slice(0, 10), null, 2)}
-
-Generate a JSON response with:
+// Inside the JSON structure definition
 {
-  "narrative": "Start with a warm, empathetic greeting. Summarize the week focusing on the user's efforts and feelings, not just numbers. Acknowledge any reported pain or swelling with care.",
-  "achievements": ["Up to 4 achievements. Celebrate consistency (e.g., 'You remembered to log your condition even on a tough day.'), specific gentle exercises completed, and maintaining a streak."],
-  "recommendations": ["Up to 3 gentle, actionable recommendations. If pain exists, prioritize rest and professional consultation. Suggest specific, safe exercises. Frame suggestions as invitations, not commands (e.g., 'Perhaps you could try...', 'How about we focus on...')."]
+  "narrative": "A summary of the week. Separate distinct ideas into short paragraphs of 2-3 sentences each using '\\n\\n' for line breaks.",
+  "achievements": ["Up to 4 specific achievements."],
+  "recommendations": ["Up to 3 gentle, actionable recommendations."]
+}
+Step 2: Update the Few-Shot Example
+
+Modify the EXPECTED OUTPUT EXAMPLE to reflect this new structure. This shows the AI exactly what a correct response looks like.
+
+Before (Original Example):
+
+JSON
+
+"narrative": "What an absolutely phenomenal week! Your performance is truly exceptional, and reaching Level 102 is a remarkable testament to your consistency and hard work."
+After (Revised Example with \n\n):
+
+JSON
+
+"narrative": "You have done so wonderfully this week. We want to send our warmest congratulations on reaching Level 102!\n\nYour 365-day exercise streak, in particular, is a priceless achievement. It speaks volumes about your unwavering dedication and strength."
+By providing both the instruction and a clear example, the AI will reliably adopt this format for all future generations.
+
+4. Clarification on Line Length (50-75 Characters)
+This is a critical point of clarification: Optimal line length is controlled by the app's User Interface (Frontend), not by the AI prompt.
+
+AI's Role: The AI generates a single, continuous string of text (e.g., "Hello world, this is a long sentence."). It has no awareness or control over how this text will be displayed on a screen.
+
+App's (Frontend) Role: The app's code takes this text string and renders it inside a visual container. The width of this container, combined with the font size and screen dimensions, determines how many characters fit on a single line before the text wraps to the next line.
+
+Actionable Advice
+This requirement should be communicated to your Frontend Developer or UI/UX Designer.
+
+Instruction for Your Development Team:
+
+"Please adjust the width of the UI text container used for the report's narrative. The styling should ensure that, on a standard mobile device screen, each line of text naturally wraps at approximately 50 to 75 characters."
+
+5. Revised Full Prompt Example (All Changes Implemented)
+Here is the complete prompt template incorporating the instructions for character count and paragraph structure.
+
+JavaScript
+
+// ... (Your existing role, context, and data sections) ...
+
+Generate a JSON response with the following structure:
+{
+  "narrative": "A summary of the week. Separate ideas into short paragraphs of 2-3 sentences each using '\\n\\n' for line breaks.",
+  "achievements": ["Up to 4 specific achievements based on the data."],
+  "recommendations": ["Up to 3 gentle, actionable, and personalized recommendations."]
 }
 
 CRITICAL SAFETY & QUALITY GUIDELINES:
-1.  **Safety First**: If average pain or swelling is high (e.g., condition score < 3), your #1 recommendation MUST be to consult a doctor or physical therapist.
-2.  **Empathy is Key**: Always validate feelings of discomfort before offering advice. Use phrases like, "It sounds like this week was challenging, and it's completely okay to feel that way."
-3.  **Gentle Language**: Use soft, caring English. Avoid aggressive or demanding fitness jargon.
-4.  **Effort over Performance**: Praise any level of activity. Remind the user that rest is also a valid and productive part of recovery.
-`;
-};
+1.  **Safety First**: If a user reports high levels of pain or swelling, your #1 recommendation MUST be to consult a doctor or physical therapist.
+2.  **Conciseness**: The total length of all text in the final JSON response should be around **520 characters**. The response must be concise yet impactful.
+3.  **Structure**: For the "narrative" field, you must use the '\\n\\n' special characters to create paragraph breaks, as demonstrated in the example.
+
+---
+
+[EXAMPLE]
+
+[USER DATA EXAMPLE]
+{
+  "Weekly Data Summary": { "exerciseCount": 19, "userLevel": 102 },
+  "Detailed Exercises": [ { "name": "365-day streak achieved" } ]
+}
+
+[EXPECTED OUTPUT EXAMPLE]
+{
+  "narrative": "You have done so wonderfully this week. We want to send our warmest congratulations on reaching Level 102!\n\nYour 365-day exercise streak, in particular, is a priceless achievement. It speaks volumes about your unwavering dedication and strength.",
+  "achievements": [
+    "Completed an incredible 365-day exercise streak!",
+    "Finished 19 exercises this week.",
+    "Achieved Level 102."
+  ],
+  "recommendations": [
+    "Consistency is your greatest strength. Keep up the amazing work.",
+    "Now that you've reached a high level, consider trying a new type of exercise to keep things fresh."
+  ]
+}
+
+---
+
+[TASK]
+Now, analyze the following real user data and generate the JSON response according to all the rules and examples provided.
+
+[USER DATA]
+// ... (Inject the real user data here) ...
