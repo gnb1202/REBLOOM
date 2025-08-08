@@ -1,15 +1,15 @@
-import React, { useEffect, useRef, useState } from 'react';
+import { useRouter } from 'expo-router';
+import { useEffect, useRef, useState } from 'react';
 import {
+  Alert,
+  Image,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
-  Alert,
-  Image,
 } from 'react-native';
-import { useRouter } from 'expo-router';
 
-const BACKEND_URL = 'http://localhost:8000';
+const BACKEND_URL = 'http://192.168.169.22:8888';
 
 interface ExerciseData {
   is_active: boolean;
