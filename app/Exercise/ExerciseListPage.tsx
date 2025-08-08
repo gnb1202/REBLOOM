@@ -20,117 +20,94 @@ interface ExerciseItem {
 }
 
 const exerciseList: ExerciseItem[] = [
-  // Recommended Shoulder Exercises
   {
-    id: 'shoulder1',
-    title: 'Shoulder Flexion Exercise',
-    description: 'Basic shoulder flexion movement to improve mobility',
-    duration: '2 min',
+    id: 'shoulder_flexion',
+    title: 'Shoulder Flexion',
+    description: 'Shoulder flexion exercise to improve forward range of motion',
+    duration: '3 min',
     difficulty: 'EASY',
     target: 'SHOULDER',
     imageUrl: require('../../assets/images/icon.png'),
   },
   {
-    id: 'shoulder2',
-    title: 'Shoulder Abduction Exercise 1',
-    description: 'Gentle shoulder abduction movement for beginners',
-    duration: '2 min',
+    id: 'shoulder_abduction_1',
+    title: 'Shoulder Abduction 1',
+    description: 'Shoulder abduction exercise to improve lateral mobility',
+    duration: '3 min',
     difficulty: 'EASY',
     target: 'SHOULDER',
     imageUrl: require('../../assets/images/icon.png'),
   },
   {
-    id: 'shoulder3',
+    id: 'shoulder_abduction_2',
+    title: 'Shoulder Abduction 2',
+    description: 'Shoulder support exercise using lower extremity movements',
+    duration: '3 min',
+    difficulty: 'MEDIUM',
+    target: 'SHOULDER',
+    imageUrl: require('../../assets/images/icon.png'),
+  },
+  {
+    id: 'shoulder_external_rotation_1',
     title: 'Shoulder External Rotation 1',
-    description: 'Basic external rotation exercise for shoulder stability',
-    duration: '2 min',
+    description: 'Shoulder external rotation exercise to strengthen rotator cuff',
+    duration: '3 min',
+    difficulty: 'MEDIUM',
+    target: 'SHOULDER',
+    imageUrl: require('../../assets/images/icon.png'),
+  },
+  {
+    id: 'shoulder_external_rotation_2',
+    title: 'Shoulder External Rotation 2',
+    description: 'Reverse direction shoulder external rotation exercise',
+    duration: '3 min',
+    difficulty: 'MEDIUM',
+    target: 'SHOULDER',
+    imageUrl: require('../../assets/images/icon.png'),
+  },
+  {
+    id: 'shoulder_external_rotation',
+    title: 'Shoulder External Rotation',
+    description: 'Basic shoulder external rotation exercise',
+    duration: '3 min',
     difficulty: 'EASY',
     target: 'SHOULDER',
     imageUrl: require('../../assets/images/icon.png'),
   },
   {
-    id: 'shoulder4',
-    title: 'Advanced Shoulder Rotation',
-    description: 'Intermediate level shoulder rotation exercise',
-    duration: '2 min',
-    difficulty: 'MEDIUM',
+    id: 'shoulder_abduction_3',
+    title: 'Shoulder Abduction 3',
+    description: 'Advanced shoulder abduction exercise',
+    duration: '3 min',
+    difficulty: 'HARD',
     target: 'SHOULDER',
     imageUrl: require('../../assets/images/icon.png'),
   },
-  // Neck Exercises
   {
-    id: 'neck1',
-    title: 'Neck Flexion Exercise',
-    description: 'Gentle neck flexion movements to reduce stiffness',
+    id: 'side_stretch',
+    title: 'Side Stretch',
+    description: 'Side stretching to relax torso and shoulder muscles',
     duration: '2 min',
     difficulty: 'EASY',
-    target: 'NECK',
+    target: 'STRETCH',
     imageUrl: require('../../assets/images/icon.png'),
   },
   {
-    id: 'neck2',
-    title: 'Neck Rotation Exercise',
-    description: 'Controlled neck rotation for improved mobility',
-    duration: '2 min',
-    difficulty: 'MEDIUM',
-    target: 'NECK',
-    imageUrl: require('../../assets/images/icon.png'),
-  },
-  // Arm Exercises
-  {
-    id: 'arm1',
-    title: 'Elbow Flexion Exercise',
-    description: 'Basic elbow flexion movement for arm strength',
+    id: 'elbow_exercise',
+    title: 'Elbow Exercise',
+    description: 'Elbow flexion exercise to improve arm mobility',
     duration: '2 min',
     difficulty: 'EASY',
     target: 'ARM',
     imageUrl: require('../../assets/images/icon.png'),
   },
   {
-    id: 'arm2',
-    title: 'Wrist Mobility Exercise',
-    description: 'Gentle wrist mobility movements',
-    duration: '6 min',
-    difficulty: 'EASY',
-    target: 'ARM',
-    imageUrl: require('../../assets/images/icon.png'),
-  },
-  // Chest Exercises
-  {
-    id: 'chest1',
-    title: 'Chest Stretch Exercise',
-    description: 'Basic chest stretching for improved flexibility',
-    duration: '7 min',
-    difficulty: 'EASY',
-    target: 'CHEST',
-    imageUrl: require('../../assets/images/icon.png'),
-  },
-  {
-    id: 'chest2',
-    title: 'Chest Mobility Exercise',
-    description: 'Intermediate chest mobility movements',
-    duration: '10 min',
+    id: 'shoulder_joint',
+    title: 'Shoulder Joint Exercise',
+    description: 'Comprehensive exercise to improve overall shoulder joint mobility',
+    duration: '4 min',
     difficulty: 'MEDIUM',
-    target: 'CHEST',
-    imageUrl: require('../../assets/images/icon.png'),
-  },
-  // Leg Exercises
-  {
-    id: 'leg1',
-    title: 'Knee Flexion Exercise',
-    description: 'Basic knee flexion movement for leg mobility',
-    duration: '8 min',
-    difficulty: 'EASY',
-    target: 'LEG',
-    imageUrl: require('../../assets/images/icon.png'),
-  },
-  {
-    id: 'leg2',
-    title: 'Ankle Mobility Exercise',
-    description: 'Gentle ankle mobility movements',
-    duration: '6 min',
-    difficulty: 'EASY',
-    target: 'LEG',
+    target: 'SHOULDER',
     imageUrl: require('../../assets/images/icon.png'),
   }
 ];
@@ -177,14 +154,14 @@ export default function ExerciseListPage() {
         <TouchableOpacity onPress={() => router.replace('/Home_page/Homepage')}>
           <Text style={styles.backButton}>{'<'}</Text>
         </TouchableOpacity>
-        <Text style={styles.title}>Select exercise</Text>
+        <Text style={styles.title}>Plan your Exercise Session!</Text>
         <View style={{width:24}}/>
       </View>
 
       <ScrollView style={styles.exerciseList}>
         {/* Recommended Exercises Section */}
         <View style={styles.recommendedSection}>
-          <Text style={styles.sectionTitle}>💫 Recommended Exercises for You</Text>
+          <Text style={styles.sectionTitle}>💫 Recommended Exercises</Text>
           {exerciseList
               .filter(ex => ex.target === 'SHOULDER' && ex.difficulty === 'EASY')
             .slice(0, 3)
@@ -204,6 +181,7 @@ export default function ExerciseListPage() {
                 {exercise.description}
               </Text>
               <View style={styles.exerciseDetails}>
+                <Text style={styles.exerciseTarget}>{exercise.target}</Text>
                 <Text style={styles.exerciseDuration}>⏱ {exercise.duration}</Text>
                 <Text
                   style={[
