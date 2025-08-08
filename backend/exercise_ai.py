@@ -119,6 +119,73 @@ class ExerciseAI:
         print(f"최종 운동 설정: {self.exercise_config}")
         return self.exercise_config.copy()
     
+    def update_exercise_settings(self, frontend_data):
+        """프론트엔드에서 전달받은 데이터로 운동 설정 업데이트"""
+        try:
+            # 프론트엔드 데이터에서 필요한 정보 추출
+            exercise_type = frontend_data.get('exercise_type')
+            custom_kpts = frontend_data.get('kpts')
+            custom_up_angle = frontend_data.get('up_angle')
+            custom_down_angle = frontend_data.get('down_angle')
+            
+            # 파라미터 유효성 검사
+            validation_errors = self.validate_exercise_params(custom_kpts, custom_up_angle, custom_down_angle)
+            if validation_errors:
+                return {
+                    "success": False,
+                    "message": "; ".join(validation_errors),
+                    "config": self.exercise_config.copy()
+                }
+            
+            # 운동 설정 업데이트
+            updated_config = self.configure_exercise(
+                exercise_type=exercise_type,
+                kpts=custom_kpts,
+                up_angle=custom_up_angle,
+                down_angle=custom_down_angle
+            )
+            
+            # AI Gym 재구성 (새로운 설정 적용)
+            if ULTRALYTICS_AVAILABLE:
+                self.setup_ai_gym(force_rebuild=True)
+            
+            # 세션 리셋 (새로운 설정으로 운동 시작)
+            self.reset_session()
+            
+            return {
+                "success": True,
+                "message": "운동 설정이 성공적으로 업데이트되었습니다.",
+                "config": updated_config
+            }
+            
+        except Exception as e:
+            print(f"운동 설정 업데이트 오류: {e}")
+            return {
+                "success": False,
+                "message": f"운동 설정 업데이트 실패: {str(e)}",
+                "config": self.exercise_config.copy()
+            }
+    
+    def validate_exercise_params(self, kpts=None, up_angle=None, down_angle=None):
+        """운동 파라미터 유효성 검사"""
+        errors = []
+        
+        if kpts is not None:
+            if not isinstance(kpts, list) or len(kpts) != 3:
+                errors.append("kpts는 3개의 정수로 구성된 리스트여야 합니다.")
+            elif not all(isinstance(k, int) and 0 <= k <= 16 for k in kpts):
+                errors.append("kpts의 각 값은 0-16 사이의 정수여야 합니다.")
+        
+        if up_angle is not None:
+            if not isinstance(up_angle, (int, float)) or not (0 <= up_angle <= 180):
+                errors.append("up_angle은 0-180 사이의 숫자여야 합니다.")
+        
+        if down_angle is not None:
+            if not isinstance(down_angle, (int, float)) or not (0 <= down_angle <= 180):
+                errors.append("down_angle은 0-180 사이의 숫자여야 합니다.")
+        
+        return errors
+    
     def get_exercise_config(self):
         """현재 운동 설정 반환"""
         return self.exercise_config.copy()
@@ -127,14 +194,19 @@ class ExerciseAI:
         """사용 가능한 운동 타입 목록 반환"""
         return list(self.predefined_configs.keys())
     
-    def setup_ai_gym(self):
+    def setup_ai_gym(self, force_rebuild=False):
         """AI Gym 인스턴스 설정 - 지연 초기화"""
         if not ULTRALYTICS_AVAILABLE:
             print("Ultralytics가 사용 불가능합니다. 시뮬레이션 모드로 실행됩니다.")
             return False
             
         try:
-            if self.gym is None:
+            # 기존 인스턴스를 강제로 재구성하거나, 인스턴스가 없는 경우 생성
+            if self.gym is None or force_rebuild:
+                if self.gym is not None:
+                    print("기존 AI Gym 인스턴스 해제")
+                    self.gym = None
+                    
                 print("AI Gym 초기화 시작...")
                 print(f"사용 중인 설정: kpts={self.exercise_config['kpts']}, up_angle={self.exercise_config['up_angle']}, down_angle={self.exercise_config['down_angle']}")
                 
@@ -147,6 +219,7 @@ class ExerciseAI:
                 )
                 print(f"AI Gym 초기화 완료 - 운동 타입: {self.exercise_config['exercise_type']}")
                 return True
+            return True
         except Exception as e:
             print(f"AI Gym 초기화 실패: {e}")
             self.gym = None
@@ -336,20 +409,47 @@ class ExerciseAI:
                         try:
                             results = self.gym(frame)
                             
-                            # 운동 카운트 업데이트
-                            if hasattr(results, 'count') and results.count is not None:
+                            # 키포인트 추출 및 가장 큰 박스 감지
+                            largest_box_detected = False
+                            
+                            if hasattr(results, 'boxes') and results.boxes is not None and len(results.boxes) > 0:
+                                # 가장 큰 박스 찾기
+                                largest_box = None
+                                largest_area = 0
+                                
+                                for box in results.boxes:
+                                    if hasattr(box, 'xyxy') and box.xyxy is not None:
+                                        x1, y1, x2, y2 = box.xyxy[0]
+                                        area = (x2 - x1) * (y2 - y1)
+                                        if area > largest_area:
+                                            largest_area = area
+                                            largest_box = box
+                                
+                                if largest_box is not None:
+                                    largest_box_detected = True
+                            
+                            # 가장 큰 박스가 감지된 경우에만 키포인트 추출 및 운동 분석 수행
+                            if largest_box_detected:
+                                # 운동 카운트 업데이트
+                                if hasattr(results, 'count') and results.count is not None:
+                                    with self.lock:
+                                        self.current_data["count"] = results.count
+                                        self.current_data["accuracy"] = self.calculate_accuracy(results)
+                                        self.current_data["is_detecting"] = True
+                                
+                                # 분석된 프레임 사용 (키포인트가 그려진 상태)
+                                if hasattr(results, 'plot'):
+                                    frame = results.plot()
+                                elif hasattr(results, 'orig_img'):
+                                    frame = results.orig_img
+                                
+                                status_text = "AI Analysis Active - Person Detected"
+                            else:
+                                # 박스가 감지되지 않은 경우 키포인트 추출하지 않음
                                 with self.lock:
-                                    self.current_data["count"] = results.count
-                                    self.current_data["accuracy"] = self.calculate_accuracy(results)
-                                    self.current_data["is_detecting"] = True
-                            
-                            # 분석된 프레임 사용 (키포인트가 그려진 상태)
-                            if hasattr(results, 'plot'):
-                                frame = results.plot()
-                            elif hasattr(results, 'orig_img'):
-                                frame = results.orig_img
-                            
-                            status_text = "AI Analysis Active"
+                                    self.current_data["is_detecting"] = False
+                                status_text = "AI Analysis Active - No Person Detected"
+                                
                         except Exception as e:
                             print(f"AI 분석 오류: {e}")
                             status_text = "AI Analysis Error"

@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from 'react';
 import {
   Alert,
   Image,
+  Modal,
+  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -14,6 +16,20 @@ const BACKEND_URL = 'http://127.0.0.1:8888';
 // const BACKEND_URL = 'http://127.0.0.1:8888';
 // const BACKEND_URL = 'http://127.0.0.1:8888';
 // const BACKEND_URL = 'http://127.0.0.1:8888';
+
+// 사용 가능한 운동 종류 정의 (백엔드 predefined_configs와 일치)
+const EXERCISE_TYPES = {
+  'shoulder_flexion': '어깨 굴곡',
+  'shoulder_abduction_1': '어깨 외전 1',
+  'shoulder_abduction_2': '어깨 외전 2',
+  'shoulder_external_rotation_1': '어깨 외회전 1',
+  'shoulder_external_rotation_2': '어깨 외회전 2',
+  'shoulder_external_rotation': '어깨 외회전',
+  'shoulder_abduction_3': '어깨 외전 3',
+  'side_stretch': '옆구리 스트레칭',
+  'elbow_exercise': '팔꿈치 운동',
+  'shoulder_joint': '어깨 관절 운동'
+};
 
 interface ExerciseData {
   is_active: boolean;
@@ -33,6 +49,10 @@ export default function ExerciseDo() {
   const [exerciseData, setExerciseData] = useState<ExerciseData | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // 운동 종류 선택 관련 상태
+  const [selectedExercise, setSelectedExercise] = useState<string>('shoulder_flexion');
+  const [showExerciseModal, setShowExerciseModal] = useState(false);
 
   // 서버 연결 상태 확인
   const checkServerConnection = async () => {
@@ -47,6 +67,56 @@ export default function ExerciseDo() {
     }
     setIsConnected(false);
     return false;
+  };
+
+  // 운동 설정 업데이트
+  const updateExerciseSettings = async (exerciseType: string) => {
+    if (!isConnected) {
+      Alert.alert('오류', '서버에 연결되지 않았습니다.');
+      return false;
+    }
+
+    try {
+      const response = await fetch(`${BACKEND_URL}/exercise/configure`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          exercise_type: exerciseType
+        }),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success) {
+          console.log('운동 설정 업데이트 성공:', result.config);
+          return true;
+        } else {
+          Alert.alert('오류', result.message);
+          return false;
+        }
+      } else {
+        Alert.alert('오류', '운동 설정 업데이트 실패');
+        return false;
+      }
+    } catch (error) {
+      console.log('운동 설정 업데이트 실패:', error);
+      Alert.alert('오류', '서버와 통신할 수 없습니다.');
+      return false;
+    }
+  };
+
+  // 운동 종류 선택
+  const selectExercise = async (exerciseKey: string) => {
+    setSelectedExercise(exerciseKey);
+    setShowExerciseModal(false);
+    
+    // 백엔드 설정 업데이트
+    const success = await updateExerciseSettings(exerciseKey);
+    if (success) {
+      Alert.alert('성공', `${EXERCISE_TYPES[exerciseKey as keyof typeof EXERCISE_TYPES]} 운동으로 설정되었습니다.`);
+    }
   };
 
   // 운동 데이터 폴링
@@ -72,7 +142,7 @@ export default function ExerciseDo() {
     }
 
     try {
-      const response = await fetch(`${BACKEND_URL}/exercise/start?exercise_type=arm_raise`, {
+      const response = await fetch(`${BACKEND_URL}/exercise/start?exercise_type=${selectedExercise}`, {
         method: 'POST',
       });
       
@@ -159,7 +229,7 @@ export default function ExerciseDo() {
 
   return (
     <View style={styles.container}>
-      {/* 상단: Front/Back 버튼 및 서버 상태 */}
+      {/* 상단: 운동 종류 선택, Front/Back 버튼 및 서버 상태 */}
       <View style={styles.topSection}>
         <View style={styles.statusIndicator}>
           <View style={[styles.statusDot, isConnected ? styles.connected : styles.disconnected]} />
@@ -167,6 +237,18 @@ export default function ExerciseDo() {
             {isConnected ? '연결됨' : '연결 안됨'}
           </Text>
         </View>
+        
+        {/* 운동 선택 버튼 */}
+        <TouchableOpacity
+          onPress={() => setShowExerciseModal(true)}
+          style={styles.exerciseSelectBtn}
+          disabled={isExerciseActive}
+        >
+          <Text style={styles.exerciseSelectText}>
+            {EXERCISE_TYPES[selectedExercise as keyof typeof EXERCISE_TYPES]}
+          </Text>
+        </TouchableOpacity>
+        
         <TouchableOpacity
           onPress={() => setCameraType(type => (type === 'front' ? 'back' : 'front'))}
           style={styles.toggleBtn}
@@ -242,6 +324,48 @@ export default function ExerciseDo() {
           </>
         )}
       </View>
+      
+      {/* 운동 종류 선택 모달 */}
+      <Modal
+        visible={showExerciseModal}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowExerciseModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>운동 종류 선택</Text>
+            <ScrollView style={styles.exerciseList}>
+              {Object.entries(EXERCISE_TYPES).map(([key, value]) => (
+                <TouchableOpacity
+                  key={key}
+                  style={[
+                    styles.exerciseItem,
+                    selectedExercise === key && styles.exerciseItemSelected
+                  ]}
+                  onPress={() => selectExercise(key)}
+                >
+                  <Text style={[
+                    styles.exerciseItemText,
+                    selectedExercise === key && styles.exerciseItemTextSelected
+                  ]}>
+                    {value}
+                  </Text>
+                  {selectedExercise === key && (
+                    <Text style={styles.checkMark}>✓</Text>
+                  )}
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+            <TouchableOpacity
+              style={styles.modalCloseBtn}
+              onPress={() => setShowExerciseModal(false)}
+            >
+              <Text style={styles.modalCloseBtnText}>취소</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -266,6 +390,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     zIndex: 10,
+    flexWrap: 'wrap',
+    gap: 8,
   },
   statusIndicator: {
     flexDirection: 'row',
@@ -372,5 +498,83 @@ const styles = StyleSheet.create({
     padding: 10, 
     backgroundColor: '#5C7BEE', 
     borderRadius: 8,
-  }
+  },
+  // 운동 선택 버튼 스타일
+  exerciseSelectBtn: {
+    backgroundColor: '#FF9800AA',
+    borderRadius: 18,
+    paddingVertical: 10,
+    paddingHorizontal: 18,
+    elevation: 2,
+    maxWidth: 140,
+  },
+  exerciseSelectText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  // 모달 스타일
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    padding: 20,
+    margin: 20,
+    maxHeight: '70%',
+    width: '80%',
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 20,
+    color: '#333',
+  },
+  exerciseList: {
+    maxHeight: 300,
+  },
+  exerciseItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 15,
+    paddingHorizontal: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  exerciseItemSelected: {
+    backgroundColor: '#5C7BEE20',
+  },
+  exerciseItemText: {
+    fontSize: 16,
+    color: '#333',
+    flex: 1,
+  },
+  exerciseItemTextSelected: {
+    color: '#5C7BEE',
+    fontWeight: 'bold',
+  },
+  checkMark: {
+    color: '#5C7BEE',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  modalCloseBtn: {
+    backgroundColor: '#f44336',
+    borderRadius: 10,
+    paddingVertical: 12,
+    marginTop: 20,
+  },
+  modalCloseBtnText: {
+    color: '#fff',
+    textAlign: 'center',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
 });
