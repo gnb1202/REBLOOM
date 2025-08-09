@@ -392,17 +392,20 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
       </ImageZoom>
 
       {/* 메뉴 버튼 */}
-      <View style={styles.buttonContainer}>
-        <TouchableOpacity onPress={() => router.push('/Home_page/HelpPage')} style={styles.button}>
-          <Text style={styles.buttonText}>?</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => router.push('/Home_page/Roommodified/roommodified')} style={styles.button}>
-          <Text style={styles.buttonText}>Room Modify</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => router.push('/Mark/Shop/ShopPage')} style={styles.button}>
-          <Text style={styles.buttonText}>Shop</Text>
-        </TouchableOpacity>
-      </View>
+<View style={styles.leftButtonContainer}>
+  <TouchableOpacity onPress={() => router.push('/Home_page/HelpPage')} style={styles.button}>
+    <Text style={styles.buttonText}>?</Text>
+  </TouchableOpacity>
+</View>
+
+<View style={styles.rightButtonContainer}>
+  <TouchableOpacity onPress={() => router.push('/Home_page/Roommodified/roommodified')} style={styles.button}>
+    <Text style={styles.buttonText}>Room Modify</Text>
+  </TouchableOpacity>
+  <TouchableOpacity onPress={() => router.push('/Mark/Shop/ShopPage')} style={styles.button}>
+    <Text style={styles.buttonText}>Shop</Text>
+  </TouchableOpacity>
+</View>
 
       {/* 드롭다운 */}
       <Modal
@@ -467,25 +470,43 @@ const styles = StyleSheet.create({
     left: 0,
     zIndex: 10,
   },
-  buttonContainer: {
-    position: 'absolute',
-    top: 40,
-    right: 20,
-    zIndex: 10,
-    flexDirection: 'row',
-    gap: 10,
-  },
+
+  // ⬇️ 새로 추가: 왼쪽 상단( ? 버튼 )
+leftButtonContainer: {
+  position: 'absolute',
+  top: 40,
+  left: '17%', // ← px 대신 % 사용
+  zIndex: 10,
+},
+
+// ⬇️ 오른쪽 상단( Room Modify / Shop )
+rightButtonContainer: {
+  position: 'absolute',
+  top: 40,
+  right: '13%', // ← px 대신 % 사용
+  zIndex: 10,
+  flexDirection: 'row',
+  gap: 10,
+},
+
   button: {
     backgroundColor: 'rgba(255, 255, 255, 0.8)',
-    padding: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
     borderRadius: 20,
   },
   buttonText: {
     fontWeight: 'bold',
   },
   overlayPartial: {
-    position: 'absolute', top: 0, left: 0, right: 0, height: '94%',
-    backgroundColor: '#FFFFFFEE', zIndex: 100, paddingTop: 60,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: '94%',
+    backgroundColor: '#FFFFFFEE',
+    zIndex: 100,
+    paddingTop: 60,
   },
   dropdownOverlay: {
     flex: 1,
