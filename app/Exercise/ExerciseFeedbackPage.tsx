@@ -1,78 +1,40 @@
 import { useState } from 'react';
 import { ActivityIndicator, Alert, StyleSheet, Text, TouchableOpacity, View, Platform } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../context/AuthContext';
 import { useExercise } from '../../context/ExerciseContext';
-import { useProgress } from '../../context/ProgressContext';
-import { saveExerciseRecord } from '../../firebase.config';
 
 export default function ExerciseFeedbackPage() {
   const router = useRouter();
   const [selected, setSelected] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
-  const { incrementFeedbackCount } = useProgress();
-  const { currentExercise, clearCurrentExercise, calculateRewards } = useExercise();
-  const { user, refreshProfile } = useAuth();
+  const { exerciseQueue, clearExerciseQueue, getTotalDuration } = useExercise();
+  const { user } = useAuth();
 
-  // 웹 스타일 이모지(색 강조)
   const emojis = ['😃', '😐', '😤'];
   const labels = ['Easy', 'Normal', 'Hard'];
 
-  const handleSubmit = async () => {
+  const handleFinish = () => {
     if (selected === null) {
       Alert.alert('Selection Required', 'Please select your feedback.');
       return;
     }
 
-    if (!user || !currentExercise) {
-      Alert.alert('Error', 'No exercise information available.');
-      router.push('/Home_page/Homepage');
-      return;
-    }
-
     setSaving(true);
-    try {
-      const feedbackRating = selected === 0 ? 5 : selected === 1 ? 3 : 1;
-      await saveExerciseRecord(user.uid, {
-        exerciseId: currentExercise.exerciseId,
-        exerciseName: currentExercise.exerciseName,
-        duration: currentExercise.duration,
-        difficulty: currentExercise.difficulty,
-        feedback: {
-          rating: feedbackRating,
-          comment: selected === 0 ? 'Good' : selected === 1 ? 'Average' : 'Difficult'
-        }
-      });
-      incrementFeedbackCount();
-      await refreshProfile();
-      clearCurrentExercise();
-      const rewards = calculateRewards();
-      Alert.alert(
-        'Exercise Complete! 🎉',
-        `Great job!\n\n💰 ${rewards.currency} Coins earned\n⭐ ${rewards.experience} Experience gained`,
-        [
-          {
-            text: 'OK',
-            onPress: () => router.push('/Home_page/Homepage')
-          }
-        ]
-      );
-    } catch (error) {
-      console.error('Failed to save exercise record:', error);
-      Alert.alert('Error', 'Failed to save exercise record.');
-    } finally {
-      setSaving(false);
-    }
+
+    // TODO: 여러 운동 기록을 한 번에 저장하는 로직 (현재는 단순화)
+    console.log('Exercise session finished with feedback:', labels[selected]);
+
+    // 운동 큐를 비우고 홈으로 이동
+    clearExerciseQueue();
+    router.replace('/Home_page/Homepage');
   };
 
   return (
     <View style={styles.container}>
-      {/* 중앙 헤더 */}
       <Text style={styles.title}>How was today's workout?</Text>
-      <Text style={styles.subtitle}>Please rate the exercise intensity</Text>
+      <Text style={styles.subtitle}>Please rate the overall exercise intensity</Text>
 
-      {/* 이모지 카드 박스 */}
       <View style={styles.box}>
         <View style={styles.emojiRow}>
           {emojis.map((emoji, index) => (
@@ -83,7 +45,6 @@ export default function ExerciseFeedbackPage() {
               style={[
                 styles.emojiWrapper,
                 selected === index && styles.selectedEmoji,
-                // 선택된 이모지는 elevation, 그림자 더 강조
               ]}
             >
               <Text style={styles.emoji}>{emoji}</Text>
@@ -98,15 +59,14 @@ export default function ExerciseFeedbackPage() {
         </View>
       </View>
 
-      {/* Finish 버튼 */}
       <TouchableOpacity
         style={[
           styles.finishButton,
           saving && styles.finishButtonDisabled,
           selected !== null && !saving && styles.finishButtonActive,
         ]}
-        onPress={handleSubmit}
-        disabled={saving}
+        onPress={handleFinish}
+        disabled={saving || selected === null}
         activeOpacity={0.85}
       >
         {saving ? (
@@ -149,7 +109,7 @@ const styles = StyleSheet.create({
     marginBottom: 40,
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.30,
+    shadowOpacity: 0.10,
     shadowRadius: 18,
     elevation: 5,
     minWidth: 320,
@@ -169,7 +129,8 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     minWidth: 80,
     minHeight: 110,
-    borderWidth: 0,
+    borderWidth: 2,
+    borderColor: 'transparent',
     shadowColor: '#E6ECFF',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.12,
@@ -178,19 +139,11 @@ const styles = StyleSheet.create({
   },
   selectedEmoji: {
     backgroundColor: '#fff',
-    borderWidth: 2,
-    borderColor: '#B2B8FF',
+    borderColor: '#5C7BEE',
     elevation: 8,
-    shadowColor: '#A2B8FF',
+    shadowColor: '#5C7BEE',
     shadowOpacity: 0.25,
-    shadowRadius: 18,
-    ...Platform.select({
-      web: {
-        boxShadow: '0 8px 24px 0 #A2B8FF30',
-      },
-      default: {},
-    }),
-    zIndex: 2,
+    transform: [{ translateY: -5 }],
   },
   emoji: {
     fontSize: 42,
@@ -209,7 +162,7 @@ const styles = StyleSheet.create({
   finishButton: {
     marginTop: 14,
     marginBottom: 10,
-    backgroundColor: '#789BFB',
+    backgroundColor: '#ccc',
     paddingHorizontal: 50,
     paddingVertical: 17,
     borderRadius: 15,
@@ -225,7 +178,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#5C7BEE',
   },
   finishButtonDisabled: {
-    backgroundColor: '#ccc',
+    backgroundColor: '#A9A9A9',
   },
   finishText: {
     fontSize: 22,
@@ -233,5 +186,4 @@ const styles = StyleSheet.create({
     color: '#fff',
     letterSpacing: 1,
   },
-
 });

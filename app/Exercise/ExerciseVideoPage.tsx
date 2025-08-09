@@ -9,14 +9,28 @@ import {
   Text,
   TouchableOpacity,
   View,
+  ActivityIndicator,
 } from 'react-native';
+import { useExercise } from '../../context/ExerciseContext';
+
+// 운동 ID와 비디오 파일을 매핑
+const videoSources: { [key: string]: any } = {
+  shoulder_flexion: require('../../assets/images/animations/demo.mp4'),
+  shoulder_abduction_1: require('../../assets/images/animations/demo.mp4'),
+  // ... 다른 운동 비디오들도 여기에 추가 ...
+  default: require('../../assets/images/animations/demo.mp4'),
+};
 
 export default function ExerciseVideoPage() {
   const router = useRouter();
+  const { getCurrentExercise } = useExercise();
+  
   const [isPlaying, setIsPlaying] = useState(true);
   const [isExpanded, setIsExpanded] = useState(false);
   const videoRef = useRef<Video>(null);
   const [videoStatus, setVideoStatus] = useState<any>(null);
+
+  const currentExercise = getCurrentExercise();
 
   useEffect(() => {
     const backAction = () => {
@@ -33,6 +47,15 @@ export default function ExerciseVideoPage() {
     );
     return () => backHandler.remove();
   }, [isExpanded]);
+
+  if (!currentExercise) {
+    return (
+      <View style={[styles.container, {justifyContent: 'center'}]}>
+        <ActivityIndicator size="large" color="#5C7BEE" />
+        <Text style={{marginTop: 10}}>Loading exercise video...</Text>
+      </View>
+    );
+  }
 
   const togglePlayPause = async () => {
     if (!videoRef.current) return;
@@ -63,13 +86,17 @@ export default function ExerciseVideoPage() {
     return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
   };
 
+  const videoSource = videoSources[currentExercise.id] || videoSources.default;
+
   return (
     <View style={styles.container}>
+      <Text style={styles.exerciseTitle}>{currentExercise.title}</Text>
+
       {/* 시범 영상 */}
       <View style={[styles.previewBox, isExpanded && styles.previewBoxExpanded]}>
         <Video
           ref={videoRef}
-          source={require('../../assets/images/animations/demo.mp4')}
+          source={videoSource}
           style={StyleSheet.absoluteFill}
           resizeMode={ResizeMode.COVER}
           shouldPlay
@@ -78,7 +105,7 @@ export default function ExerciseVideoPage() {
           onPlaybackStatusUpdate={status => setVideoStatus(status)}
         />
         <View style={styles.previewOverlay}>
-          <Text style={styles.previewText}>demonstration video</Text>
+          <Text style={styles.previewText}>Demonstration Video</Text>
         </View>
         {/* 슬라이더 or 시간 */}
         {videoStatus && (
@@ -117,7 +144,7 @@ export default function ExerciseVideoPage() {
       {!isExpanded && (
         <View style={styles.bottomBar}>
           <TouchableOpacity onPress={() => router.back()}>
-            <Text style={styles.controlText}>◁</Text>
+            <Text style={styles.controlText}>◁ Back</Text>
           </TouchableOpacity>
           <TouchableOpacity onPress={togglePlayPause}>
             <Text style={styles.controlText}>{isPlaying ? '⏸' : '▶'}</Text>
@@ -129,13 +156,13 @@ export default function ExerciseVideoPage() {
         </View>
       )}
 
-      {/* 운동 종료 버튼 */}
+      {/* 운동 시작 버튼 */}
       {!isExpanded && (
         <TouchableOpacity
           style={styles.endButton}
           onPress={() => router.push('/Exercise/ExerciseDo')}
         >
-          <Text style={styles.endButtonText}>Let's Do it </Text>
+          <Text style={styles.endButtonText}>Let's Do it!</Text>
         </TouchableOpacity>
       )}
     </View>
@@ -149,10 +176,17 @@ const styles = StyleSheet.create({
     padding: 16,
     position: 'relative',
   },
+  exerciseTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 16,
+    color: '#333',
+  },
   previewBox: {
-    flex: 2,
+    flex: 1,
     backgroundColor: '#000',
-    borderRadius: 8,
+    borderRadius: 12,
     overflow: 'hidden',
     marginBottom: 12,
     position: 'relative',
@@ -172,10 +206,14 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 10,
     left: 10,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
   },
   previewText: {
     color: '#fff',
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
   },
   fullScreenExitBtn: {
@@ -190,32 +228,29 @@ const styles = StyleSheet.create({
   bottomBar: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    paddingTop: 12,
+    alignItems: 'center',
+    paddingVertical: 12,
     borderTopWidth: 1,
-    borderColor: '#ccc',
+    borderColor: '#eee',
   },
   controlText: {
-    fontSize: 20,
+    fontSize: 18,
     color: '#444',
     paddingHorizontal: 16,
   },
   endButton: {
     backgroundColor: '#5C7BEE',
-    paddingVertical: 12,
+    paddingVertical: 16,
     paddingHorizontal: 32,
-    borderRadius: 10,
+    borderRadius: 30,
     alignSelf: 'center',
     marginTop: 24,
+    elevation: 2,
   },
   endButtonText: {
     color: '#fff',
     fontWeight: 'bold',
-    fontSize: 16,
-  },
-  message: {
-    fontSize: 16,
-    textAlign: 'center',
-    marginVertical: 20,
+    fontSize: 18,
   },
   sliderContainer: {
     position: 'absolute',

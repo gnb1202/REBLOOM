@@ -1,9 +1,29 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useExercise } from '../../context/ExerciseContext';
 
 export default function ExerciseSummaryPage() {
   const router = useRouter();
+  const { exerciseQueue, getTotalDuration, clearExerciseQueue } = useExercise();
+
+  const totalDuration = getTotalDuration();
+  const totalCalories = totalDuration * 5; // 분당 5칼로리 소모로 가정
+
+  const handleGetReward = () => {
+    // 1. PlantRewardPage로 이동
+    router.push('/Exercise/PlantRewardPage');
+
+    // 2. 1.5초 후 CoinRewardPage로 이동
+    setTimeout(() => {
+      router.push('/Exercise/CoinRewardPage');
+    }, 1500);
+
+    // 3. 3초 후 ExerciseFeedbackPage로 이동 (1.5 + 1.5)
+    setTimeout(() => {
+      router.replace('/Exercise/ExerciseFeedbackPage');
+    }, 3000);
+  };
 
   return (
     <ScrollView
@@ -11,44 +31,40 @@ export default function ExerciseSummaryPage() {
       contentContainerStyle={styles.container}
       showsVerticalScrollIndicator={false}
     >
-      {/* 축하 이모지와 텍스트 */}
       <View style={styles.celebrateBox}>
         <Text style={styles.celebrateIcon}>🎉</Text>
-        <Text style={styles.header}>Today's workout is over!{'\n'}Congratulations!!!</Text>
+        <Text style={styles.header}>{"Today's workout is over!\nCongratulations!"}</Text>
       </View>
 
       <Text style={styles.subHeader}>Exercise Statistics</Text>
 
       <View style={styles.summaryBox}>
-        {/* 원형 차트 대체 */}
         <View style={styles.pieChartPlaceholder}>
           <Text style={styles.chartLabel}>Area of Exercise</Text>
-          <Text style={styles.pieIcon}>🟦🟩🟧</Text>
+          <Text style={styles.pieIcon}>💪</Text>
         </View>
 
-        {/* 구분선 */}
         <View style={styles.divider} />
 
         <View style={styles.detailRow}>
+          <Text style={styles.detailLabel}>Total Exercises</Text>
+          <Text style={styles.detailValue}>{exerciseQueue.length}</Text>
+        </View>
+
+        <View style={styles.detailRow}>
           <Text style={styles.detailLabel}>Total Exercise Time</Text>
-          <Text style={styles.detailValue}>20:00</Text>
+          <Text style={styles.detailValue}>{totalDuration}:00 min</Text>
         </View>
 
         <View style={styles.detailRow}>
-          <Text style={styles.detailLabel}>Calories</Text>
-          <Text style={styles.detailValue}>120 kcal</Text>
-        </View>
-
-        <View style={styles.detailRow}>
-          <Text style={styles.detailLabel}>Quests Completed</Text>
-          <Text style={styles.detailValue}>2</Text>
+          <Text style={styles.detailLabel}>Calories Burned (Est.)</Text>
+          <Text style={styles.detailValue}>{totalCalories} kcal</Text>
         </View>
       </View>
 
-      {/* ✅ 보상 보기 버튼 */}
       <TouchableOpacity
         style={styles.endButton}
-        onPress={() => router.push('/Exercise/PlantRewardPage')}
+        onPress={handleGetReward}
         activeOpacity={0.85}
       >
         <Text style={styles.endButtonText}>Get Reward</Text>
@@ -128,7 +144,7 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   pieIcon: {
-    fontSize: 26,
+    fontSize: 40,
   },
   divider: {
     width: '90%',

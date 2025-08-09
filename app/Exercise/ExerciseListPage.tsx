@@ -1,3 +1,4 @@
+
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import {
@@ -8,16 +9,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-
-interface ExerciseItem {
-  id: string;
-  title: string;
-  description: string;
-  duration: string;
-  difficulty: 'EASY' | 'MEDIUM' | 'HARD';
-  target: string;
-  imageUrl: any; // 임시로 any 타입 사용
-}
+import { useExercise, ExerciseItem } from '../../context/ExerciseContext';
 
 const exerciseList: ExerciseItem[] = [
   {
@@ -114,6 +106,7 @@ const exerciseList: ExerciseItem[] = [
 
 export default function ExerciseListPage() {
   const router = useRouter();
+  const { startExerciseQueue } = useExercise(); // ExerciseContext 사용
   const [selectedExercises, setSelectedExercises] = useState<string[]>([]);
 
   const handleExerciseSelect = (exerciseId: string) => {
@@ -128,10 +121,16 @@ export default function ExerciseListPage() {
 
   const handleStartExercise = () => {
     if (selectedExercises.length > 0) {
-      router.push({
-        pathname: '/Exercise/Explain',
-        params: { exercises: selectedExercises.join(',') }
-      });
+      // 선택된 운동 ID에 해당하는 전체 운동 정보 객체를 찾습니다.
+      const selectedExerciseObjects = exerciseList.filter(exercise => 
+        selectedExercises.includes(exercise.id)
+      );
+      
+      // ExerciseContext에 선택된 운동 큐를 설정합니다.
+      startExerciseQueue(selectedExerciseObjects);
+      
+      // Explain 페이지로 이동합니다.
+      router.push('/Exercise/Explain');
     }
   };
 
