@@ -5,7 +5,7 @@ import { useExercise } from '../../context/ExerciseContext';
 
 export default function ExplainPage() {
   const router = useRouter();
-  const { exerciseQueue, getTotalDuration } = useExercise();
+  const { exerciseQueue, getTotalDuration, recordExerciseStart } = useExercise();
 
   const totalDuration = getTotalDuration();
 
@@ -47,6 +47,8 @@ export default function ExplainPage() {
       <TouchableOpacity
         style={styles.startButton}
         onPress={() => {
+          // 운동 시작 시간 기록
+          recordExerciseStart();
           // 첫 번째 운동의 소개 페이지로 이동
           router.push('/Exercise/ExerciseIntroPage');
         }}

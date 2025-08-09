@@ -119,17 +119,22 @@ export default function ExerciseListPage() {
     });
   };
 
+  const getExerciseOrder = (exerciseId: string) => {
+    const index = selectedExercises.indexOf(exerciseId);
+    return index !== -1 ? index + 1 : null;
+  };
+
   const handleStartExercise = () => {
     if (selectedExercises.length > 0) {
-      // 선택된 운동 ID에 해당하는 전체 운동 정보 객체를 찾습니다.
+      // Find the full exercise objects for selected exercise IDs
       const selectedExerciseObjects = exerciseList.filter(exercise => 
         selectedExercises.includes(exercise.id)
       );
       
-      // ExerciseContext에 선택된 운동 큐를 설정합니다.
+      // Set the selected exercise queue in ExerciseContext
       startExerciseQueue(selectedExerciseObjects);
       
-      // Explain 페이지로 이동합니다.
+      // Navigate to Explain page
       router.push('/Exercise/Explain');
     }
   };
@@ -175,7 +180,14 @@ export default function ExerciseListPage() {
           >
             <Image source={exercise.imageUrl} style={styles.exerciseImage} />
             <View style={styles.exerciseInfo}>
-              <Text style={styles.exerciseTitle}>{exercise.title}</Text>
+              <View style={styles.titleContainer}>
+                <Text style={styles.exerciseTitle}>{exercise.title}</Text>
+                {getExerciseOrder(exercise.id) && (
+                  <View style={styles.orderBadge}>
+                    <Text style={styles.orderText}>{getExerciseOrder(exercise.id)}</Text>
+                  </View>
+                )}
+              </View>
               <Text style={styles.exerciseDescription}>
                 {exercise.description}
               </Text>
@@ -210,7 +222,14 @@ export default function ExerciseListPage() {
             >
               <Image source={exercise.imageUrl} style={styles.exerciseImage} />
               <View style={styles.exerciseInfo}>
-                <Text style={styles.exerciseTitle}>{exercise.title}</Text>
+                <View style={styles.titleContainer}>
+                  <Text style={styles.exerciseTitle}>{exercise.title}</Text>
+                  {getExerciseOrder(exercise.id) && (
+                    <View style={styles.orderBadge}>
+                      <Text style={styles.orderText}>{getExerciseOrder(exercise.id)}</Text>
+                    </View>
+                  )}
+                </View>
                 <Text style={styles.exerciseDescription}>
                   {exercise.description}
                 </Text>
@@ -251,6 +270,23 @@ export default function ExerciseListPage() {
 }
 
 const styles = StyleSheet.create({
+  titleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 5,
+  },
+  orderBadge: {
+    backgroundColor: '#5C7BEE',
+    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    marginLeft: 8,
+  },
+  orderText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
   recommendedSection: {
     marginBottom: 30,
   },

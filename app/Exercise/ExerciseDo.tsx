@@ -35,7 +35,9 @@ export default function ExerciseDo() {
     isQueueFinished,
     clearExerciseQueue,
     currentExerciseIndex,
-    exerciseQueue
+    exerciseQueue,
+    recordExerciseEnd,
+    getActualDuration
   } = useExercise();
 
   const currentExercise = getCurrentExercise();
@@ -44,6 +46,8 @@ export default function ExerciseDo() {
   const [exerciseData, setExerciseData] = useState<ExerciseData | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const [totalElapsedTime, setTotalElapsedTime] = useState(0);
+  const totalTimeIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // 서버 연결 및 운동 설정
   useEffect(() => {
@@ -57,10 +61,18 @@ export default function ExerciseDo() {
 
     const connectionInterval = setInterval(checkServerConnection, 5000);
     
+    // 전체 운동 시간 업데이트
+    totalTimeIntervalRef.current = setInterval(() => {
+      setTotalElapsedTime(getActualDuration());
+    }, 1000);
+    
     return () => {
       clearInterval(connectionInterval);
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
+      }
+      if (totalTimeIntervalRef.current) {
+        clearInterval(totalTimeIntervalRef.current);
       }
       if (isExerciseActive) {
         stopExercise(false); // 페이지를 떠날 때, 다음으로 넘어가지 않음
@@ -158,8 +170,12 @@ export default function ExerciseDo() {
     const nextIndex = currentExerciseIndex + 1;
 
     if (nextIndex >= exerciseQueue.length) {
-      // 모든 운동이 끝났으므로 요약 페이지로 이동합니다.
-      Alert.alert('운동 완료!', '모든 운동을 성공적으로 마쳤습니다. 결과를 확인합니다.');
+      // 모든 운동이 끝났으므로 종료 시간을 기록하고 요약 페이지로 이동합니다.
+      recordExerciseEnd();
+      const actualDuration = getActualDuration();
+      const minutes = Math.floor(actualDuration / 60);
+      const seconds = actualDuration % 60;
+      Alert.alert('운동 완료!', `모든 운동을 성공적으로 마쳤습니다.\n총 소요 시간: ${minutes}분 ${seconds}초`);
       router.replace('/Exercise/ExerciseSummaryPage');
     } else {
       // 아직 남은 운동이 있으므로 다음 운동으로 상태를 업데이트하고 소개 페이지로 이동합니다.
@@ -220,13 +236,16 @@ export default function ExerciseDo() {
         <CameraView style={styles.camera} facing={cameraType} />
       )}
 
-      {isExerciseActive && exerciseData && (
-        <View style={styles.dataOverlay}>
-          <View style={styles.dataItem}><Text style={styles.dataLabel}>횟수</Text><Text style={styles.dataValue}>{exerciseData.count}</Text></View>
-          <View style={styles.dataItem}><Text style={styles.dataLabel}>정확도</Text><Text style={styles.dataValue}>{exerciseData.accuracy}%</Text></View>
-          <View style={styles.dataItem}><Text style={styles.dataLabel}>시간</Text><Text style={styles.dataValue}>{formatTime(exerciseData.elapsed_time)}</Text></View>
-        </View>
-      )}
+      <View style={styles.dataOverlay}>
+        {isExerciseActive && exerciseData && (
+          <>
+            <View style={styles.dataItem}><Text style={styles.dataLabel}>횟수</Text><Text style={styles.dataValue}>{exerciseData.count}</Text></View>
+            <View style={styles.dataItem}><Text style={styles.dataLabel}>정확도</Text><Text style={styles.dataValue}>{exerciseData.accuracy}%</Text></View>
+            <View style={styles.dataItem}><Text style={styles.dataLabel}>현재 운동</Text><Text style={styles.dataValue}>{formatTime(exerciseData.elapsed_time)}</Text></View>
+          </>
+        )}
+        <View style={styles.dataItem}><Text style={styles.dataLabel}>전체 시간</Text><Text style={styles.dataValue}>{formatTime(totalElapsedTime)}</Text></View>
+      </View>
 
       <View style={styles.bottomControls}>
         {!isExerciseActive ? (

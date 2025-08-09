@@ -16,6 +16,8 @@ export interface ExerciseItem {
 interface ExerciseContextType {
   exerciseQueue: ExerciseItem[];
   currentExerciseIndex: number;
+  exerciseStartTime: Date | null;
+  exerciseEndTime: Date | null;
   
   // 운동 큐를 시작(설정)하는 함수
   startExerciseQueue: (exercises: ExerciseItem[]) => void;
@@ -34,6 +36,15 @@ interface ExerciseContextType {
 
   // 전체 큐의 운동 시간을 계산하는 함수
   getTotalDuration: () => number;
+  
+  // 실제 운동 시작 시간 기록
+  recordExerciseStart: () => void;
+  
+  // 실제 운동 종료 시간 기록
+  recordExerciseEnd: () => void;
+  
+  // 실제 소요 시간 계산 (초 단위)
+  getActualDuration: () => number;
 }
 
 const ExerciseContext = createContext<ExerciseContextType | undefined>(undefined);
@@ -57,11 +68,17 @@ export const ExerciseProvider: React.FC<ExerciseProviderProps> = ({ children }) 
   const [exerciseQueue, setExerciseQueue] = useState<ExerciseItem[]>([]);
   // 현재 진행 중인 운동의 큐 내 인덱스를 저장하는 상태
   const [currentExerciseIndex, setCurrentExerciseIndex] = useState<number>(0);
+  // 실제 운동 시작 시간
+  const [exerciseStartTime, setExerciseStartTime] = useState<Date | null>(null);
+  // 실제 운동 종료 시간
+  const [exerciseEndTime, setExerciseEndTime] = useState<Date | null>(null);
 
   // 운동 큐를 설정하고 첫 번째 운동부터 시작
   const startExerciseQueue = (exercises: ExerciseItem[]) => {
     setExerciseQueue(exercises);
     setCurrentExerciseIndex(0);
+    setExerciseStartTime(null);
+    setExerciseEndTime(null);
   };
 
   // 다음 운동으로 인덱스를 이동
@@ -86,6 +103,8 @@ export const ExerciseProvider: React.FC<ExerciseProviderProps> = ({ children }) 
   const clearExerciseQueue = () => {
     setExerciseQueue([]);
     setCurrentExerciseIndex(0);
+    setExerciseStartTime(null);
+    setExerciseEndTime(null);
   };
 
   // 큐에 있는 모든 운동의 총 소요 시간(분)을 계산
@@ -95,17 +114,45 @@ export const ExerciseProvider: React.FC<ExerciseProviderProps> = ({ children }) 
       return total + durationInMin;
     }, 0);
   };
+  
+  // 실제 운동 시작 시간 기록
+  const recordExerciseStart = () => {
+    setExerciseStartTime(new Date());
+    setExerciseEndTime(null);
+  };
+  
+  // 실제 운동 종료 시간 기록
+  const recordExerciseEnd = () => {
+    setExerciseEndTime(new Date());
+  };
+  
+  // 실제 소요 시간 계산 (초 단위)
+  const getActualDuration = () => {
+    if (exerciseStartTime && exerciseEndTime) {
+      return Math.floor((exerciseEndTime.getTime() - exerciseStartTime.getTime()) / 1000);
+    }
+    if (exerciseStartTime && !exerciseEndTime) {
+      // 아직 진행 중인 경우 현재 시간까지 계산
+      return Math.floor((new Date().getTime() - exerciseStartTime.getTime()) / 1000);
+    }
+    return 0;
+  };
 
   // Context를 통해 제공할 값들
   const value: ExerciseContextType = {
     exerciseQueue,
     currentExerciseIndex,
+    exerciseStartTime,
+    exerciseEndTime,
     startExerciseQueue,
     advanceToNextExercise,
     getCurrentExercise,
     isQueueFinished,
     clearExerciseQueue,
     getTotalDuration,
+    recordExerciseStart,
+    recordExerciseEnd,
+    getActualDuration,
   };
 
   return (
