@@ -174,12 +174,6 @@ export default function QuestPage() {
         }}
       />
 
-      {badgeImage && (
-        <View style={{ alignItems: 'center', marginTop: 10 }}>
-          <Image source={badgeImage} style={{ width: 100, height: 100 }} />
-        </View>
-      )}
-
       <TouchableOpacity
         style={styles.closeButton}
         onPress={() => router.push('/Home_page/Homepage')}
