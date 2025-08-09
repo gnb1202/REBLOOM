@@ -258,15 +258,33 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
           );
         })()}
 
-        {/* 🔽 Exercise 버튼 - 오른쪽 문 위에 표시 (눌러서 이동) */}
         <TouchableOpacity
-          onPress={() => router.push('/Exercise/ExercisePage')}
+          onPress={() => router.push('/Home_page/TravelLoadingPage')}
           style={{
             position: 'absolute',
-            left: imageScaledWidth * 0.825, // 오른쪽 문 중앙 근처
-            top: imageScaledHeight * 0.60,
-            width: imageScaledWidth * 0.08,
-            height: imageScaledHeight * 0.08,
+            left: imageScaledWidth * 0.0225, // 왼쪽 끝 근처
+            top: imageScaledHeight * 0.35, // 문 위쪽
+            width: imageScaledWidth * 0.135,
+            height: imageScaledHeight * 0.15,
+            zIndex: 8,
+          }}
+        >
+          <Image
+            source={ExploreButton}
+            style={{ width: '100%', height: '100%' }}
+            resizeMode="contain"
+          />
+        </TouchableOpacity>
+
+        {/* 🔽 Exercise 버튼 - 오른쪽 문 위에 표시 (눌러서 이동) */}
+        <TouchableOpacity
+          onPress={() => router.push('/Exercise/ExerciseListPage')}
+          style={{
+            position: 'absolute',
+            left: imageScaledWidth * 0.845, // 오른쪽 끝 근처
+            top: imageScaledHeight * 0.365, // 상단 가까이
+            width: imageScaledWidth * 0.135, // 기존보다 크게
+            height: imageScaledHeight * 0.15,
             zIndex: 8,
           }}
         >
