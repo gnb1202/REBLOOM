@@ -9,7 +9,8 @@ export interface ExerciseItem {
   duration: string;
   difficulty: 'EASY' | 'MEDIUM' | 'HARD';
   target: string;
-  imageUrl: any; 
+  imageUrl: any;
+  count: number; // 운동 반복 횟수
 }
 
 // Context가 관리할 상태와 함수들의 타입 정의

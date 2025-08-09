@@ -20,6 +20,7 @@ const exerciseList: ExerciseItem[] = [
     difficulty: 'EASY',
     target: 'SHOULDER',
     imageUrl: require('../../assets/images/icon.png'),
+    count: 8,
   },
   {
     id: 'shoulder_abduction_1',
@@ -29,6 +30,7 @@ const exerciseList: ExerciseItem[] = [
     difficulty: 'EASY',
     target: 'SHOULDER',
     imageUrl: require('../../assets/images/icon.png'),
+    count: 6,
   },
   {
     id: 'shoulder_abduction_2',
@@ -38,6 +40,7 @@ const exerciseList: ExerciseItem[] = [
     difficulty: 'MEDIUM',
     target: 'SHOULDER',
     imageUrl: require('../../assets/images/icon.png'),
+    count: 10,
   },
   {
     id: 'shoulder_external_rotation_1',
@@ -47,6 +50,7 @@ const exerciseList: ExerciseItem[] = [
     difficulty: 'MEDIUM',
     target: 'SHOULDER',
     imageUrl: require('../../assets/images/icon.png'),
+    count: 7,
   },
   {
     id: 'shoulder_external_rotation_2',
@@ -56,6 +60,7 @@ const exerciseList: ExerciseItem[] = [
     difficulty: 'MEDIUM',
     target: 'SHOULDER',
     imageUrl: require('../../assets/images/icon.png'),
+    count: 9,
   },
   {
     id: 'shoulder_external_rotation',
@@ -65,6 +70,7 @@ const exerciseList: ExerciseItem[] = [
     difficulty: 'EASY',
     target: 'SHOULDER',
     imageUrl: require('../../assets/images/icon.png'),
+    count: 5,
   },
   {
     id: 'shoulder_abduction_3',
@@ -74,6 +80,7 @@ const exerciseList: ExerciseItem[] = [
     difficulty: 'HARD',
     target: 'SHOULDER',
     imageUrl: require('../../assets/images/icon.png'),
+    count: 10,
   },
   {
     id: 'side_stretch',
@@ -83,6 +90,7 @@ const exerciseList: ExerciseItem[] = [
     difficulty: 'EASY',
     target: 'STRETCH',
     imageUrl: require('../../assets/images/icon.png'),
+    count: 6,
   },
   {
     id: 'elbow_exercise',
@@ -92,6 +100,7 @@ const exerciseList: ExerciseItem[] = [
     difficulty: 'EASY',
     target: 'ARM',
     imageUrl: require('../../assets/images/icon.png'),
+    count: 8,
   },
   {
     id: 'shoulder_joint',
@@ -101,6 +110,7 @@ const exerciseList: ExerciseItem[] = [
     difficulty: 'MEDIUM',
     target: 'SHOULDER',
     imageUrl: require('../../assets/images/icon.png'),
+    count: 7,
   }
 ];
 
@@ -194,6 +204,7 @@ export default function ExerciseListPage() {
               <View style={styles.exerciseDetails}>
                 <Text style={styles.exerciseTarget}>{exercise.target}</Text>
                 <Text style={styles.exerciseDuration}>⏱ {exercise.duration}</Text>
+                <Text style={styles.exerciseCount}>🔄 {exercise.count} reps</Text>
                 <Text
                   style={[
                     styles.exerciseDifficulty,
@@ -384,6 +395,11 @@ const styles = StyleSheet.create({
   exerciseDuration: {
     fontSize: 14,
     color: '#5C7BEE',
+  },
+  exerciseCount: {
+    fontSize: 14,
+    color: '#FF6B6B',
+    fontWeight: '600',
   },
   exerciseDifficulty: {
     fontSize: 14,
