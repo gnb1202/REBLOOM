@@ -167,7 +167,14 @@ export const ProgressProvider = ({ children }: { children: React.ReactNode }) =>
         if (savedBadgeLevel !== null) setFlowerBadgeLevel(JSON.parse(savedBadgeLevel));
         if (savedCompletedChallenges !== null) setCompletedChallenges(JSON.parse(savedCompletedChallenges));
         if (savedPlacedFlowers !== null) setPlacedFlowersState(JSON.parse(savedPlacedFlowers));
-        if (savedPlacedFurniture !== null) setPlacedFurnitureState(JSON.parse(savedPlacedFurniture));
+        if (savedPlacedFurniture !== null) {
+          setPlacedFurnitureState(JSON.parse(savedPlacedFurniture));
+        } else {
+          // 📌 첫 시작 시 기본 우체통 제공
+          const defaultMailbox = { id: 'mailbox_A_black', x: 0, y: 0 }; // x, y는 Homepage에서 재계산됨
+          setPlacedFurnitureState([defaultMailbox]);
+          await AsyncStorage.setItem('@placedFurniture', JSON.stringify([defaultMailbox]));
+        }
         if (savedObtainedDecorations !== null) setObtainedDecorationsState(JSON.parse(savedObtainedDecorations));
         if (savedPlacedDecorations !== null) setPlacedDecorationsState(JSON.parse(savedPlacedDecorations));
         if (savedSelectedDecoration !== null) setSelectedDecorationState(savedSelectedDecoration);

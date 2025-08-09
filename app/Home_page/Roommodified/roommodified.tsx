@@ -1,7 +1,6 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import {
-  Alert,
   Dimensions,
   Image,
   ImageBackground,
@@ -16,10 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useProgress } from '../../../context/ProgressContext';
 import ToastMessage from '../../../components/ToastMessage';
 
-import Background1 from '../../../assets/images/HomeBackgroundImages/Backgroundlevel1.png';
-import Background2 from '../../../assets/images/HomeBackgroundImages/Backgroundlevel2.png';
 import BaseBackground from '../../../assets/images/HomeBackgroundImages/BasicHomepage.png';
-
 import Blue1 from '../../../assets/images/HomeBackgroundImages/blue_1.jpg';
 import Blue2 from '../../../assets/images/HomeBackgroundImages/blue_2.jpg';
 import Green1 from '../../../assets/images/HomeBackgroundImages/green_1.jpg';
@@ -56,11 +52,12 @@ const flowerList = [
   { id: 'tulip', name: 'tulip', image: tulip },
 ];
 
+// ✅ Homepage.tsx와 동일한 크기로 맞춤
 const furnitureList = [
-  { id: 'mailbox_A_black', icon: mailbox_A_black },
-  { id: 'mailbox_A_blackwhite', icon: mailbox_A_blackwhite },
-  { id: 'mailbox_A_white', icon: mailbox_A_white },
-  { id: 'signboard', icon: signboard },
+  { id: 'mailbox_A_black',      icon: mailbox_A_black,      style: { width: 150, height: 300 } },
+  { id: 'mailbox_A_blackwhite', icon: mailbox_A_blackwhite, style: { width: 200, height: 400 } },
+  { id: 'mailbox_A_white',      icon: mailbox_A_white,      style: { width: 200, height: 400 } },
+  { id: 'signboard',            icon: signboard,            style: { width: 160, height: 140 } },
 ];
 
 const roomList = [
@@ -85,6 +82,19 @@ const minScale = screenHeight / ORIGINAL_HEIGHT;
 const scaledWidth = ORIGINAL_WIDTH * minScale;
 const scaledHeight = ORIGINAL_HEIGHT * minScale;
 
+// ✅ 우체통 고정 좌표(Homepage와 동일 로직)
+const getMailboxPosition = (imageW: number, imageH: number, boxW: number, boxH: number) => {
+  const pillarCenterX = imageW * 0.395;
+  const floorLineY = imageH * 0.855;
+  const deltaX = -15;
+  const deltaY = +100;
+
+  return {
+    left: pillarCenterX - boxW / 2 + deltaX,
+    top: floorLineY - boxH + deltaY,
+  };
+};
+
 export default function RoomModified() {
   const router = useRouter();
   const [selectedTab, setSelectedTab] = useState<'Background' | 'Flower' | 'Furniture' | 'Decoration'>('Background');
@@ -98,7 +108,6 @@ export default function RoomModified() {
   const [isOverlayVisible, setIsOverlayVisible] = useState(false);
   const [isOverlayExpanded, setIsOverlayExpanded] = useState(true);
 
-  // 데코레이션 선택 임시 상태
   const {
     obtainedFlowers,
     obtainedFurniture,
@@ -117,45 +126,38 @@ export default function RoomModified() {
 
   const containerRef = useRef(null);
 
-  // [로그] 모든 상태 변화 추적
-  useEffect(() => {
-    console.log('[RoomModified] obtainedFlowers:', obtainedFlowers);
-    console.log('[RoomModified] obtainedFurniture:', obtainedFurniture);
-    console.log('[RoomModified] obtainedRooms:', obtainedRooms);
-    console.log('[RoomModified] obtainedDecorations:', obtainedDecorations);
-    console.log('[RoomModified] selectedRoom:', selectedRoom);
-    console.log('[RoomModified] selectedDecoration:', selectedDecoration);
-    console.log('[RoomModified] placedFlowers:', placedFlowers);
-    console.log('[RoomModified] placedFurniture:', placedFurniture);
-    console.log('[RoomModified] (local) flowers:', flowers);
-    console.log('[RoomModified] (local) furnitureItems:', furnitureItems);
-    console.log('[RoomModified] tempSelectedRoom:', tempSelectedRoom);
-    console.log('[RoomModified] tempSelectedDecoration:', tempSelectedDecoration);
-  }, [
-    obtainedFlowers, obtainedFurniture, obtainedRooms, obtainedDecorations,
-    selectedRoom, selectedDecoration, placedFlowers, placedFurniture,
-    flowers, furnitureItems, tempSelectedRoom, tempSelectedDecoration
-  ]);
-
   useEffect(() => {
     setFlowers(placedFlowers);
     setFurnitureItems(placedFurniture);
     setTempSelectedRoom(selectedRoom || 'default');
     setTempSelectedDecoration(selectedDecoration ?? null);
-    console.log('[RoomModified] useEffect - placedFlowers:', placedFlowers, 'placedFurniture:', placedFurniture, 'selectedRoom:', selectedRoom, 'selectedDecoration:', selectedDecoration);
+
+    // 📌 mailbox 초기 위치 설정
+    const mailbox = placedFurniture.find(f => f.id.startsWith('mailbox_'));
+    if (mailbox && mailbox.x === 0 && mailbox.y === 0) {
+      const fData = furnitureList.find(f => f.id === mailbox.id);
+      if (fData) {
+        const w = fData.style.width;
+        const h = fData.style.height;
+        const pos = getMailboxPosition(scaledWidth, scaledHeight, w, h);
+        
+        const updatedFurniture = placedFurniture.map(f => 
+          f.id === mailbox.id ? { ...f, x: pos.left, y: pos.top } : f
+        );
+        setPlacedFurniture(updatedFurniture);
+      }
+    }
   }, [placedFlowers, placedFurniture, selectedRoom, selectedDecoration]);
 
   const handleReturn = () => {
-    console.log('[RoomModified] handleReturn()');
     router.push('/Home_page/Homepage');
   };
 
   const handleSelectItem = (itemId: string) => {
-    console.log('[RoomModified] handleSelectItem:', itemId);
     setSelectedItemId(itemId);
   };
 
-  // 터치로 꽃/가구만 배치(Decoration은 배치 X)
+  // 터치로 꽃/가구 배치 (mailbox는 고정 좌표 + 실제 크기 사용)
   const handleTouch = (event: any) => {
     let x = 0, y = 0;
     if (event.nativeEvent.locationX !== undefined && event.nativeEvent.locationY !== undefined) {
@@ -176,38 +178,58 @@ export default function RoomModified() {
     }
     const adjustedX = x - 30;
     const adjustedY = y - 30;
-    console.log('[RoomModified] handleTouch:', { x, y, adjustedX, adjustedY, selectedItemId, selectedTab });
 
     if (selectedItemId) {
       if (selectedTab === 'Flower' && obtainedFlowers.includes(selectedItemId)) {
         const newFlowers = [...flowers, { x: adjustedX, y: adjustedY, id: selectedItemId }];
-        console.log('[RoomModified] Flower placed:', newFlowers);
         setFlowers(newFlowers);
         setPlacedFlowers(newFlowers);
         setSelectedItemId(null);
+
       } else if (selectedTab === 'Furniture' && obtainedFurniture.includes(selectedItemId)) {
-        const newFurniture = [...furnitureItems, { x: adjustedX, y: adjustedY, id: selectedItemId }];
-        console.log('[RoomModified] Furniture placed:', newFurniture);
-        setFurnitureItems(newFurniture);
-        setPlacedFurniture(newFurniture);
+        let placeX = adjustedX;
+        let placeY = adjustedY;
+
+        // 📌 mailbox 계열은 Homepage와 동일한 크기 사용 + 비율 고정 좌표
+        if (selectedItemId.startsWith('mailbox_')) {
+          const fData = furnitureList.find(f => f.id === selectedItemId);
+          const w = fData?.style?.width ?? 120;
+          const h = fData?.style?.height ?? 120;
+          const pos = getMailboxPosition(scaledWidth, scaledHeight, w, h);
+          placeX = pos.left;
+          placeY = pos.top;
+
+          // 기존 mailbox 찾아서 교체, 없으면 추가
+          const existingMailboxIndex = furnitureItems.findIndex(item => item.id.startsWith('mailbox_'));
+          let newFurniture;
+          if (existingMailboxIndex > -1) {
+            newFurniture = [...furnitureItems];
+            newFurniture[existingMailboxIndex] = { x: placeX, y: placeY, id: selectedItemId };
+          } else {
+            newFurniture = [...furnitureItems, { x: placeX, y: placeY, id: selectedItemId }];
+          }
+          setFurnitureItems(newFurniture);
+          setPlacedFurniture(newFurniture);
+
+        } else {
+          const newFurniture = [...furnitureItems, { x: placeX, y: placeY, id: selectedItemId }];
+          setFurnitureItems(newFurniture);
+          setPlacedFurniture(newFurniture);
+        }
         setSelectedItemId(null);
       }
-      // Decoration은 여기서 아무 것도 안함!
     }
   };
 
-  // 저장버튼: 데코도 저장
   const handleSave = async () => {
     try {
-      console.log('[RoomModified] handleSave() START', { tempSelectedRoom, tempSelectedDecoration });
       await setSelectedRoom(tempSelectedRoom);
       await setSelectedDecoration(tempSelectedDecoration);
       setToastMessage('저장 완료!');
       setToastType('success');
       setToastVisible(true);
       setTimeout(() => {
-        console.log('[RoomModified] handleSave() ROUTE TO HOMEPAGE');
-        router.replace('/Home_page/Homepage'); // replace 사용시 뒤로가기도 깔끔
+        router.replace('/Home_page/Homepage');
       }, 2000);
     } catch (error) {
       setToastMessage('저장 실패!');
@@ -224,25 +246,23 @@ export default function RoomModified() {
       {/* === 상단 오버레이 메뉴 === */}
       {isOverlayVisible && (
         <View style={[styles.overlayTop, isOverlayExpanded && styles.overlayExpanded]}>
-          {/* 닫기 버튼(상단 chevron-up) */}
+          {/* 닫기 */}
           <View style={styles.centerExpandButtonContainerTop}>
             <TouchableOpacity
-              onPress={() => {
-                console.log('[RoomModified] Overlay 닫힘');
-                setIsOverlayVisible(false);
-              }}
+              onPress={() => setIsOverlayVisible(false)}
               style={styles.expandIconBox}
             >
               <Ionicons name="chevron-up" size={30} color="#5C7BEE" />
             </TouchableOpacity>
           </View>
+
+          {/* 탭 */}
           <View style={styles.tabContainer}>
             {['Background', 'Flower', 'Furniture', 'Decoration'].map((tab) => (
               <TouchableOpacity
                 key={tab}
                 style={[styles.tab, selectedTab === tab && styles.activeTab]}
                 onPress={() => {
-                  console.log('[RoomModified] Tab 변경:', tab);
                   setSelectedTab(tab as any);
                   setSelectedItemId(null);
                 }}
@@ -253,15 +273,14 @@ export default function RoomModified() {
               </TouchableOpacity>
             ))}
           </View>
+
+          {/* 아이템 리스트 */}
           <ScrollView horizontal contentContainerStyle={styles.itemScrollContainer}>
             {selectedTab === 'Background' &&
               roomList
                 .filter(room => room.id === 'default' || obtainedRooms.includes(room.id))
                 .map(room => (
-                  <TouchableOpacity key={room.id} onPress={() => {
-                    console.log('[RoomModified] Background 선택:', room.id);
-                    setTempSelectedRoom(room.id);
-                  }}>
+                  <TouchableOpacity key={room.id} onPress={() => setTempSelectedRoom(room.id)}>
                     <Image
                       source={room.image}
                       style={[
@@ -271,22 +290,25 @@ export default function RoomModified() {
                     />
                   </TouchableOpacity>
                 ))}
+
             {selectedTab === 'Flower' &&
               flowerList
                 .filter(f => obtainedFlowers.includes(f.id))
                 .map((flower) => (
-                  <TouchableOpacity key={flower.id} onPress={() => handleSelectItem(flower.id)}>
+                  <TouchableOpacity key={flower.id} onPress={() => setSelectedItemId(flower.id)}>
                     <Image source={flower.image} style={styles.itemImage} />
                   </TouchableOpacity>
                 ))}
+
             {selectedTab === 'Furniture' &&
               furnitureList
                 .filter(f => obtainedFurniture.includes(f.id))
                 .map(item => (
-                  <TouchableOpacity key={item.id} onPress={() => handleSelectItem(item.id)}>
+                  <TouchableOpacity key={item.id} onPress={() => setSelectedItemId(item.id)}>
                     <Image source={item.icon} style={styles.itemImage} />
                   </TouchableOpacity>
                 ))}
+
             {selectedTab === 'Decoration' && (
               <>
                 {decorationList
@@ -294,10 +316,7 @@ export default function RoomModified() {
                   .map(deco => (
                     <TouchableOpacity
                       key={deco.id}
-                      onPress={() => {
-                        console.log('[RoomModified] Decoration 선택:', deco.id);
-                        setTempSelectedDecoration(deco.id);
-                      }}
+                      onPress={() => setTempSelectedDecoration(deco.id)}
                       style={[
                         styles.itemImage,
                         tempSelectedDecoration === deco.id && { borderColor: '#5C7BEE', borderWidth: 2 },
@@ -306,12 +325,9 @@ export default function RoomModified() {
                       <Image source={deco.image} style={styles.itemImage} />
                     </TouchableOpacity>
                   ))}
-                {/* "선택안함" 버튼 */}
+                {/* 선택 해제 */}
                 <TouchableOpacity
-                  onPress={() => {
-                    console.log('[RoomModified] Decoration 선택 해제');
-                    setTempSelectedDecoration(null);
-                  }}
+                  onPress={() => setTempSelectedDecoration(null)}
                   style={[
                     styles.itemImage,
                     !tempSelectedDecoration && { borderColor: '#5C7BEE', borderWidth: 2, justifyContent: 'center', alignItems: 'center' }
@@ -322,18 +338,18 @@ export default function RoomModified() {
               </>
             )}
           </ScrollView>
+
           <View style={styles.expandedArea}>
             <Text style={styles.expandedText}></Text>
           </View>
         </View>
       )}
 
-      {/* 상단 중앙에 확장(드롭) 버튼 (닫혀있을 때만 표시) */}
+      {/* 상단 중앙 expand 버튼 (닫혀 있을 때) */}
       {!isOverlayVisible && (
         <View style={styles.centerExpandButtonContainerTop}>
           <TouchableOpacity
             onPress={() => {
-              console.log('[RoomModified] Overlay 열림');
               setIsOverlayVisible(true);
               setIsOverlayExpanded(true);
             }}
@@ -344,7 +360,7 @@ export default function RoomModified() {
         </View>
       )}
 
-      {/* 아래쪽에 기존 이미지 영역(그림 배치 영역) */}
+      {/* 배경/배치 영역 */}
       <ScrollView
         horizontal
         contentContainerStyle={{ width: scaledWidth, height: scaledHeight }}
@@ -356,7 +372,7 @@ export default function RoomModified() {
           style={{ width: scaledWidth, height: scaledHeight }}
           resizeMode="cover"
         >
-          {/* 데코 오버레이 (미리보기: tempSelectedDecoration 사용) */}
+          {/* 데코 오버레이 (미리보기) */}
           {tempSelectedDecoration && (() => {
             const decoData = decorationList.find(d => d.id === tempSelectedDecoration);
             return decoData ? (
@@ -375,11 +391,13 @@ export default function RoomModified() {
               />
             ) : null;
           })()}
+
           <Pressable
             ref={containerRef}
             style={StyleSheet.absoluteFill}
             onPress={handleTouch}
           >
+            {/* 꽃 배치 */}
             {flowers.map((item, index) => {
               const flowerData = flowerList.find(f => f.id === item.id);
               if (!flowerData) return null;
@@ -391,7 +409,6 @@ export default function RoomModified() {
                     updated.splice(index, 1);
                     setFlowers(updated);
                     setPlacedFlowers(updated);
-                    console.log('[RoomModified] Flower 삭제:', updated);
                   }}
                   style={[
                     styles.placedImage,
@@ -407,6 +424,7 @@ export default function RoomModified() {
               );
             })}
 
+            {/* 가구 배치 */}
             {furnitureItems.map((item, index) => {
               const furnitureData = furnitureList.find(f => f.id === item.id);
               if (!furnitureData) return null;
@@ -418,11 +436,10 @@ export default function RoomModified() {
                     updated.splice(index, 1);
                     setFurnitureItems(updated);
                     setPlacedFurniture(updated);
-                    console.log('[RoomModified] Furniture 삭제:', updated);
                   }}
-                  style={[styles.placedFurnitureImage, { left: item.x, top: item.y }]}
+                  style={[styles.placedFurnitureImage, { left: item.x, top: item.y }]} // 래퍼는 크기 없음
                 >
-                  <Image source={furnitureData.icon} style={{ width: 120, height: 120 }} />
+                  <Image source={furnitureData.icon} style={furnitureData.style} resizeMode="contain" />
                 </TouchableOpacity>
               );
             })}
@@ -430,9 +447,9 @@ export default function RoomModified() {
         </ImageBackground>
       </ScrollView>
 
-      {/* 오른쪽 상단 기존 버튼 */}
+      {/* 오른쪽 상단 버튼들 */}
       <View style={styles.topRightContainer}>
-        <TouchableOpacity onPress={handleReturn}>
+        <TouchableOpacity onPress={() => router.push('/Home_page/Homepage')}>
           <Image source={ModifiedButton} style={styles.modifiedImageButton} />
         </TouchableOpacity>
         <TouchableOpacity onPress={handleSave} style={styles.saveButton}>
@@ -447,8 +464,8 @@ export default function RoomModified() {
         onHide={() => setToastVisible(false)}
       />
     </View>
-   );
- }
+  );
+}
 
 const styles = StyleSheet.create({
   fullScreen: { flex: 1, backgroundColor: '#fff' },
@@ -457,10 +474,9 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
   },
+  // ✅ 래퍼에서 고정 크기 제거 (이미지에 실제 style 적용)
   placedFurnitureImage: {
     position: 'absolute',
-    width: 120,
-    height: 120,
   },
   topRightContainer: {
     position: 'absolute',
