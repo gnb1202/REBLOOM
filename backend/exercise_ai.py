@@ -209,6 +209,7 @@ class ExerciseAI:
                     
                 print("AI Gym 초기화 시작...")
                 print(f"사용 중인 설정: kpts={self.exercise_config['kpts']}, up_angle={self.exercise_config['up_angle']}, down_angle={self.exercise_config['down_angle']}")
+                print("성능 최적화: max_det=1 (최대 1명만 탐지)")
                 
                 self.gym = solutions.AIGym(
                     line_width=2,
@@ -216,6 +217,8 @@ class ExerciseAI:
                     kpts=self.exercise_config["kpts"],
                     up_angle=self.exercise_config["up_angle"],
                     down_angle=self.exercise_config["down_angle"],
+                    max_det=1,  # 최대 1명만 탐지하여 성능 향상
+                    fps=60,
                 )
                 print(f"AI Gym 초기화 완료 - 운동 타입: {self.exercise_config['exercise_type']}")
                 return True
@@ -257,13 +260,71 @@ class ExerciseAI:
             self.cap = None
     
     def calculate_accuracy(self, results):
-        """자세 정확도 계산 (임시 구현)"""
-        # 실제로는 더 복잡한 알고리즘 필요
-        # 여기서는 랜덤하게 80-95% 사이의 값 반환
-        import random
-        base_accuracy = 85
-        variation = random.randint(-5, 10)
-        return max(70, min(100, base_accuracy + variation))
+        """운동 정확도 계산 - 실시간 각도 기반"""
+        if results is None:
+            return 85.0  # 시뮬레이션 모드 기본값
+        
+        try:
+            # AI Gym에서 실시간 각도 정보 가져오기
+            current_angle = None
+            target_up_angle = self.exercise_config["up_angle"]
+            target_down_angle = self.exercise_config["down_angle"]
+            
+            # 1. gym 인스턴스에서 현재 각도 확인
+            if hasattr(self.gym, 'angle'):
+                current_angle = self.gym.angle
+                print(f"  >> 현재 각도 (gym.angle): {current_angle}")
+            elif hasattr(self.gym, 'current_angle'):
+                current_angle = self.gym.current_angle
+                print(f"  >> 현재 각도 (gym.current_angle): {current_angle}")
+            elif hasattr(results, 'angle'):
+                current_angle = results.angle
+                print(f"  >> 현재 각도 (results.angle): {current_angle}")
+            
+            # 2. 현재 단계 확인
+            current_stage = None
+            if hasattr(self.gym, 'stage'):
+                current_stage = self.gym.stage
+                print(f"  >> 현재 단계 (gym.stage): {current_stage}")
+            elif hasattr(results, 'stage'):
+                current_stage = results.stage
+                print(f"  >> 현재 단계 (results.stage): {current_stage}")
+            
+            # 3. 정확도 계산
+            if current_angle is not None:
+                # 현재 단계에 따라 목표 각도와 비교
+                if current_stage == 'up' or current_stage == 1:
+                    target_angle = target_up_angle
+                    angle_diff = abs(current_angle - target_angle)
+                    print(f"  >> UP 단계: 목표={target_angle}°, 현재={current_angle}°, 차이={angle_diff}°")
+                elif current_stage == 'down' or current_stage == 0:
+                    target_angle = target_down_angle
+                    angle_diff = abs(current_angle - target_angle)
+                    print(f"  >> DOWN 단계: 목표={target_angle}°, 현재={current_angle}°, 차이={angle_diff}°")
+                else:
+                    # 중간 단계인 경우 전체 범위 내에서 계산
+                    angle_range = abs(target_up_angle - target_down_angle)
+                    if target_down_angle <= current_angle <= target_up_angle or target_up_angle <= current_angle <= target_down_angle:
+                        angle_diff = 0  # 범위 내에 있으면 완벽
+                    else:
+                        angle_diff = min(abs(current_angle - target_up_angle), abs(current_angle - target_down_angle))
+                    print(f"  >> 중간 단계: 범위={target_down_angle}°-{target_up_angle}°, 현재={current_angle}°, 차이={angle_diff}°")
+                
+                # 각도 차이를 정확도로 변환 (0~30도 차이를 70~100% 정확도로 매핑)
+                max_angle_error = 30.0
+                if angle_diff <= max_angle_error:
+                    accuracy = 100 - (angle_diff / max_angle_error) * 30  # 70~100%
+                else:
+                    accuracy = 70  # 최소 70%
+                
+                print(f"  >> 계산된 정확도: {accuracy:.1f}%")
+                return max(70, min(100, accuracy))
+            
+        except Exception as e:
+            print(f"  >> 정확도 계산 오류: {e}")
+        
+        # 기본값 반환
+        return 85.0
     
     def get_ai_stream_video(self, exercise_session):
         """AI 분석이 포함된 비디오 스트리밍 생성기"""
@@ -409,27 +470,40 @@ class ExerciseAI:
                         try:
                             results = self.gym(frame)
                             
-                            # 키포인트 추출 및 가장 큰 박스 감지
-                            largest_box_detected = False
+                            # AI Gym의 모든 관련 속성 값을 매 detection마다 출력
+                            print(f"[Frame {frame_count}] AI Gym 상태 분석:")
                             
+                            # 카운트 관련 속성들
+                            count_attrs = ['count', 'counter', 'gym_count', 'stage_count', 'rep_count']
+                            for attr in count_attrs:
+                                if hasattr(self.gym, attr):
+                                    value = getattr(self.gym, attr)
+                                    print(f"  - gym.{attr}: {value}")
+                            
+                            # 각도 관련 속성들  
+                            angle_attrs = ['angle', 'current_angle', 'stage_angle', 'up_angle', 'down_angle']
+                            for attr in angle_attrs:
+                                if hasattr(self.gym, attr):
+                                    value = getattr(self.gym, attr)
+                                    print(f"  - gym.{attr}: {value}")
+                            
+                            # 상태 관련 속성들
+                            stage_attrs = ['stage', 'current_stage', 'up_stage', 'down_stage']
+                            for attr in stage_attrs:
+                                if hasattr(self.gym, attr):
+                                    value = getattr(self.gym, attr)
+                                    print(f"  - gym.{attr}: {value}")
+                            
+                            # Results 객체에서도 확인
+                            if hasattr(results, 'count'):
+                                print(f"  - results.count: {results.count}")
+                            if hasattr(results, 'angle'):
+                                print(f"  - results.angle: {results.angle}")
+                            if hasattr(results, 'stage'):
+                                print(f"  - results.stage: {results.stage}")
+                            
+                            # 객체가 감지된 경우 운동 분석 수행 (max_det=1로 최대 1개만 탐지됨)
                             if hasattr(results, 'boxes') and results.boxes is not None and len(results.boxes) > 0:
-                                # 가장 큰 박스 찾기
-                                largest_box = None
-                                largest_area = 0
-                                
-                                for box in results.boxes:
-                                    if hasattr(box, 'xyxy') and box.xyxy is not None:
-                                        x1, y1, x2, y2 = box.xyxy[0]
-                                        area = (x2 - x1) * (y2 - y1)
-                                        if area > largest_area:
-                                            largest_area = area
-                                            largest_box = box
-                                
-                                if largest_box is not None:
-                                    largest_box_detected = True
-                            
-                            # 가장 큰 박스가 감지된 경우에만 키포인트 추출 및 운동 분석 수행
-                            if largest_box_detected:
                                 # 운동 카운트 업데이트
                                 if hasattr(results, 'count') and results.count is not None:
                                     with self.lock:
@@ -443,16 +517,13 @@ class ExerciseAI:
                                 elif hasattr(results, 'orig_img'):
                                     frame = results.orig_img
                                 
-                                status_text = "AI Analysis Active - Person Detected"
                             else:
                                 # 박스가 감지되지 않은 경우 키포인트 추출하지 않음
                                 with self.lock:
                                     self.current_data["is_detecting"] = False
-                                status_text = "AI Analysis Active - No Person Detected"
                                 
                         except Exception as e:
                             print(f"AI 분석 오류: {e}")
-                            status_text = "AI Analysis Error"
                     else:
                         # AI Gym이 없으면 시뮬레이션 모드
                         if frame_count % 150 == 0:  # 5초마다
@@ -462,28 +533,9 @@ class ExerciseAI:
                                 self.current_data["accuracy"] = self.calculate_accuracy(None)
                                 self.current_data["is_detecting"] = True
                         
-                        status_text = "Simulation Mode"
-                    
-                    # 운동 정보를 프레임에 표시
-                    cv2.putText(frame, f"Count: {self.current_data['count']}", 
-                               (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-                    cv2.putText(frame, f"Accuracy: {self.current_data['accuracy']}%", 
-                               (10, 70), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-                    cv2.putText(frame, f"Exercise: {self.exercise_config['exercise_type']}", 
-                               (10, 110), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 255), 2)
-                    cv2.putText(frame, status_text, 
-                               (10, 150), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
                 
                 except Exception as e:
                     print(f"프레임 처리 오류: {e}")
-                    cv2.putText(frame, "Frame Processing Error", 
-                               (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
-            else:
-                # 비활성 상태
-                cv2.putText(frame, "Exercise Session Inactive", 
-                           (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (128, 128, 128), 2)
-                cv2.putText(frame, "Camera Active - Click Start Exercise", 
-                           (10, 70), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (128, 128, 128), 2)
             
             # 프레임을 JPEG로 인코딩
             ret, buffer = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 80])

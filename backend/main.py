@@ -25,9 +25,6 @@ app.add_middleware(
 # 전역 운동 AI 인스턴스
 exercise_ai = ExerciseAI()
 # exercise_ai = ExerciseAI()
-# exercise_ai = ExerciseAI()
-# exercise_ai = ExerciseAI()
-# # exercise_ai = ExerciseAI()
 
 # 운동 세션 상태
 class ExerciseSession:
