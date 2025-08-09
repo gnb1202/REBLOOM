@@ -10,7 +10,14 @@ import {
     View,
 } from 'react-native';
 import ImageZoom from 'react-native-image-pan-zoom';
-import { getOtherUserRoomData, getUserProfile } from '../../firebase.config';
+import {
+    checkLikeStatus,
+    getOtherUserRoomData,
+    getUserLikeCount,
+    getUserProfile,
+    toggleLike,
+} from '../../firebase.config';
+import { useAuth } from '../../context/AuthContext';
 
 // 방 배경 이미지들
 import Background1 from '../../assets/images/HomeBackgroundImages/Backgroundlevel1.png';
@@ -77,11 +84,17 @@ interface RoomData {
 export default function VisitedRoomPage() {
   const router = useRouter();
   const { userId, nickname } = useLocalSearchParams();
+  const { user } = useAuth();
+
   const [roomData, setRoomData] = useState<RoomData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [infoCollapsed, setInfoCollapsed] = useState(false);
   const [userCreatedAt, setUserCreatedAt] = useState<any>(null);
+
+  const [likeCount, setLikeCount] = useState(0);
+  const [isLiked, setIsLiked] = useState(false);
+  const [likeLoading, setLikeLoading] = useState(false);
 
   // 가입일 포맷 함수
   const formatJoinDate = (createdAt: any): string => {
@@ -126,7 +139,7 @@ export default function VisitedRoomPage() {
   };
 
   useEffect(() => {
-    const loadRoomData = async () => {
+    const loadData = async () => {
       if (!userId || typeof userId !== 'string') {
         setError('Invalid user ID');
         setLoading(false);
@@ -134,28 +147,59 @@ export default function VisitedRoomPage() {
       }
 
       try {
-        const data = await getOtherUserRoomData(userId);
-        if (data) {
-          setRoomData(data);
+        setLoading(true);
+        
+        // 방 데이터와 사용자 프로필 동시 로드
+        const [room, userProfile, initialLikeCount, initialLikedStatus] = await Promise.all([
+          getOtherUserRoomData(userId),
+          getUserProfile(userId),
+          getUserLikeCount(userId),
+          user ? checkLikeStatus(user.uid, userId) : false,
+        ]);
+
+        if (room) {
+          setRoomData(room);
         } else {
           setError('Room data not found');
         }
-        
-        // 사용자 프로필에서 가입일 조회
-        const userProfile = await getUserProfile(userId);
+
         if (userProfile && userProfile.createdAt) {
           setUserCreatedAt(userProfile.createdAt);
         }
-      } catch (error) {
-        console.error('방 데이터 로딩 실패:', error);
+
+        setLikeCount(initialLikeCount);
+        setIsLiked(initialLikedStatus);
+
+      } catch (err) {
+        console.error('데이터 로딩 실패:', err);
         setError('Failed to load room data');
       } finally {
         setLoading(false);
       }
     };
 
-    loadRoomData();
-  }, [userId]);
+    loadData();
+  }, [userId, user]);
+
+  const handleLike = async () => {
+    if (!user || !userId || typeof userId !== 'string' || likeLoading) {
+      return;
+    }
+
+    setLikeLoading(true);
+    try {
+      const { liked, success } = await toggleLike(user.uid, userId);
+      if (success) {
+        setIsLiked(liked);
+        setLikeCount(prev => liked ? prev + 1 : prev - 1);
+      }
+    } catch (error) {
+      console.error("좋아요 처리 실패:", error);
+    } finally {
+      setLikeLoading(false);
+    }
+  };
+
 
   if (loading) {
     return (
@@ -297,6 +341,15 @@ export default function VisitedRoomPage() {
                 <Text style={styles.statLabel}>Collected Flowers</Text>
                 <Text style={styles.statValue}>{roomData.obtainedFlowers.length}</Text>
               </View>
+              <View style={styles.statItem}>
+                <Text style={styles.statLabel}>Likes</Text>
+                <View style={styles.likeContainer}>
+                  <TouchableOpacity onPress={handleLike} disabled={likeLoading} style={styles.likeButton}>
+                    <Text style={[styles.likeText, isLiked && styles.likedText]}>❤️</Text>
+                  </TouchableOpacity>
+                  <Text style={styles.statValue}>{likeCount}</Text>
+                </View>
+              </View>
             </View>
           </>
         )}
@@ -423,5 +476,20 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: 'bold',
     color: '#5C7BEE',
+  },
+  likeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  likeButton: {
+    marginRight: 8,
+    padding: 4,
+  },
+  likeText: {
+    fontSize: 24,
+    color: '#ccc',
+  },
+  likedText: {
+    color: '#ff6b6b',
   },
 });
