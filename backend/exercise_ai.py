@@ -38,8 +38,8 @@ class ExerciseAI:
         self.predefined_configs = {
             "shoulder_flexion": {
                 "kpts": [7, 5, 11],  # 왼쪽 어깨-팔꿈치-손목
-                "up_angle": 130,
-                "down_angle": 90
+                "up_angle": 120,
+                "down_angle": 50
             },
             "shoulder_abduction_1": {
                 "kpts": [8, 6, 12],  # 오른쪽 어깨-팔꿈치-손목  
@@ -261,70 +261,42 @@ class ExerciseAI:
     
     def calculate_accuracy(self, results):
         """운동 정확도 계산 - 실시간 각도 기반"""
-        if results is None:
-            return 85.0  # 시뮬레이션 모드 기본값
-        
+        if results is None or not results.workout_angle:
+            return 85.0  # 데이터가 없으면 기본값 반환
+
         try:
-            # AI Gym에서 실시간 각도 정보 가져오기
-            current_angle = None
+            # AI Gym 결과에서 실시간 각도와 단계 정보 가져오기 (max_det=1 기준)
+            current_angle = results.workout_angle[0]
+            current_stage = results.workout_stage[0]
             target_up_angle = self.exercise_config["up_angle"]
             target_down_angle = self.exercise_config["down_angle"]
             
-            # 1. gym 인스턴스에서 현재 각도 확인
-            if hasattr(self.gym, 'angle'):
-                current_angle = self.gym.angle
-                print(f"  >> 현재 각도 (gym.angle): {current_angle}")
-            elif hasattr(self.gym, 'current_angle'):
-                current_angle = self.gym.current_angle
-                print(f"  >> 현재 각도 (gym.current_angle): {current_angle}")
-            elif hasattr(results, 'angle'):
-                current_angle = results.angle
-                print(f"  >> 현재 각도 (results.angle): {current_angle}")
+            angle_diff = 0
+            # 현재 단계에 따라 목표 각도와 비교
+            if current_stage == 'up':
+                target_angle = target_up_angle
+                angle_diff = abs(current_angle - target_angle)
+            elif current_stage == 'down':
+                target_angle = target_down_angle
+                angle_diff = abs(current_angle - target_angle)
+            else: # 중간 단계 ('-')
+                # 전체 동작 범위 내에 있는지 확인
+                if not (min(target_down_angle, target_up_angle) <= current_angle <= max(target_down_angle, target_up_angle)):
+                    # 범위를 벗어난 경우, 더 가까운 쪽 경계와의 차이를 계산
+                    angle_diff = min(abs(current_angle - target_up_angle), abs(current_angle - target_down_angle))
+
+            # 각도 차이를 정확도로 변환 (0~30도 차이를 70~100% 정확도로 매핑)
+            max_angle_error = 30.0
+            if angle_diff <= max_angle_error:
+                accuracy = 100 - (angle_diff / max_angle_error) * 30  # 70~100%
+            else:
+                accuracy = 70.0  # 최소 70%
             
-            # 2. 현재 단계 확인
-            current_stage = None
-            if hasattr(self.gym, 'stage'):
-                current_stage = self.gym.stage
-                print(f"  >> 현재 단계 (gym.stage): {current_stage}")
-            elif hasattr(results, 'stage'):
-                current_stage = results.stage
-                print(f"  >> 현재 단계 (results.stage): {current_stage}")
+            return max(70, min(100, accuracy))
             
-            # 3. 정확도 계산
-            if current_angle is not None:
-                # 현재 단계에 따라 목표 각도와 비교
-                if current_stage == 'up' or current_stage == 1:
-                    target_angle = target_up_angle
-                    angle_diff = abs(current_angle - target_angle)
-                    print(f"  >> UP 단계: 목표={target_angle}°, 현재={current_angle}°, 차이={angle_diff}°")
-                elif current_stage == 'down' or current_stage == 0:
-                    target_angle = target_down_angle
-                    angle_diff = abs(current_angle - target_angle)
-                    print(f"  >> DOWN 단계: 목표={target_angle}°, 현재={current_angle}°, 차이={angle_diff}°")
-                else:
-                    # 중간 단계인 경우 전체 범위 내에서 계산
-                    angle_range = abs(target_up_angle - target_down_angle)
-                    if target_down_angle <= current_angle <= target_up_angle or target_up_angle <= current_angle <= target_down_angle:
-                        angle_diff = 0  # 범위 내에 있으면 완벽
-                    else:
-                        angle_diff = min(abs(current_angle - target_up_angle), abs(current_angle - target_down_angle))
-                    print(f"  >> 중간 단계: 범위={target_down_angle}°-{target_up_angle}°, 현재={current_angle}°, 차이={angle_diff}°")
-                
-                # 각도 차이를 정확도로 변환 (0~30도 차이를 70~100% 정확도로 매핑)
-                max_angle_error = 30.0
-                if angle_diff <= max_angle_error:
-                    accuracy = 100 - (angle_diff / max_angle_error) * 30  # 70~100%
-                else:
-                    accuracy = 70  # 최소 70%
-                
-                print(f"  >> 계산된 정확도: {accuracy:.1f}%")
-                return max(70, min(100, accuracy))
-            
-        except Exception as e:
+        except (IndexError, TypeError, AttributeError) as e:
             print(f"  >> 정확도 계산 오류: {e}")
-        
-        # 기본값 반환
-        return 85.0
+            return 85.0 # 오류 발생 시 기본값
     
     def get_ai_stream_video(self, exercise_session):
         """AI 분석이 포함된 비디오 스트리밍 생성기"""
@@ -470,57 +442,19 @@ class ExerciseAI:
                         try:
                             results = self.gym(frame)
                             
-                            # AI Gym의 모든 관련 속성 값을 매 detection마다 출력
-                            print(f"[Frame {frame_count}] AI Gym 상태 분석:")
-                            
-                            # 카운트 관련 속성들
-                            count_attrs = ['count', 'counter', 'gym_count', 'stage_count', 'rep_count']
-                            for attr in count_attrs:
-                                if hasattr(self.gym, attr):
-                                    value = getattr(self.gym, attr)
-                                    print(f"  - gym.{attr}: {value}")
-                            
-                            # 각도 관련 속성들  
-                            angle_attrs = ['angle', 'current_angle', 'stage_angle', 'up_angle', 'down_angle']
-                            for attr in angle_attrs:
-                                if hasattr(self.gym, attr):
-                                    value = getattr(self.gym, attr)
-                                    print(f"  - gym.{attr}: {value}")
-                            
-                            # 상태 관련 속성들
-                            stage_attrs = ['stage', 'current_stage', 'up_stage', 'down_stage']
-                            for attr in stage_attrs:
-                                if hasattr(self.gym, attr):
-                                    value = getattr(self.gym, attr)
-                                    print(f"  - gym.{attr}: {value}")
-                            
-                            # Results 객체에서도 확인
-                            if hasattr(results, 'count'):
-                                print(f"  - results.count: {results.count}")
-                            if hasattr(results, 'angle'):
-                                print(f"  - results.angle: {results.angle}")
-                            if hasattr(results, 'stage'):
-                                print(f"  - results.stage: {results.stage}")
-                            
-                            # 객체가 감지된 경우 운동 분석 수행 (max_det=1로 최대 1개만 탐지됨)
-                            if hasattr(results, 'boxes') and results.boxes is not None and len(results.boxes) > 0:
-                                # 운동 카운트 업데이트
-                                if hasattr(results, 'count') and results.count is not None:
+                            # workout_count 출력
+                            if hasattr(results, 'workout_count') and results.workout_count is not None:
+                                print(f"Frame {frame_count} - workout_count: {results.workout_count}")
+                                if len(results.workout_count) > 0:
+                                    count = results.workout_count[0]
                                     with self.lock:
-                                        self.current_data["count"] = results.count
+                                        self.current_data["count"] = count
                                         self.current_data["accuracy"] = self.calculate_accuracy(results)
                                         self.current_data["is_detecting"] = True
-                                
-                                # 분석된 프레임 사용 (키포인트가 그려진 상태)
-                                if hasattr(results, 'plot'):
-                                    frame = results.plot()
-                                elif hasattr(results, 'orig_img'):
-                                    frame = results.orig_img
-                                
-                            else:
-                                # 박스가 감지되지 않은 경우 키포인트 추출하지 않음
-                                with self.lock:
-                                    self.current_data["is_detecting"] = False
+                            
+                            # 분석된 프레임 사용 (키포인트, 카운트 등이 그려진 상태)
+                            if hasattr(results, 'plot_im'):
+                                frame = results.plot_im
                                 
                         except Exception as e:
                             print(f"AI 분석 오류: {e}")
@@ -545,7 +479,7 @@ class ExerciseAI:
                        b'Content-Type: image/jpeg\r\n\r\n' + 
                        bytearray(frame_bytes) + b'\r\n')
             
-            time.sleep(0.03)  # 30 FPS 제한
+            time.sleep(0.015)  # 30 FPS 제한
 
     def __del__(self):
         """소멸자 - 리소스 정리"""
