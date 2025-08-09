@@ -10,7 +10,7 @@ import {
     View,
 } from 'react-native';
 import ImageZoom from 'react-native-image-pan-zoom';
-import { getOtherUserRoomData } from '../../firebase.config';
+import { getOtherUserRoomData, getUserProfile } from '../../firebase.config';
 
 // 방 배경 이미지들
 import Background1 from '../../assets/images/HomeBackgroundImages/Backgroundlevel1.png';
@@ -71,6 +71,7 @@ interface RoomData {
   flowerBadgeLevel: number;
   surgeryDate: string | null;
   selectedBadge: string | null;
+  createdAt?: any;
 }
 
 export default function VisitedRoomPage() {
@@ -79,16 +80,33 @@ export default function VisitedRoomPage() {
   const [roomData, setRoomData] = useState<RoomData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [headerCollapsed, setHeaderCollapsed] = useState(false);
   const [infoCollapsed, setInfoCollapsed] = useState(false);
+  const [userCreatedAt, setUserCreatedAt] = useState<any>(null);
 
-  // D-Day 계산 함수
-  const calculateDaysSinceSurgery = (surgeryDate: string | null): number => {
-    if (!surgeryDate) return 0;
-    const surgery = new Date(surgeryDate);
-    const today = new Date();
-    const diffTime = today.getTime() - surgery.getTime();
-    return Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
+  // 가입일 포맷 함수
+  const formatJoinDate = (createdAt: any): string => {
+    if (!createdAt) return 'Unknown';
+    
+    let date: Date;
+    if (createdAt.toDate) {
+      // Firestore Timestamp
+      date = createdAt.toDate();
+    } else if (createdAt.seconds) {
+      // Firestore Timestamp in plain object
+      date = new Date(createdAt.seconds * 1000);
+    } else if (typeof createdAt === 'string') {
+      // String date
+      date = new Date(createdAt);
+    } else {
+      // Already a Date object or unknown format
+      date = new Date(createdAt);
+    }
+    
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    
+    return `${year}.${month}.${day}`;
   };
 
   // 뱃지 이모지 매핑 함수
@@ -121,6 +139,12 @@ export default function VisitedRoomPage() {
           setRoomData(data);
         } else {
           setError('Room data not found');
+        }
+        
+        // 사용자 프로필에서 가입일 조회
+        const userProfile = await getUserProfile(userId);
+        if (userProfile && userProfile.createdAt) {
+          setUserCreatedAt(userProfile.createdAt);
         }
       } catch (error) {
         console.error('방 데이터 로딩 실패:', error);
@@ -166,19 +190,13 @@ export default function VisitedRoomPage() {
 
   return (
     <View style={styles.container}>
-      {/* 상단 헤더 */}
-      <View style={[styles.header, headerCollapsed && styles.headerCollapsed]}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Text style={styles.backText}>{'<'}</Text>
-        </TouchableOpacity>
-        {!headerCollapsed && <Text style={styles.title}>{nickname}'s Room</Text>}
-        <TouchableOpacity 
-          onPress={() => setHeaderCollapsed(!headerCollapsed)}
-          style={styles.collapseButton}
-        >
-          <Text style={styles.collapseIcon}>{headerCollapsed ? '▼' : '▲'}</Text>
-        </TouchableOpacity>
-      </View>
+      {/* 뒤로가기 버튼 */}
+      <TouchableOpacity 
+        onPress={() => router.back()} 
+        style={styles.backButtonCircle}
+      >
+        <Text style={styles.backText}>{'←'}</Text>
+      </TouchableOpacity>
 
       {/* 메인 방 영역 */}
       <View style={styles.roomContainer}>
@@ -268,22 +286,18 @@ export default function VisitedRoomPage() {
           <>
             <View style={styles.statsContainer}>
               <View style={styles.statItem}>
-                <Text style={styles.statLabel}>Surgery</Text>
-                <Text style={styles.statValue}>D+{calculateDaysSinceSurgery(roomData.surgeryDate)}</Text>
+                <Text style={styles.statLabel}>Since</Text>
+                <Text style={styles.statValue}>{formatJoinDate(userCreatedAt)}</Text>
               </View>
               <View style={styles.statItem}>
                 <Text style={styles.statLabel}>Badge</Text>
                 <Text style={styles.statValue}>{getBadgeEmoji(roomData.selectedBadge)}</Text>
               </View>
               <View style={styles.statItem}>
-                <Text style={styles.statLabel}>Flowers</Text>
+                <Text style={styles.statLabel}>Collected Flowers</Text>
                 <Text style={styles.statValue}>{roomData.obtainedFlowers.length}</Text>
               </View>
             </View>
-            
-            <Text style={styles.visitInfo}>
-              👀 You're visiting {nickname}'s room
-            </Text>
           </>
         )}
       </View>
@@ -295,47 +309,31 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
-    paddingTop: 20,
   },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    marginBottom: 5,
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-    borderRadius: 12,
-    marginHorizontal: 10,
+  backButtonCircle: {
     position: 'absolute',
-    top: 20,
-    left: 0,
-    right: 0,
-    zIndex: 10,
-  },
-  headerCollapsed: {
-    paddingVertical: 5,
-    marginBottom: 0,
-  },
-  collapseButton: {
-    padding: 8,
-  },
-  collapseIcon: {
-    fontSize: 18,
-    color: '#333',
+    top: 50,
+    left: 20,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 20,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 5,
   },
   backText: {
-    fontSize: 28,
+    fontSize: 24,
     color: '#333',
     fontWeight: 'bold',
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  placeholder: {
-    width: 24,
   },
   roomContainer: {
     flex: 1,
@@ -417,7 +415,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   statLabel: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#666',
     marginBottom: 6,
   },
@@ -425,11 +423,5 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: 'bold',
     color: '#5C7BEE',
-  },
-  visitInfo: {
-    textAlign: 'center',
-    fontSize: 16,
-    color: '#333',
-    fontStyle: 'italic',
   },
 });

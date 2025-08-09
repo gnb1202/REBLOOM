@@ -18,6 +18,7 @@ interface UserProfile {
   id: string;
   nickname: string;
   surgeryDate: string;
+  createdAt?: any;
   gameData: {
     level: number;
     consecutiveExercises: number;
@@ -27,6 +28,7 @@ interface UserProfile {
     nickname?: string;
     selectedBadge?: string;
   };
+  likeCount?: number;
 }
 
 export default function ExplorePage() {
@@ -46,6 +48,7 @@ export default function ExplorePage() {
         id: 'honggildong',
         nickname: '홍길동',
         surgeryDate: new Date(today.getTime() - 120 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        createdAt: new Date(today.getTime() - 150 * 24 * 60 * 60 * 1000),
         gameData: {
           level: 3,
           consecutiveExercises: 15,
@@ -54,13 +57,15 @@ export default function ExplorePage() {
         profile: {
           nickname: '홍길동',
           selectedBadge: 'exercise2'
-        }
+        },
+        likeCount: 24
       },
       {
         uid: 'dummy_002',
         id: 'kimchulsoo',
         nickname: '김철수',
         surgeryDate: new Date(today.getTime() - 45 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        createdAt: new Date(today.getTime() - 60 * 24 * 60 * 60 * 1000),
         gameData: {
           level: 2,
           consecutiveExercises: 7,
@@ -68,13 +73,15 @@ export default function ExplorePage() {
         },
         profile: {
           nickname: '김철수'
-        }
+        },
+        likeCount: 12
       },
       {
         uid: 'dummy_003',
         id: 'leeyounghee',
         nickname: '이영희',
         surgeryDate: new Date(today.getTime() - 230 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        createdAt: new Date(today.getTime() - 250 * 24 * 60 * 60 * 1000),
         gameData: {
           level: 4,
           consecutiveExercises: 25,
@@ -83,13 +90,15 @@ export default function ExplorePage() {
         profile: {
           nickname: '이영희',
           selectedBadge: 'flower3'
-        }
+        },
+        likeCount: 38
       },
       {
         uid: 'dummy_004',
         id: 'parkminsoo',
         nickname: '박민수',
         surgeryDate: new Date(today.getTime() - 15 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        createdAt: new Date(today.getTime() - 20 * 24 * 60 * 60 * 1000),
         gameData: {
           level: 1,
           consecutiveExercises: 3,
@@ -97,13 +106,15 @@ export default function ExplorePage() {
         },
         profile: {
           nickname: '박민수'
-        }
+        },
+        likeCount: 5
       },
       {
         uid: 'dummy_005',
         id: 'choijihye',
         nickname: '최지혜',
         surgeryDate: new Date(today.getTime() - 180 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        createdAt: new Date(today.getTime() - 200 * 24 * 60 * 60 * 1000),
         gameData: {
           level: 3,
           consecutiveExercises: 18,
@@ -112,13 +123,15 @@ export default function ExplorePage() {
         profile: {
           nickname: '최지혜',
           selectedBadge: 'exercise3'
-        }
+        },
+        likeCount: 31
       },
       {
         uid: 'dummy_006',
         id: 'jungsubin',
         nickname: '정수빈',
         surgeryDate: new Date(today.getTime() - 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        createdAt: new Date(today.getTime() - 100 * 24 * 60 * 60 * 1000),
         gameData: {
           level: 2,
           consecutiveExercises: 12,
@@ -127,13 +140,15 @@ export default function ExplorePage() {
         profile: {
           nickname: '정수빈',
           selectedBadge: 'flower1'
-        }
+        },
+        likeCount: 18
       },
       {
         uid: 'dummy_007',
         id: 'kangtaeyoung',
         nickname: '강태영',
         surgeryDate: new Date(today.getTime() - 300 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        createdAt: new Date(today.getTime() - 320 * 24 * 60 * 60 * 1000),
         gameData: {
           level: 5,
           consecutiveExercises: 30,
@@ -142,13 +157,15 @@ export default function ExplorePage() {
         profile: {
           nickname: '강태영',
           selectedBadge: 'exercise4'
-        }
+        },
+        likeCount: 52
       },
       {
         uid: 'dummy_008',
         id: 'yoonseoyeon',
         nickname: '윤서연',
         surgeryDate: new Date(today.getTime() - 60 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        createdAt: new Date(today.getTime() - 75 * 24 * 60 * 60 * 1000),
         gameData: {
           level: 2,
           consecutiveExercises: 5,
@@ -156,13 +173,15 @@ export default function ExplorePage() {
         },
         profile: {
           nickname: '윤서연'
-        }
+        },
+        likeCount: 9
       },
       {
         uid: 'dummy_009',
         id: 'jangminhyuk',
         nickname: '장민혁',
         surgeryDate: new Date(today.getTime() - 150 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        createdAt: new Date(today.getTime() - 170 * 24 * 60 * 60 * 1000),
         gameData: {
           level: 3,
           consecutiveExercises: 20,
@@ -171,13 +190,15 @@ export default function ExplorePage() {
         profile: {
           nickname: '장민혁',
           selectedBadge: 'flower2'
-        }
+        },
+        likeCount: 27
       },
       {
         uid: 'dummy_010',
         id: 'limsoyoung',
         nickname: '임소영',
         surgeryDate: new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        createdAt: new Date(today.getTime() - 40 * 24 * 60 * 60 * 1000),
         gameData: {
           level: 1,
           consecutiveExercises: 8,
@@ -186,19 +207,37 @@ export default function ExplorePage() {
         profile: {
           nickname: '임소영',
           selectedBadge: 'exercise1'
-        }
+        },
+        likeCount: 7
       }
     ];
 
     return dummyProfiles;
   };
 
-  const calculateDaysSinceSurgery = (surgeryDate: string): number => {
-    const surgery = new Date(surgeryDate);
-    const today = new Date();
-    const diffTime = today.getTime() - surgery.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return Math.max(0, diffDays);
+  const formatJoinDate = (createdAt: any): string => {
+    if (!createdAt) return 'Since Unknown';
+    
+    let date: Date;
+    if (createdAt.toDate) {
+      // Firestore Timestamp
+      date = createdAt.toDate();
+    } else if (createdAt.seconds) {
+      // Firestore Timestamp in plain object
+      date = new Date(createdAt.seconds * 1000);
+    } else if (typeof createdAt === 'string') {
+      // String date
+      date = new Date(createdAt);
+    } else {
+      // Already a Date object or unknown format
+      date = new Date(createdAt);
+    }
+    
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    
+    return `Since ${year}.${month}.${day}`;
   };
 
   const loadProfiles = async () => {
@@ -328,9 +367,9 @@ export default function ExplorePage() {
                 {profile?.profile?.nickname ?? profile?.nickname ?? 'Anonymous'}
               </Text>
 
-              {/* 수술 경과일 */}
+              {/* 가입일 */}
               <Text style={styles.daysSince}>
-                D+{calculateDaysSinceSurgery(profile.surgeryDate)}
+                {formatJoinDate(profile.createdAt)}
               </Text>
 
               {/* 연속 운동 횟수 */}
@@ -472,7 +511,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   daysSince: {
-    fontSize: 16,
+    fontSize: 12,
     fontWeight: 'bold',
     color: '#5C7BEE',
     marginBottom: 8,

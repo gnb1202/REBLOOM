@@ -1,3 +1,4 @@
+import { OpenSans_700Bold_Italic, useFonts } from '@expo-google-fonts/open-sans';
 import { useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import {
@@ -43,8 +44,8 @@ import rose from '../../assets/images/flowers/Display/rose_display.png';
 import sunflower from '../../assets/images/flowers/Display/sunflower_display.png';
 import tulip from '../../assets/images/flowers/Display/tulip_display.png';
 
-import sparkleGif from '../../assets/images/decoration/DecorationBackgroundSparkle.gif';
 import deco1Gif from '../../assets/images/decoration/DecorationBackground1.gif';
+import sparkleGif from '../../assets/images/decoration/DecorationBackgroundSparkle.gif';
 
 // 🔽 새로 추가: flowerbed
 import flowerbed from '../../assets/images/flowerbed/flowerbed.png';
@@ -95,6 +96,10 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const [dimensions, setDimensions] = useState(Dimensions.get('window'));
+  
+  const [fontsLoaded] = useFonts({
+    OpenSans_700Bold_Italic,
+  });
 
   const {
     isLoaded,
@@ -144,7 +149,7 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
   }
   const backgroundImage = backgroundMap[roomBgKey];
 
-  if (!isLoaded) {
+  if (!isLoaded || !fontsLoaded) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#5C7BEE" />
@@ -230,12 +235,27 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
           );
         })()}
 
-        {/* 문 클릭 */}
+        {/* 왼쪽 문 클릭 - 탐험 */}
         <TouchableOpacity
           onPress={() => router.push('/Home_page/TravelLoadingPage')}
           style={{
             position: 'absolute',
             left: imageScaledWidth * 0.06,
+            top: imageScaledHeight * 0.49,
+            width: imageScaledWidth * 0.13,
+            height: imageScaledHeight * 0.28,
+            zIndex: 5,
+          }}
+        >
+          <View style={{ flex: 1 }} />
+        </TouchableOpacity>
+
+        {/* 오른쪽 문 클릭 - 운동 */}
+        <TouchableOpacity
+          onPress={() => router.push('/Exercise/ExerciseListPage')}
+          style={{
+            position: 'absolute',
+            left: imageScaledWidth * 0.81,
             top: imageScaledHeight * 0.49,
             width: imageScaledWidth * 0.13,
             height: imageScaledHeight * 0.28,
@@ -292,6 +312,23 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
             />
           );
         })}
+
+        {/* 간판 텍스트 */}
+        <Text
+          style={{
+            position: 'absolute',
+            left: imageScaledWidth * 0.25,
+            top: imageScaledHeight * 0.05,
+            fontSize: 54,
+            fontFamily: 'OpenSans_700Bold_Italic',
+            color: '#4A4A4A',
+            textAlign: 'center',
+            width: imageScaledWidth * 0.5,
+            zIndex: 10,
+          }}
+        >
+          {userProfile?.nickname || userProfile?.profile?.nickname || 'Guest'}'s Flower Shop
+        </Text>
       </ImageZoom>
 
       {/* 메뉴 버튼 */}
