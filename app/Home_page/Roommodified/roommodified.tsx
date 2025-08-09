@@ -41,6 +41,9 @@ import tulip from '../../../assets/images/flowers/Display/tulip_display.png';
 import sparkleGif from '../../../assets/images/decoration/DecorationBackgroundSparkle.gif';
 import deco1Gif from '../../../assets/images/decoration/DecorationBackground1.gif';
 
+// 🔽 화단 이미지 (Homepage와 동일 폴더 구조라면 아래 경로 사용)
+import flowerbed from '../../../assets/images/flowerbed/flowerbed.png';
+
 const flowerList = [
   { id: 'daisy', name: 'daisy', image: daisy },
   { id: 'hydrangea', name: 'hydrangea', image: hydrangea },
@@ -95,6 +98,15 @@ const getMailboxPosition = (imageW: number, imageH: number, boxW: number, boxH: 
   };
 };
 
+// ✅ 화단 위치(Homepage와 동일 비율)
+const getFlowerbedRect = (W: number, H: number) => {
+  const width = W * 0.42;       // 가로 비율
+  const height = H * 0.35;      // 세로 비율
+  const left = W * 0.50;        // x 위치
+  const top = H * 1.009 - height; // 바닥선에 맞추기
+  return { left, top, width, height };
+};
+
 export default function RoomModified() {
   const router = useRouter();
   const [selectedTab, setSelectedTab] = useState<'Background' | 'Flower' | 'Furniture' | 'Decoration'>('Background');
@@ -140,8 +152,8 @@ export default function RoomModified() {
         const w = fData.style.width;
         const h = fData.style.height;
         const pos = getMailboxPosition(scaledWidth, scaledHeight, w, h);
-        
-        const updatedFurniture = placedFurniture.map(f => 
+
+        const updatedFurniture = placedFurniture.map(f =>
           f.id === mailbox.id ? { ...f, x: pos.left, y: pos.top } : f
         );
         setPlacedFurniture(updatedFurniture);
@@ -372,6 +384,25 @@ export default function RoomModified() {
           style={{ width: scaledWidth, height: scaledHeight }}
           resizeMode="cover"
         >
+          {/* 🔽 화단: Homepage와 동일 위치/크기 */}
+          {(() => {
+            const rect = getFlowerbedRect(scaledWidth, scaledHeight);
+            return (
+              <Image
+                source={flowerbed}
+                style={{
+                  position: 'absolute',
+                  left: rect.left,
+                  top: rect.top,
+                  width: rect.width,
+                  height: rect.height,
+                  zIndex: 4, // 배경 위, 데코/아이템 아래 조정 가능
+                }}
+                resizeMode="contain"
+              />
+            );
+          })()}
+
           {/* 데코 오버레이 (미리보기) */}
           {tempSelectedDecoration && (() => {
             const decoData = decorationList.find(d => d.id === tempSelectedDecoration);
@@ -417,7 +448,7 @@ export default function RoomModified() {
                 >
                   <Image
                     source={flowerData.image}
-                    style={{ width: 70, height: 70 }}
+                    style={{ width: 160, height: 160 }}
                     resizeMode="contain"
                   />
                 </TouchableOpacity>

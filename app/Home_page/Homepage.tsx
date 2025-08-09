@@ -46,6 +46,9 @@ import tulip from '../../assets/images/flowers/Display/tulip_display.png';
 import sparkleGif from '../../assets/images/decoration/DecorationBackgroundSparkle.gif';
 import deco1Gif from '../../assets/images/decoration/DecorationBackground1.gif';
 
+// 🔽 새로 추가: flowerbed
+import flowerbed from '../../assets/images/flowerbed/flowerbed.png';
+
 const ORIGINAL_WIDTH = 2300;
 const ORIGINAL_HEIGHT = 1518;
 
@@ -126,7 +129,14 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
     });
   };
 
-  
+  // 🔽 Flowerbed 위치/크기 (요청한 비율 적용)
+  const getFlowerbedRect = (W: number, H: number) => {
+    const width = W * 0.42;      // 가로 비율
+    const height = H * 0.35;     // 세로 비율
+    const left = W * 0.50;       // 오른쪽 쇼윈도 영역
+    const top = H * 1.009 - height; // 바닥선에 맞추기
+    return { left, top, width, height };
+  };
 
   let roomBgKey = 'default';
   if (isLoaded && selectedRoom && backgroundMap[selectedRoom]) {
@@ -192,6 +202,34 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
           ) : null;
         })()}
 
+        {/* 🔽 Flowerbed (클릭 시 /Menu/Flowermanage 이동) */}
+        {(() => {
+          const rect = getFlowerbedRect(imageScaledWidth, imageScaledHeight);
+          return (
+            <TouchableOpacity
+              onPress={() => router.push('/Menu/Flowermanage')}
+              activeOpacity={0.8}
+              style={{
+                position: 'absolute',
+                left: rect.left,
+                top: rect.top,
+                width: rect.width,
+                height: rect.height,
+                zIndex: 6,
+              }}
+            >
+              <Image
+                source={flowerbed}
+                style={{
+                  width: '100%',
+                  height: '100%',
+                }}
+                resizeMode="contain"
+              />
+            </TouchableOpacity>
+          );
+        })()}
+
         {/* 문 클릭 */}
         <TouchableOpacity
           onPress={() => router.push('/Home_page/TravelLoadingPage')}
@@ -212,8 +250,6 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
           const data = furnitureList.find(f => f.id === item?.id);
           if (!data || !item) return null;
 
-          // 📌 모든 가구는 이제 context에 저장된 x, y 좌표를 사용합니다.
-          // mailbox 클릭 시 메뉴로 가는 로직만 유지합니다.
           if (item.id.startsWith('mailbox_')) {
             return (
               <TouchableOpacity
@@ -222,11 +258,7 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
                 style={{ position: 'absolute', left: item.x, top: item.y }}
                 activeOpacity={0.8}
               >
-                <Image
-                  source={data.overlay}
-                  style={data.style}
-                  resizeMode="contain"
-                />
+                <Image source={data.overlay} style={data.style} resizeMode="contain" />
               </TouchableOpacity>
             );
           }
@@ -253,8 +285,8 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
                 position: 'absolute',
                 left: item.x,
                 top: item.y,
-                width: 60,
-                height: 60,
+                width: 150,
+                height: 150,
               }}
               resizeMode="contain"
             />
@@ -262,7 +294,7 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
         })}
       </ImageZoom>
 
-      {/* 메뉴 버튼들 */}
+      {/* 메뉴 버튼 */}
       <View style={styles.buttonContainer}>
         <TouchableOpacity onPress={() => router.push('/Home_page/HelpPage')} style={styles.button}>
           <Text style={styles.buttonText}>?</Text>
@@ -274,7 +306,6 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
           <Text style={styles.buttonText}>Shop</Text>
         </TouchableOpacity>
       </View>
-
 
       {/* 드롭다운 */}
       <Modal
@@ -355,12 +386,10 @@ const styles = StyleSheet.create({
   buttonText: {
     fontWeight: 'bold',
   },
-  rightCircleWrapper: { position: 'absolute', right: 20, top: 100, zIndex: 10 },
   overlayPartial: {
     position: 'absolute', top: 0, left: 0, right: 0, height: '94%',
     backgroundColor: '#FFFFFFEE', zIndex: 100, paddingTop: 60,
   },
-  modifiedImageButton: { width: 40, height: 40 },
   dropdownOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.2)',
