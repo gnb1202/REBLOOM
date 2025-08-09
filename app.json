@@ -46,7 +46,8 @@
       ],
       "expo-video",
       "expo-audio",
-      "expo-camera"
+      "expo-camera",
+      "expo-font"
     ],
     "experiments": {
       "typedRoutes": true

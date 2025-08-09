@@ -47,8 +47,12 @@ import tulip from '../../assets/images/flowers/Display/tulip_display.png';
 import deco1Gif from '../../assets/images/decoration/DecorationBackground1.gif';
 import sparkleGif from '../../assets/images/decoration/DecorationBackgroundSparkle.gif';
 
-// 🔽 새로 추가: flowerbed
+// 🔽 화단
 import flowerbed from '../../assets/images/flowerbed/flowerbed.png';
+
+// 🔽 추가: Exercise 버튼 이미지(요청 경로)
+import ExerciseButton from '../../assets/images/entrybutton/ExerciseButton.png';
+import ExploreButton from '../../assets/images/entrybutton/ExploreButton.png';
 
 const ORIGINAL_WIDTH = 2300;
 const ORIGINAL_HEIGHT = 1518;
@@ -86,6 +90,10 @@ const backgroundMap: { [key: string]: any } = {
   pink_2: Pink2,
 };
 
+// 🔧 화단 클릭(hit) 영역 축소 비율
+const FLOWERBED_HIT_INSET_X = 0.24;
+const FLOWERBED_HIT_INSET_Y = 0.40;
+
 export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean }) {
   const router = useRouter();
   const imageZoomRef = useRef<any>(null);
@@ -96,7 +104,7 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const [dimensions, setDimensions] = useState(Dimensions.get('window'));
-  
+
   const [fontsLoaded] = useFonts({
     OpenSans_700Bold_Italic,
   });
@@ -134,12 +142,12 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
     });
   };
 
-  // 🔽 Flowerbed 위치/크기 (요청한 비율 적용)
+  // 화단 위치/크기 (요청 비율)
   const getFlowerbedRect = (W: number, H: number) => {
-    const width = W * 0.42;      // 가로 비율
-    const height = H * 0.35;     // 세로 비율
-    const left = W * 0.50;       // 오른쪽 쇼윈도 영역
-    const top = H * 1.009 - height; // 바닥선에 맞추기
+    const width = W * 0.42;
+    const height = H * 0.35;
+    const left = W * 0.50;
+    const top = H * 1.009 - height;
     return { left, top, width, height };
   };
 
@@ -166,13 +174,13 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
         cropHeight={dimensions.height}
         imageWidth={imageScaledWidth}
         imageHeight={imageScaledHeight}
-        panToMove={true}
+        panToMove
         pinchToZoom={false}
         doubleClickZoom={false}
         enableCenterFocus={false}
         minScale={minScale}
         maxScale={minScale}
-        useNativeDriver={true}
+        useNativeDriver
         onLayout={() => {
           if (!layoutReady) {
             setLayoutReady(true);
@@ -207,35 +215,69 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
           ) : null;
         })()}
 
-        {/* 🔽 Flowerbed (클릭 시 /Menu/Flowermanage 이동) */}
+        {/* 🔽 화단: 이미지 + 축소된 클릭(hit) 레이어 */}
         {(() => {
           const rect = getFlowerbedRect(imageScaledWidth, imageScaledHeight);
+
+          // 클릭 레이어 크기 계산
+          const hitW = rect.width * (1 - 2 * FLOWERBED_HIT_INSET_X);
+          const hitH = rect.height * (1 - FLOWERBED_HIT_INSET_Y);
+          const hitLeft = rect.left + rect.width * FLOWERBED_HIT_INSET_X;
+          const hitTop = rect.top + rect.height * FLOWERBED_HIT_INSET_Y;
+
           return (
-            <TouchableOpacity
-              onPress={() => router.push('/Menu/Flowermanage')}
-              activeOpacity={0.8}
-              style={{
-                position: 'absolute',
-                left: rect.left,
-                top: rect.top,
-                width: rect.width,
-                height: rect.height,
-                zIndex: 6,
-              }}
-            >
+            <>
+              {/* 화단 이미지 (포인터 비활성화) */}
               <Image
                 source={flowerbed}
                 style={{
-                  width: '100%',
-                  height: '100%',
+                  position: 'absolute',
+                  left: rect.left,
+                  top: rect.top,
+                  width: rect.width,
+                  height: rect.height,
+                  zIndex: 6,
+                  pointerEvents: 'none',
                 }}
                 resizeMode="contain"
               />
-            </TouchableOpacity>
+              {/* 축소된 클릭(hit) 영역 */}
+              <TouchableOpacity
+                onPress={() => router.push('/Menu/Flowermanage')}
+                activeOpacity={0.8}
+                style={{
+                  position: 'absolute',
+                  left: hitLeft,
+                  top: hitTop,
+                  width: hitW,
+                  height: hitH,
+                  zIndex: 7,
+                }}
+              />
+            </>
           );
         })()}
 
-        {/* 왼쪽 문 클릭 - 탐험 */}
+        {/* 🔽 Exercise 버튼 - 오른쪽 문 위에 표시 (눌러서 이동) */}
+        <TouchableOpacity
+          onPress={() => router.push('/Exercise/ExercisePage')}
+          style={{
+            position: 'absolute',
+            left: imageScaledWidth * 0.825, // 오른쪽 문 중앙 근처
+            top: imageScaledHeight * 0.60,
+            width: imageScaledWidth * 0.08,
+            height: imageScaledHeight * 0.08,
+            zIndex: 8,
+          }}
+        >
+          <Image
+            source={ExerciseButton}
+            style={{ width: '100%', height: '100%' }}
+            resizeMode="contain"
+          />
+        </TouchableOpacity>
+
+        {/* 왼쪽 문 클릭 - 탐험 (기존 투명 영역) */}
         <TouchableOpacity
           onPress={() => router.push('/Home_page/TravelLoadingPage')}
           style={{
@@ -250,7 +292,7 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
           <View style={{ flex: 1 }} />
         </TouchableOpacity>
 
-        {/* 오른쪽 문 클릭 - 운동 */}
+        {/* 오른쪽 문 클릭 - 운동 (기존 투명 영역) */}
         <TouchableOpacity
           onPress={() => router.push('/Exercise/ExerciseListPage')}
           style={{
