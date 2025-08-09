@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import {
   Image,
   Modal,
@@ -15,6 +15,17 @@ import mailbox_A_black from '../../assets/images/furnitures/mailbox/mailbox_A_bl
 import mailbox_A_blackwhite from '../../assets/images/furnitures/mailbox/mailbox_A_blackwhite.png';
 import mailbox_A_white from '../../assets/images/furnitures/mailbox/mailbox_A_white.png';
 import signboard from '../../assets/images/furnitures/signboard/Standingboard.png';
+
+// ✅ ID 별칭(오타/케이스/네이밍 차이 보정)
+const ID_ALIAS: Record<string, string> = {
+  Standingboard: 'signboard',
+  standingboard: 'signboard',
+  standing_board: 'signboard',
+  standing_signboard: 'signboard',
+  StandingSignboard: 'signboard',
+};
+
+const normalizeId = (id: string) => ID_ALIAS[id] ?? id;
 
 const furnitureList = [
   {
@@ -43,14 +54,21 @@ const furnitureList = [
   },
 ];
 
-
 export default function FurnitureCollection() {
   const router = useRouter();
   const { obtainedFurniture } = useProgress();
-  const [selectedFurniture, setSelectedFurniture] = useState(null);
+  const [selectedFurniture, setSelectedFurniture] = useState<any>(null);
 
-  const ownedItems = furnitureList.filter((item) =>
-    obtainedFurniture.includes(item.id)
+  // ✅ 보유 ID들을 정규화해서 Set으로 보관
+  const ownedIdSet = useMemo(
+    () => new Set((obtainedFurniture || []).map(normalizeId)),
+    [obtainedFurniture]
+  );
+
+  // ✅ 리스트 아이템도 정규화된 ID로 매칭
+  const ownedItems = useMemo(
+    () => furnitureList.filter((item) => ownedIdSet.has(normalizeId(item.id))),
+    [ownedIdSet]
   );
 
   return (
@@ -66,20 +84,22 @@ export default function FurnitureCollection() {
 
       {/* Display only obtained furniture */}
       <ScrollView contentContainerStyle={styles.grid}>
-        {ownedItems.map((item, idx) => (
-          <TouchableOpacity
-            key={idx}
-            style={styles.item}
-            onPress={() => setSelectedFurniture(item)}
-          >
-            <Image
-              source={item.image}
-              style={styles.image}
-              resizeMode="contain"
-            />
-            <Text style={styles.label}>{item.name}</Text>
-          </TouchableOpacity>
-        ))}
+        {ownedItems.length === 0 ? (
+          <View style={styles.emptyBox}>
+            <Text style={styles.emptyText}>아직 보유한 가구가 없어요.</Text>
+          </View>
+        ) : (
+          ownedItems.map((item) => (
+            <TouchableOpacity
+              key={item.id} // ✅ 안정적인 key
+              style={styles.item}
+              onPress={() => setSelectedFurniture(item)}
+            >
+              <Image source={item.image} style={styles.image} resizeMode="contain" />
+              <Text style={styles.label}>{item.name}</Text>
+            </TouchableOpacity>
+          ))
+        )}
       </ScrollView>
 
       {/* Detail Modal */}
@@ -212,4 +232,6 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   modalCloseText: { color: '#fff', fontWeight: 'bold' },
+  emptyBox: { alignItems: 'center', paddingVertical: 60, width: '100%' },
+  emptyText: { color: '#777' },
 });

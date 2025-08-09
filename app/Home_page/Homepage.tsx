@@ -1,15 +1,14 @@
 import { useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import {
-    ActivityIndicator,
-    Alert,
-    Dimensions,
-    Image,
-    Modal,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Dimensions,
+  Image,
+  Modal,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import ImageZoom from 'react-native-image-pan-zoom';
 
@@ -51,9 +50,9 @@ const ORIGINAL_WIDTH = 2300;
 const ORIGINAL_HEIGHT = 1518;
 
 const furnitureList = [
-  { id: 'mailbox_A_black', overlay: mailbox_A_black, style: { width: 120, height: 120 } },
-  { id: 'mailbox_A_blackwhite', overlay: mailbox_A_blackwhite, style: { width: 120, height: 120 } },
-  { id: 'mailbox_A_white', overlay: mailbox_A_white, style: { width: 120, height: 120 } },
+  { id: 'mailbox_A_black', overlay: mailbox_A_black, style: { width: 150, height: 300 } },
+  { id: 'mailbox_A_blackwhite', overlay: mailbox_A_blackwhite, style: { width: 200, height: 400 } },
+  { id: 'mailbox_A_white', overlay: mailbox_A_white, style: { width: 200, height: 400 } },
   { id: 'signboard', overlay: signboard, style: { width: 160, height: 140 } },
 ];
 
@@ -98,55 +97,15 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
     isLoaded,
     placedFurniture,
     placedFlowers,
-    setPlacedFurniture,
     selectedRoom,
     selectedDecoration,
   } = useProgress();
-
-  console.log('[Homepage] isLoaded:', isLoaded);
-  console.log('[Homepage] selectedRoom:', selectedRoom);
-  console.log('[Homepage] selectedDecoration:', selectedDecoration);
-
-  useEffect(() => {
-    console.log('[Homepage] useEffect selectedRoom:', selectedRoom);
-  }, [selectedRoom]);
-
-  useEffect(() => {
-    if (isLoaded) {
-      console.log('[Homepage] isLoaded:', isLoaded);
-      console.log('[Homepage] selectedRoom:', selectedRoom);
-      console.log('[Homepage] selectedDecoration:', selectedDecoration);
-      console.log('[Homepage] placedFurniture:', placedFurniture);
-      console.log('[Homepage] placedFlowers:', placedFlowers);
-    }
-  }, [isLoaded, selectedRoom, selectedDecoration, placedFurniture, placedFlowers]);
 
   const { userProfile } = useAuth();
 
   const minScale = dimensions.height / ORIGINAL_HEIGHT;
   const imageScaledWidth = ORIGINAL_WIDTH * minScale;
   const imageScaledHeight = ORIGINAL_HEIGHT * minScale;
-
-  // ---- 로그용 useEffect ----
-  useEffect(() => {
-    console.log('isLoaded changed:', isLoaded);
-  }, [isLoaded]);
-  useEffect(() => {
-    console.log('selectedRoom changed:', selectedRoom);
-  }, [selectedRoom]);
-  useEffect(() => {
-    console.log('selectedDecoration changed:', selectedDecoration);
-  }, [selectedDecoration]);
-  useEffect(() => {
-    console.log('placedFurniture changed:', placedFurniture);
-  }, [placedFurniture]);
-  useEffect(() => {
-    console.log('placedFlowers changed:', placedFlowers);
-  }, [placedFlowers]);
-  useEffect(() => {
-    console.log('dimensions changed:', dimensions);
-  }, [dimensions]);
-  // ----
 
   useEffect(() => {
     const subscription = Dimensions.addEventListener('change', ({ window }) => {
@@ -167,23 +126,29 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
     });
   };
 
-  // [핵심] selectedRoom이 isLoaded 후에만 backgroundMap 사용
+  // 우체통 고정 좌표
+  const getMailboxPosition = (
+    imageW: number,
+    imageH: number,
+    boxW: number,
+    boxH: number
+  ) => {
+    const pillarCenterX = imageW * 0.395;
+    const floorLineY = imageH * 0.855;
+    const deltaX = -15;
+    const deltaY = +100;
+
+    return {
+      left: pillarCenterX - boxW / 2 + deltaX,
+      top: floorLineY - boxH + deltaY,
+    };
+  };
+
   let roomBgKey = 'default';
   if (isLoaded && selectedRoom && backgroundMap[selectedRoom]) {
     roomBgKey = selectedRoom;
   }
   const backgroundImage = backgroundMap[roomBgKey];
-
-  // ---- 렌더링 직전 상태 로그 ----
-  console.log('Homepage Render', {
-    isLoaded,
-    selectedRoom,
-    selectedDecoration,
-    roomBgKey,
-    backgroundImage,
-    placedFurniture,
-    placedFlowers,
-  });
 
   if (!isLoaded) {
     return (
@@ -223,7 +188,7 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
           resizeMode="cover"
         />
 
-        {/* 데코레이션 오버레이 */}
+        {/* 데코레이션 */}
         {selectedDecoration && (() => {
           const decoData = decorationList.find(d => d.id === selectedDecoration);
           return decoData ? (
@@ -243,7 +208,7 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
           ) : null;
         })()}
 
-        {/* 문 클릭 → 이동 */}
+        {/* 문 클릭 */}
         <TouchableOpacity
           onPress={() => router.push('/Home_page/TravelLoadingPage')}
           style={{
@@ -258,29 +223,45 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
           <View style={{ flex: 1 }} />
         </TouchableOpacity>
 
-        <TouchableOpacity
-          onPress={() => router.push('/Home_page/ExerciseLoadingPage')}
-          style={{
-            position: 'absolute',
-            left: imageScaledWidth * 0.81,
-            top: imageScaledHeight * 0.49,
-            width: imageScaledWidth * 0.13,
-            height: imageScaledHeight * 0.28,
-            zIndex: 5,
-          }}
-        >
-          <View style={{ flex: 1 }} />
-        </TouchableOpacity>
-
         {/* 가구 */}
         {(placedFurniture || []).map((item, index) => {
           const data = furnitureList.find(f => f.id === item?.id);
           if (!data || !item) return null;
+
+          let left = item.x;
+          let top = item.y;
+
+          if (item.id.startsWith('mailbox_')) {
+            const pos = getMailboxPosition(
+              imageScaledWidth,
+              imageScaledHeight,
+              (data.style as any).width,
+              (data.style as any).height
+            );
+            left = pos.left;
+            top = pos.top;
+
+            return (
+              <TouchableOpacity
+                key={`furniture-${index}`}
+                onPress={() => router.push('/Menu/Menupage')}
+                style={{ position: 'absolute', left, top }}
+                activeOpacity={0.8}
+              >
+                <Image
+                  source={data.overlay}
+                  style={data.style}
+                  resizeMode="contain"
+                />
+              </TouchableOpacity>
+            );
+          }
+
           return (
             <Image
               key={`furniture-${index}`}
               source={data.overlay}
-              style={[{ position: 'absolute', left: item.x, top: item.y }, data.style]}
+              style={[{ position: 'absolute', left, top }, data.style]}
               resizeMode="contain"
             />
           );
@@ -318,7 +299,7 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
         </TouchableOpacity>
       </View>
 
-      {/* 모달 드롭다운 메뉴 */}
+      {/* 드롭다운 */}
       <Modal
         transparent
         animationType="fade"
@@ -366,15 +347,6 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
             visible={showProfileModal}
             onClose={() => setShowProfileModal(false)}
           />
-
-          <View style={styles.bottomButtonContainer}>
-            <TouchableOpacity style={styles.bottomButton} onPress={() => router.push('/Home_page/TravelLoadingPage')}>
-              <Text style={styles.bottomButtonText}>Explore</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.bottomButton} onPress={() => router.push('/Exercise/ExerciseListPage')}>
-              <Text style={styles.bottomButtonText}>Exercise</Text>
-            </TouchableOpacity>
-          </View>
         </>
       )}
     </View>
@@ -396,30 +368,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFFEE', zIndex: 100, paddingTop: 60,
   },
   modifiedImageButton: { width: 40, height: 40 },
-  bottomButtonContainer: {
-    position: 'absolute',
-    bottom: 30,
-    width: '100%',
-    flexDirection: 'row',
-    justifyContent: 'space-evenly',
-    zIndex: 10,
-  },
-  bottomButton: {
-    backgroundColor: '#fff',
-    paddingVertical: 6,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  bottomButtonText: {
-    color: '#5C7BEE',
-    fontSize: 14,
-    fontWeight: 'bold',
-  },
   dropdownOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.2)',

@@ -10,24 +10,14 @@ export default function Mainmenu() {
   // 메뉴 정보 리스트
   const menuList = [
     {
-      title: 'Edit Profile',
-      color: ['#E5F7FF', '#f57c00'],
-      onPress: () => router.push('/Menu/profilemodified'),
-    },
-    {
       title: 'Health Report',
       color: ['#E5F7FF', '#388e3c'],
       onPress: () => router.push('/Menu/Report'),
     },
     {
-      title: 'Flower Management',
-      color: ['#E5F7FF', '#7b1fa2'],
-      onPress: () => router.push('/Menu/Flowermanage'),
-    },
-    {
-      title: 'Collection View',
+      title: 'Quest',
       color: ['#E5F7FF', '#0097a7'],
-      onPress: () => router.push('/Menu/Collection'),
+      onPress: () => router.push('/Mark/Quest/QuestPage'),
     },
   ];
 
