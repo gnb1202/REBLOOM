@@ -5,10 +5,12 @@ import { useExercise } from '../../context/ExerciseContext';
 
 export default function ExerciseSummaryPage() {
   const router = useRouter();
-  const { exerciseQueue, getTotalDuration, clearExerciseQueue } = useExercise();
+  const { exerciseQueue, getTotalDuration, clearExerciseQueue, getActualDuration } = useExercise();
 
   const totalDuration = getTotalDuration();
-  const totalCalories = totalDuration * 5; // 분당 5칼로리 소모로 가정
+  const actualDurationInSeconds = getActualDuration();
+  const actualMinutes = Math.floor(actualDurationInSeconds / 60);
+  const actualSeconds = actualDurationInSeconds % 60;
 
   const handleGetReward = () => {
     // 1. PlantRewardPage로 이동
@@ -52,14 +54,25 @@ export default function ExerciseSummaryPage() {
         </View>
 
         <View style={styles.detailRow}>
-          <Text style={styles.detailLabel}>Total Exercise Time</Text>
+          <Text style={styles.detailLabel}>Expected Time</Text>
           <Text style={styles.detailValue}>{totalDuration}:00 min</Text>
         </View>
 
         <View style={styles.detailRow}>
-          <Text style={styles.detailLabel}>Calories Burned (Est.)</Text>
-          <Text style={styles.detailValue}>{totalCalories} kcal</Text>
+          <Text style={styles.detailLabel}>Actual Exercise Time</Text>
+          <Text style={styles.detailValue}>{actualMinutes}:{actualSeconds.toString().padStart(2, '0')} min</Text>
         </View>
+      </View>
+
+      <Text style={styles.subHeader}>Completed Exercises</Text>
+      <View style={styles.exerciseListBox}>
+        {exerciseQueue.map((exercise, index) => (
+          <View key={exercise.id} style={styles.exerciseItem}>
+            <Text style={styles.exerciseNumber}>{index + 1}.</Text>
+            <Text style={styles.exerciseTitle}>{exercise.title}</Text>
+            <Text style={styles.exerciseDuration}>{exercise.duration}</Text>
+          </View>
+        ))}
       </View>
 
       <TouchableOpacity
@@ -179,5 +192,41 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 18,
     letterSpacing: 0.5,
+  },
+  exerciseListBox: {
+    backgroundColor: '#fff',
+    borderRadius: 18,
+    paddingVertical: 20,
+    paddingHorizontal: 20,
+    width: '92%',
+    marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.07,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  exerciseItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E6ECFF',
+  },
+  exerciseNumber: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#5C7BEE',
+    marginRight: 10,
+    width: 25,
+  },
+  exerciseTitle: {
+    flex: 1,
+    fontSize: 15,
+    color: '#333',
+  },
+  exerciseDuration: {
+    fontSize: 14,
+    color: '#999',
   },
 });

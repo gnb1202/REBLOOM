@@ -41,6 +41,7 @@ export default function ExerciseIntroPage() {
           <Text style={styles.bullet}>🎯 Target: {currentExercise.target}</Text>
           <Text style={styles.bullet}>💪 Difficulty: {currentExercise.difficulty}</Text>
           <Text style={styles.bullet}>⏱️ Duration: {currentExercise.duration}</Text>
+          <Text style={styles.bullet}>🔄 Repetitions: {currentExercise.count} reps</Text>
           <Text style={styles.bulletDescription}>{currentExercise.description}</Text>
         </View>
       </View>
