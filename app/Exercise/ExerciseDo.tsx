@@ -88,7 +88,7 @@ export default function ExerciseDo() {
         return true;
       }
     } catch (error) {
-      console.log('서버 연결 실패:', error);
+      console.log('Server connection failed:', error);
     }
     setIsConnected(false);
     return false;
@@ -127,7 +127,7 @@ export default function ExerciseDo() {
 
   const startExercise = async () => {
     if (!isConnected || !currentExercise) {
-      Alert.alert('오류', '서버에 연결되지 않았거나 운동 정보가 없습니다.');
+      Alert.alert('Error', 'Not connected to the server or no exercise information available.');
       return;
     }
     try {
@@ -138,10 +138,10 @@ export default function ExerciseDo() {
         setIsExerciseActive(true);
         intervalRef.current = setInterval(pollExerciseData, 1000);
       } else {
-        Alert.alert('오류', '운동 시작 실패');
+        Alert.alert('Error', 'Failure to start exercising');
       }
     } catch (error) {
-      Alert.alert('오류', '서버와 통신할 수 없습니다.');
+      Alert.alert('Error', 'Unable to communicate with the server.');
     }
   };
 
@@ -155,10 +155,10 @@ export default function ExerciseDo() {
     try {
       const response = await fetch(`${BACKEND_URL}/exercise/stop`, { method: 'POST' });
       if (!response.ok) {
-        Alert.alert('오류', '운동 종료 실패');
+        Alert.alert('Error', 'Failure to end exercising');
       }
     } catch (error) {
-      Alert.alert('오류', '서버와 통신할 수 없습니다.');
+      Alert.alert('Error', 'Unable to communicate with the server.');
     }
 
     if (proceedToNext) {
@@ -175,12 +175,12 @@ export default function ExerciseDo() {
       const actualDuration = getActualDuration();
       const minutes = Math.floor(actualDuration / 60);
       const seconds = actualDuration % 60;
-      Alert.alert('운동 완료!', `모든 운동을 성공적으로 마쳤습니다.\n총 소요 시간: ${minutes}분 ${seconds}초`);
+      Alert.alert('Exercise Complete!', `All exercises completed successfully.\nTotal time : ${minutes}min ${seconds}sec`);
       router.replace('/Exercise/ExerciseSummaryPage');
     } else {
       // 아직 남은 운동이 있으므로 다음 운동으로 상태를 업데이트하고 소개 페이지로 이동합니다.
       advanceToNextExercise();
-      Alert.alert('성공!', '다음 운동으로 넘어갑니다.');
+      Alert.alert('Success!', 'Moving on to the next exercise');
       router.replace('/Exercise/ExerciseIntroPage');
     }
   };
@@ -216,7 +216,7 @@ export default function ExerciseDo() {
       <View style={styles.topSection}>
         <View style={styles.statusIndicator}>
           <View style={[styles.statusDot, isConnected ? styles.connected : styles.disconnected]} />
-          <Text style={styles.statusText}>{isConnected ? '연결됨' : '연결 안됨'}</Text>
+          <Text style={styles.statusText}>{isConnected ? 'Connected' : 'Not connected'}</Text>
         </View>
         <View style={styles.exerciseTitleContainer}>
             <Text style={styles.exerciseTitleText}>{currentExercise.title}</Text>
@@ -239,26 +239,26 @@ export default function ExerciseDo() {
       <View style={styles.dataOverlay}>
         {isExerciseActive && exerciseData && (
           <>
-            <View style={styles.dataItem}><Text style={styles.dataLabel}>횟수</Text><Text style={styles.dataValue}>{exerciseData.count}</Text></View>
-            <View style={styles.dataItem}><Text style={styles.dataLabel}>정확도</Text><Text style={styles.dataValue}>{exerciseData.accuracy}%</Text></View>
-            <View style={styles.dataItem}><Text style={styles.dataLabel}>현재 운동</Text><Text style={styles.dataValue}>{formatTime(exerciseData.elapsed_time)}</Text></View>
+            <View style={styles.dataItem}><Text style={styles.dataLabel}>Number of times</Text><Text style={styles.dataValue}>{exerciseData.count}</Text></View>
+            <View style={styles.dataItem}><Text style={styles.dataLabel}>Accuracy</Text><Text style={styles.dataValue}>{exerciseData.accuracy}%</Text></View>
+            <View style={styles.dataItem}><Text style={styles.dataLabel}>Present exercise</Text><Text style={styles.dataValue}>{formatTime(exerciseData.elapsed_time)}</Text></View>
           </>
         )}
-        <View style={styles.dataItem}><Text style={styles.dataLabel}>전체 시간</Text><Text style={styles.dataValue}>{formatTime(totalElapsedTime)}</Text></View>
+        <View style={styles.dataItem}><Text style={styles.dataLabel}>Total time</Text><Text style={styles.dataValue}>{formatTime(totalElapsedTime)}</Text></View>
       </View>
 
       <View style={styles.bottomControls}>
         {!isExerciseActive ? (
           <TouchableOpacity style={[styles.controlBtn, styles.startBtn]} onPress={startExercise} disabled={!isConnected}>
-            <Text style={styles.btnText}>운동 시작</Text>
+            <Text style={styles.btnText}>Start</Text>
           </TouchableOpacity>
         ) : (
           <TouchableOpacity style={[styles.controlBtn, styles.stopBtn]} onPress={() => stopExercise(true)}>
-            <Text style={styles.btnText}>운동 종료</Text>
+            <Text style={styles.btnText}>End</Text>
           </TouchableOpacity>
         )}
          <TouchableOpacity style={styles.nextBtn} onPress={handleNextStep}>
-            <Text style={styles.nextBtnText}>Skip →</Text>
+            <Text style={styles.nextBtnText}>Skip</Text>
         </TouchableOpacity>
       </View>
     </View>
