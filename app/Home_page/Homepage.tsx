@@ -12,6 +12,7 @@ import {
   View,
 } from 'react-native';
 import ImageZoom from 'react-native-image-pan-zoom';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import DiaryCheckPage from '../Mark/Check/DiaryCheckPage';
 import QuestPage from '../Mark/Quest/QuestPage';
@@ -104,6 +105,7 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const [dimensions, setDimensions] = useState(Dimensions.get('window'));
+  const [hasNewHealthCheck, setHasNewHealthCheck] = useState(false);
 
   const [fontsLoaded] = useFonts({
     OpenSans_700Bold_Italic,
@@ -128,8 +130,54 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
       setDimensions(window);
       setTimeout(centerImage, 100);
     });
+    checkHealthCheckStatus();
+    checkAutoShowHealthCheck();
     return () => subscription?.remove?.();
   }, []);
+
+  const checkHealthCheckStatus = async () => {
+    try {
+      const { getTodayHealthCheck } = await import('../../firebase.config');
+      const { user } = await import('../../context/AuthContext').then(m => m.useAuth.getState());
+      if (!user) return;
+      
+      const todayCheck = await getTodayHealthCheck(user.uid);
+      if (!todayCheck) {
+        setHasNewHealthCheck(true);
+      }
+    } catch (error) {
+      console.error('Failed to check health status:', error);
+    }
+  };
+
+  const checkAutoShowHealthCheck = async () => {
+    try {
+      const now = new Date();
+      const currentHour = now.getHours();
+      const today = now.toDateString();
+      
+      const lastShownDate = await AsyncStorage.getItem('healthCheckLastShown');
+      const doLaterTime = await AsyncStorage.getItem('healthCheckDoLater');
+      
+      // Check if it's after 06:00 and haven't shown today
+      if (currentHour >= 6 && lastShownDate !== today) {
+        // Check if user didn't select "Do Later" recently (within last 2 hours)
+        if (doLaterTime) {
+          const doLaterDate = new Date(doLaterTime);
+          const hoursSinceDoLater = (now.getTime() - doLaterDate.getTime()) / (1000 * 60 * 60);
+          if (hoursSinceDoLater < 2) return; // Don't auto-show if clicked Do Later within 2 hours
+        }
+        
+        await AsyncStorage.setItem('healthCheckLastShown', today);
+        // Auto-navigate to health check
+        setTimeout(() => {
+          router.push('/Mark/Check/DiaryCheckPage');
+        }, 1500); // Small delay to let homepage load first
+      }
+    } catch (error) {
+      console.error('Failed to check auto-show:', error);
+    }
+  };
 
   const centerImage = () => {
     const offsetX = (imageScaledWidth - dimensions.width) / 2;
@@ -396,6 +444,15 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
   <TouchableOpacity onPress={() => router.push('/Home_page/HelpPage')} style={styles.button}>
     <Text style={styles.buttonText}>?</Text>
   </TouchableOpacity>
+  <TouchableOpacity 
+    onPress={() => router.push('/Mark/Check/DiaryCheckPage')} 
+    style={[styles.button, styles.healthButton]}
+  >
+    <Text style={styles.buttonText}>Health Check</Text>
+    {hasNewHealthCheck && (
+      <View style={styles.notificationDot} />
+    )}
+  </TouchableOpacity>
 </View>
 
 <View style={styles.rightButtonContainer}>
@@ -477,6 +534,8 @@ leftButtonContainer: {
   top: 40,
   left: '17%', // ← px 대신 % 사용
   zIndex: 10,
+  flexDirection: 'row',
+  gap: 10,
 },
 
 // ⬇️ 오른쪽 상단( Room Modify / Shop )
@@ -494,6 +553,20 @@ rightButtonContainer: {
     paddingVertical: 10,
     paddingHorizontal: 14,
     borderRadius: 20,
+  },
+  healthButton: {
+    position: 'relative',
+  },
+  notificationDot: {
+    position: 'absolute',
+    top: -2,
+    right: -2,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#FF4444',
+    borderWidth: 2,
+    borderColor: '#fff',
   },
   buttonText: {
     fontWeight: 'bold',
