@@ -532,7 +532,7 @@ const styles = StyleSheet.create({
 leftButtonContainer: {
   position: 'absolute',
   top: 40,
-  left: '17%', // ← px 대신 % 사용
+  left: '14%', // ← px 대신 % 사용
   zIndex: 10,
   flexDirection: 'row',
   gap: 10,
