@@ -6,12 +6,12 @@ import {
     ScrollView,
     StyleSheet,
     Text,
-    TextInput,
     TouchableOpacity,
     View,
 } from 'react-native';
 import { useAuth } from '../../../context/AuthContext';
 import { getTodayHealthCheck, saveDailyHealthCheck } from '../../../firebase.config';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function DiaryCheckPage() {
   const router = useRouter();
@@ -21,22 +21,39 @@ export default function DiaryCheckPage() {
   const [saving, setSaving] = useState(false);
   const [alreadyChecked, setAlreadyChecked] = useState(false);
   
-  // 건강 체크 데이터
-  const [condition, setCondition] = useState(0);
-  const [painAreas, setPainAreas] = useState<string[]>([]);
-  const [swelling, setSwelling] = useState(0);
-  const [notes, setNotes] = useState('');
+  // 5 new health check data
+  const [bodyCondition, setBodyCondition] = useState(3);
+  const [mood, setMood] = useState(2); // 0-4 for emojis
+  const [armShoulderPain, setArmShoulderPain] = useState(1);
+  const [stiffnessLevel, setStiffnessLevel] = useState(1);
+  const [swellingLevel, setSwellingLevel] = useState(0);
 
-  const painAreaOptions = [
-    'Knee', 'Ankle', 'Thigh', 'Calf', 'Toes', 'Lower back', 'Neck', 'Shoulder', 'Arm', 'Wrist'
-  ];
-
-  const conditionLabels = ['', 'Very Poor', 'Poor', 'Average', 'Good', 'Very Good'];
-  const swellingLabels = ['', 'None', 'Mild', 'Moderate', 'Severe', 'Very Severe'];
+  const moodEmojis = ['😭', '😢', '😐', '😊', '😁'];
+  const moodLabels = ['Very Bad', 'Bad', 'Normal', 'Good', 'Very Good'];
 
   useEffect(() => {
     checkTodayStatus();
+    checkAutoShow();
   }, []);
+
+  const checkAutoShow = async () => {
+    try {
+      const lastShownDate = await AsyncStorage.getItem('healthCheckLastShown');
+      const now = new Date();
+      const currentHour = now.getHours();
+      const today = now.toDateString();
+      
+      // Auto-show at 06:00 or first access after 06:00
+      if (!lastShownDate || lastShownDate !== today) {
+        if (currentHour >= 6) {
+          await AsyncStorage.setItem('healthCheckLastShown', today);
+          // Health check will be shown
+        }
+      }
+    } catch (error) {
+      console.error('Failed to check auto-show status:', error);
+    }
+  };
 
   const checkTodayStatus = async () => {
     if (!user) return;
@@ -45,25 +62,17 @@ export default function DiaryCheckPage() {
       const todayCheck = await getTodayHealthCheck(user.uid);
       if (todayCheck) {
         setAlreadyChecked(true);
-        setCondition(todayCheck.condition);
-        setPainAreas(todayCheck.painAreas || []);
-        setSwelling(todayCheck.swelling);
-        setNotes(todayCheck.notes || '');
+        // Load existing data if available
+        setBodyCondition(todayCheck.bodyCondition || 3);
+        setMood(todayCheck.mood || 2);
+        setArmShoulderPain(todayCheck.armShoulderPain || 1);
+        setStiffnessLevel(todayCheck.stiffnessLevel || 1);
+        setSwellingLevel(todayCheck.swellingLevel || 0);
       }
     } catch (error) {
       console.error('Failed to check today\'s status:', error);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handlePainAreaToggle = (area: string) => {
-    if (alreadyChecked) return;
-    
-    if (painAreas.includes(area)) {
-      setPainAreas(painAreas.filter(a => a !== area));
-    } else {
-      setPainAreas([...painAreas, area]);
     }
   };
 
@@ -73,23 +82,15 @@ export default function DiaryCheckPage() {
       return;
     }
 
-    if (condition === 0) {
-      Alert.alert('Notice', 'Please select today\'s condition.');
-      return;
-    }
-
-    if (swelling === 0) {
-      Alert.alert('Notice', 'Please select swelling level.');
-      return;
-    }
-
     setSaving(true);
     try {
       await saveDailyHealthCheck(user.uid, {
-        condition,
-        painAreas,
-        swelling,
-        notes: notes.trim()
+        bodyCondition,
+        mood,
+        armShoulderPain,
+        stiffnessLevel,
+        swellingLevel,
+        timestamp: new Date().toISOString()
       });
 
       Alert.alert(
@@ -110,153 +111,203 @@ export default function DiaryCheckPage() {
     }
   };
 
+  const handleDoLater = async () => {
+    // Mark as "do later" and return to homepage
+    await AsyncStorage.setItem('healthCheckDoLater', new Date().toISOString());
+    router.push('/Home_page/Homepage');
+  };
+
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#5C7BEE" />
-        <Text style={styles.loadingText}>Loading health check information...</Text>
+        <Text style={styles.loadingText}>Loading health check...</Text>
       </View>
     );
   }
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      <Text style={styles.title}>
-        {alreadyChecked ? 'Today\'s Health Check (Completed)' : 'Today\'s Health Check'}
-      </Text>
+      <View style={styles.header}>
+        <Text style={styles.title}>Daily Health Check</Text>
+        <Text style={styles.subtitle}>
+          {alreadyChecked ? '✅ Completed Today' : 'How are you feeling today?'}
+        </Text>
+      </View>
 
-      {alreadyChecked && (
-        <View style={styles.completedBanner}>
-          <Text style={styles.completedText}>✅ Today's health check already completed!</Text>
-        </View>
-      )}
-
-      {/* 컨디션 선택 */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>How is your condition today?</Text>
-        <View style={styles.ratingContainer}>
-          {[1, 2, 3, 4, 5].map((rating) => (
+      {/* Question 1: Body Condition */}
+      <View style={styles.questionCard}>
+        <Text style={styles.questionTitle}>1. Overall Body Condition</Text>
+        <Text style={styles.questionSubtitle}>Rate from 1 (worst) to 5 (best)</Text>
+        <View style={styles.buttonRowContainer}>
+          {[1, 2, 3, 4, 5].map((value) => (
             <TouchableOpacity
-              key={rating}
+              key={value}
               style={[
                 styles.ratingButton,
-                condition === rating && styles.ratingButtonSelected,
-                alreadyChecked && styles.ratingButtonDisabled
+                bodyCondition === value && styles.ratingButtonSelected,
+                alreadyChecked && styles.buttonDisabled
               ]}
-              onPress={() => !alreadyChecked && setCondition(rating)}
+              onPress={() => !alreadyChecked && setBodyCondition(value)}
               disabled={alreadyChecked}
             >
               <Text style={[
-                styles.ratingText,
-                condition === rating && styles.ratingTextSelected
+                styles.ratingButtonText,
+                bodyCondition === value && styles.ratingButtonTextSelected
               ]}>
-                {rating}
+                {value}
               </Text>
             </TouchableOpacity>
           ))}
         </View>
-        {condition > 0 && (
-          <Text style={styles.ratingLabel}>{conditionLabels[condition]}</Text>
-        )}
       </View>
 
-      {/* 통증 부위 선택 */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Please select areas with pain</Text>
-        <Text style={styles.sectionSubtitle}>Multiple selection allowed (skip if no pain)</Text>
-        <View style={styles.painAreasContainer}>
-          {painAreaOptions.map((area) => (
+      {/* Question 2: Mood */}
+      <View style={styles.questionCard}>
+        <Text style={styles.questionTitle}>2. Today's Mood</Text>
+        <Text style={styles.questionSubtitle}>Select the emoji that matches your mood</Text>
+        <View style={styles.moodContainer}>
+          {moodEmojis.map((emoji, index) => (
             <TouchableOpacity
-              key={area}
+              key={index}
               style={[
-                styles.painAreaButton,
-                painAreas.includes(area) && styles.painAreaButtonSelected,
-                alreadyChecked && styles.painAreaButtonDisabled
+                styles.moodButton,
+                mood === index && styles.moodButtonSelected,
+                alreadyChecked && styles.buttonDisabled
               ]}
-              onPress={() => handlePainAreaToggle(area)}
+              onPress={() => !alreadyChecked && setMood(index)}
               disabled={alreadyChecked}
             >
+              <Text style={styles.moodEmoji}>{emoji}</Text>
               <Text style={[
-                styles.painAreaText,
-                painAreas.includes(area) && styles.painAreaTextSelected
+                styles.moodLabel,
+                mood === index && styles.moodLabelSelected
               ]}>
-                {area}
+                {moodLabels[index]}
               </Text>
             </TouchableOpacity>
           ))}
         </View>
       </View>
 
-      {/* 부종 정도 */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>How is your swelling level?</Text>
-        <View style={styles.ratingContainer}>
-          {[1, 2, 3, 4, 5].map((rating) => (
+      {/* Question 3: Arm/Shoulder Pain */}
+      <View style={styles.questionCard}>
+        <Text style={styles.questionTitle}>3. Arm/Shoulder Pain Level</Text>
+        <Text style={styles.questionSubtitle}>Select pain level from 1 to 5</Text>
+        <View style={styles.buttonRowContainer}>
+          {[1, 2, 3, 4, 5].map((value) => (
             <TouchableOpacity
-              key={rating}
+              key={value}
               style={[
                 styles.ratingButton,
-                swelling === rating && styles.ratingButtonSelected,
-                alreadyChecked && styles.ratingButtonDisabled
+                armShoulderPain === value && styles.ratingButtonSelected,
+                alreadyChecked && styles.buttonDisabled
               ]}
-              onPress={() => !alreadyChecked && setSwelling(rating)}
+              onPress={() => !alreadyChecked && setArmShoulderPain(value)}
               disabled={alreadyChecked}
             >
               <Text style={[
-                styles.ratingText,
-                swelling === rating && styles.ratingTextSelected
+                styles.ratingButtonText,
+                armShoulderPain === value && styles.ratingButtonTextSelected
               ]}>
-                {rating}
+                {value}
               </Text>
             </TouchableOpacity>
           ))}
         </View>
-        {swelling > 0 && (
-          <Text style={styles.ratingLabel}>{swellingLabels[swelling]}</Text>
-        )}
       </View>
 
-      {/* 추가 메모 */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Additional Notes (Optional)</Text>
-        <TextInput
-          style={[
-            styles.notesInput,
-            alreadyChecked && styles.notesInputDisabled
-          ]}
-          multiline
-          numberOfLines={3}
-          placeholder="Feel free to record your condition today..."
-          value={notes}
-          onChangeText={setNotes}
-          editable={!alreadyChecked}
-        />
+      {/* Question 4: Stiffness Level */}
+      <View style={styles.questionCard}>
+        <Text style={styles.questionTitle}>4. Stiffness Level</Text>
+        <Text style={styles.questionSubtitle}>Select stiffness level from 1 to 5</Text>
+        <View style={styles.buttonRowContainer}>
+          {[1, 2, 3, 4, 5].map((value) => (
+            <TouchableOpacity
+              key={value}
+              style={[
+                styles.ratingButton,
+                stiffnessLevel === value && styles.ratingButtonSelected,
+                alreadyChecked && styles.buttonDisabled
+              ]}
+              onPress={() => !alreadyChecked && setStiffnessLevel(value)}
+              disabled={alreadyChecked}
+            >
+              <Text style={[
+                styles.ratingButtonText,
+                stiffnessLevel === value && styles.ratingButtonTextSelected
+              ]}>
+                {value}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
       </View>
 
-      {/* 버튼들 */}
+      {/* Question 5: Swelling Level */}
+      <View style={styles.questionCard}>
+        <Text style={styles.questionTitle}>5. Swelling Level</Text>
+        <Text style={styles.questionSubtitle}>Select your swelling condition</Text>
+        <View style={styles.swellingContainer}>
+          {[
+            { label: 'None', value: 0 },
+            { label: 'Mild', value: 1 },
+            { label: 'Severe', value: 2 }
+          ].map((item) => (
+            <TouchableOpacity
+              key={item.value}
+              style={[
+                styles.swellingButton,
+                swellingLevel === item.value && styles.swellingButtonSelected,
+                alreadyChecked && styles.buttonDisabled
+              ]}
+              onPress={() => !alreadyChecked && setSwellingLevel(item.value)}
+              disabled={alreadyChecked}
+            >
+              <Text style={[
+                styles.swellingButtonText,
+                swellingLevel === item.value && styles.swellingButtonTextSelected
+              ]}>
+                {item.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </View>
+
+      {/* Action Buttons */}
       <View style={styles.buttonContainer}>
         {!alreadyChecked && (
-          <TouchableOpacity
-            style={[styles.saveButton, saving && styles.saveButtonDisabled]}
-            onPress={handleSave}
-            disabled={saving}
-          >
-            {saving ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <Text style={styles.saveButtonText}>Complete Health Check</Text>
-            )}
-          </TouchableOpacity>
+          <>
+            <TouchableOpacity
+              style={[styles.saveButton, saving && styles.saveButtonDisabled]}
+              onPress={handleSave}
+              disabled={saving}
+            >
+              {saving ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={styles.saveButtonText}>Complete Check</Text>
+              )}
+            </TouchableOpacity>
+            
+            <TouchableOpacity
+              style={styles.laterButton}
+              onPress={handleDoLater}
+            >
+              <Text style={styles.laterButtonText}>Do Later</Text>
+            </TouchableOpacity>
+          </>
         )}
         
-        <TouchableOpacity
-          style={styles.closeButton}
-          onPress={() => router.push('/Home_page/Homepage')}
-        >
-          <Text style={styles.closeButtonText}>
-            {alreadyChecked ? 'Go Back' : 'Do Later'}
-          </Text>
-        </TouchableOpacity>
+        {alreadyChecked && (
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => router.push('/Home_page/Homepage')}
+          >
+            <Text style={styles.backButtonText}>Back to Home</Text>
+          </TouchableOpacity>
+        )}
       </View>
     </ScrollView>
   );
@@ -265,172 +316,224 @@ export default function DiaryCheckPage() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
-    padding: 20,
+    backgroundColor: '#F5F7FA',
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f8f9fa',
+    backgroundColor: '#F5F7FA',
   },
   loadingText: {
     marginTop: 16,
     fontSize: 16,
     color: '#666',
   },
+  header: {
+    backgroundColor: '#5C7BEE',
+    paddingTop: 60,
+    paddingBottom: 30,
+    paddingHorizontal: 20,
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
+    marginBottom: 20,
+  },
   title: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: 'bold',
+    color: '#fff',
     textAlign: 'center',
-    color: '#333',
-    marginBottom: 20,
-    marginTop: 10,
+    marginBottom: 8,
   },
-  completedBanner: {
-    backgroundColor: '#d4edda',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 20,
-    borderLeftWidth: 4,
-    borderLeftColor: '#28a745',
-  },
-  completedText: {
-    color: '#155724',
-    fontWeight: '600',
-    textAlign: 'center',
+  subtitle: {
     fontSize: 16,
+    color: '#E8ECFF',
+    textAlign: 'center',
   },
-  section: {
+  questionCard: {
     backgroundColor: '#fff',
-    borderRadius: 12,
+    borderRadius: 16,
     padding: 20,
+    marginHorizontal: 20,
     marginBottom: 16,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
       height: 2,
     },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
     elevation: 3,
   },
-  sectionTitle: {
+  questionTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 12,
+    fontWeight: '600',
+    color: '#2C3E50',
+    marginBottom: 6,
   },
-  sectionSubtitle: {
+  questionSubtitle: {
     fontSize: 14,
-    color: '#666',
-    marginBottom: 16,
+    color: '#7F8C8D',
+    marginBottom: 20,
   },
-  ratingContainer: {
+  sliderContainer: {
+    alignItems: 'center',
+  },
+  slider: {
+    width: '100%',
+    height: 40,
+  },
+  sliderValue: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: '#5C7BEE',
+    marginBottom: 10,
+  },
+  painHigh: {
+    color: '#FF6B6B',
+  },
+  sliderLabels: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    paddingHorizontal: 10,
+  },
+  sliderLabel: {
+    fontSize: 12,
+    color: '#95A5A6',
+  },
+  moodContainer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    marginBottom: 12,
+    marginTop: 10,
+  },
+  moodButton: {
+    alignItems: 'center',
+    padding: 10,
+    borderRadius: 12,
+    minWidth: 60,
+  },
+  moodButtonSelected: {
+    backgroundColor: '#E8ECFF',
+  },
+  buttonDisabled: {
+    opacity: 0.6,
+  },
+  moodEmoji: {
+    fontSize: 32,
+    marginBottom: 4,
+  },
+  moodLabel: {
+    fontSize: 11,
+    color: '#7F8C8D',
+    textAlign: 'center',
+  },
+  moodLabelSelected: {
+    color: '#5C7BEE',
+    fontWeight: '600',
+  },
+  buttonRowContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 10,
   },
   ratingButton: {
     width: 50,
     height: 50,
     borderRadius: 25,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: '#F0F0F0',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: '#ddd',
+    borderColor: 'transparent',
   },
   ratingButtonSelected: {
-    backgroundColor: '#5C7BEE',
+    backgroundColor: '#E8ECFF',
     borderColor: '#5C7BEE',
   },
-  ratingButtonDisabled: {
-    opacity: 0.6,
-  },
-  ratingText: {
+  ratingButtonText: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#666',
-  },
-  ratingTextSelected: {
-    color: '#fff',
-  },
-  ratingLabel: {
-    textAlign: 'center',
-    fontSize: 16,
-    color: '#5C7BEE',
     fontWeight: '600',
+    color: '#7F8C8D',
   },
-  painAreasContainer: {
+  ratingButtonTextSelected: {
+    color: '#5C7BEE',
+  },
+  swellingContainer: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
+    justifyContent: 'space-between',
+    marginTop: 10,
+    gap: 10,
   },
-  painAreaButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: '#f0f0f0',
-    borderWidth: 1,
-    borderColor: '#ddd',
-    marginBottom: 8,
+  swellingButton: {
+    flex: 1,
+    paddingVertical: 16,
+    borderRadius: 12,
+    backgroundColor: '#F0F0F0',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: 'transparent',
   },
-  painAreaButtonSelected: {
-    backgroundColor: '#5C7BEE',
+  swellingButtonSelected: {
+    backgroundColor: '#E8ECFF',
     borderColor: '#5C7BEE',
   },
-  painAreaButtonDisabled: {
-    opacity: 0.6,
-  },
-  painAreaText: {
-    fontSize: 14,
-    color: '#333',
-    fontWeight: '500',
-  },
-  painAreaTextSelected: {
-    color: '#fff',
-  },
-  notesInput: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    padding: 12,
+  swellingButtonText: {
     fontSize: 16,
-    backgroundColor: '#fff',
-    textAlignVertical: 'top',
-    minHeight: 80,
+    fontWeight: '600',
+    color: '#7F8C8D',
   },
-  notesInputDisabled: {
-    backgroundColor: '#f5f5f5',
-    color: '#666',
+  swellingButtonTextSelected: {
+    color: '#5C7BEE',
   },
   buttonContainer: {
-    marginTop: 20,
-    marginBottom: 40,
+    paddingHorizontal: 20,
+    paddingVertical: 30,
   },
   saveButton: {
     backgroundColor: '#5C7BEE',
-    borderRadius: 12,
-    paddingVertical: 16,
+    borderRadius: 16,
+    paddingVertical: 18,
     alignItems: 'center',
     marginBottom: 12,
+    shadowColor: '#5C7BEE',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 5,
   },
   saveButtonDisabled: {
-    backgroundColor: '#ccc',
+    backgroundColor: '#BDC3C7',
+    shadowOpacity: 0,
   },
   saveButtonText: {
     color: '#fff',
     fontSize: 18,
     fontWeight: 'bold',
   },
-  closeButton: {
-    backgroundColor: '#6c757d',
-    borderRadius: 12,
-    paddingVertical: 16,
+  laterButton: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    paddingVertical: 18,
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#E0E0E0',
+  },
+  laterButtonText: {
+    color: '#7F8C8D',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  backButton: {
+    backgroundColor: '#34495E',
+    borderRadius: 16,
+    paddingVertical: 18,
     alignItems: 'center',
   },
-  closeButtonText: {
+  backButtonText: {
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
