@@ -25,8 +25,8 @@ export default function ExerciseFeedbackPage() {
     // TODO: 여러 운동 기록을 한 번에 저장하는 로직 (현재는 단순화)
     console.log('Exercise session finished with feedback:', labels[selected]);
 
-    // 운동 큐를 비우고 홈으로 이동
-    clearExerciseQueue();
+    // 운동 큐를 비우지 않고 홈으로 이동
+    // (다음 운동 세션 시작 시 자동으로 새로운 큐로 교체됨)
     router.replace('/Home_page/Homepage');
   };
 

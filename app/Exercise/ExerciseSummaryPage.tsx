@@ -13,12 +13,12 @@ export default function ExerciseSummaryPage() {
   const actualSeconds = actualDurationInSeconds % 60;
 
   const handleGetReward = () => {
-    // 1. PlantRewardPage로 이동
-    router.push('/Exercise/PlantRewardPage');
+    // 1. PlantRewardPage로 이동 (replace 사용하여 스택 누적 방지)
+    router.replace('/Exercise/PlantRewardPage');
 
     // 2. 1.5초 후 CoinRewardPage로 이동
     setTimeout(() => {
-      router.push('/Exercise/CoinRewardPage');
+      router.replace('/Exercise/CoinRewardPage');
     }, 1500);
 
     // 3. 3초 후 ExerciseFeedbackPage로 이동 (1.5 + 1.5)
