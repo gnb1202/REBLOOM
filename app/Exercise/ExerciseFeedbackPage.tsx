@@ -3,31 +3,81 @@ import { ActivityIndicator, Alert, StyleSheet, Text, TouchableOpacity, View, Pla
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../context/AuthContext';
 import { useExercise } from '../../context/ExerciseContext';
+import { saveExerciseSession } from '../../firebase.config';
 
 export default function ExerciseFeedbackPage() {
   const router = useRouter();
   const [selected, setSelected] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
-  const { exerciseQueue, clearExerciseQueue, getTotalDuration } = useExercise();
+  const { 
+    exerciseQueue, 
+    clearExerciseQueue, 
+    getTotalDuration, 
+    getActualDuration,
+    exerciseStartTime,
+    exerciseEndTime
+  } = useExercise();
   const { user } = useAuth();
 
   const emojis = ['😃', '😐', '😤'];
   const labels = ['Easy', 'Normal', 'Hard'];
 
-  const handleFinish = () => {
+  const handleFinish = async () => {
     if (selected === null) {
       Alert.alert('Selection Required', 'Please select your feedback.');
       return;
     }
 
+    if (!user) {
+      Alert.alert('Error', 'User not authenticated');
+      return;
+    }
+
     setSaving(true);
 
-    // TODO: 여러 운동 기록을 한 번에 저장하는 로직 (현재는 단순화)
-    console.log('Exercise session finished with feedback:', labels[selected]);
+    try {
+      // 피드백을 1-5 점수로 변환 (Easy=5, Normal=3, Hard=1)
+      const feedbackRating = selected === 0 ? 5 : selected === 1 ? 3 : 1;
+      
+      // 운동 데이터 준비
+      const sessionData = {
+        exercises: exerciseQueue.map(exercise => ({
+          id: exercise.id,
+          title: exercise.title,
+          description: exercise.description,
+          duration: exercise.duration,
+          difficulty: exercise.difficulty,
+          target: exercise.target,
+          count: exercise.count,
+        })),
+        totalDuration: getActualDuration(), // 실제 소요 시간 (초)
+        startTime: exerciseStartTime,
+        endTime: exerciseEndTime,
+        overallFeedback: labels[selected],
+        feedbackRating: feedbackRating,
+      };
 
-    // 운동 큐를 비우지 않고 홈으로 이동
-    // (다음 운동 세션 시작 시 자동으로 새로운 큐로 교체됨)
-    router.replace('/Home_page/Homepage');
+      console.log('Saving exercise session data:', sessionData);
+      
+      // Firebase에 데이터 저장
+      const sessionId = await saveExerciseSession(user.uid, sessionData);
+      console.log('Exercise session saved with ID:', sessionId);
+
+      // 운동 큐를 비우지 않고 홈으로 이동
+      // (다음 운동 세션 시작 시 자동으로 새로운 큐로 교체됨)
+      router.replace('/Home_page/Homepage');
+      
+    } catch (error) {
+      console.error('Failed to save exercise session:', error);
+      Alert.alert(
+        'Save Failed', 
+        'Failed to save your exercise data. Would you like to continue anyway?',
+        [
+          { text: 'Cancel', style: 'cancel', onPress: () => setSaving(false) },
+          { text: 'Continue', onPress: () => router.replace('/Home_page/Homepage') }
+        ]
+      );
+    }
   };
 
   return (

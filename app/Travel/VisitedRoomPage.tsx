@@ -242,6 +242,23 @@ export default function VisitedRoomPage() {
         <Text style={styles.backText}>{'←'}</Text>
       </TouchableOpacity>
 
+      {/* 닉네임's Flower Shop 타이틀 */}
+      <View style={styles.titleContainer}>
+        <Text style={styles.titleText}>{nickname}'s Flower Shop</Text>
+        <View style={styles.likeSection}>
+          <TouchableOpacity 
+            onPress={handleLike} 
+            disabled={likeLoading}
+            style={styles.heartButton}
+          >
+            <Text style={[styles.heartIcon, isLiked && styles.heartIconLiked]}>
+              {isLiked ? '❤️' : '🤍'}
+            </Text>
+          </TouchableOpacity>
+          <Text style={styles.likeCountText}>{likeCount}</Text>
+        </View>
+      </View>
+
       {/* 메인 방 영역 */}
       <View style={styles.roomContainer}>
         <ImageZoom
@@ -340,15 +357,6 @@ export default function VisitedRoomPage() {
               <View style={styles.statItem}>
                 <Text style={styles.statLabel}>Collected Flowers</Text>
                 <Text style={styles.statValue}>{roomData.obtainedFlowers.length}</Text>
-              </View>
-              <View style={styles.statItem}>
-                <Text style={styles.statLabel}>Likes</Text>
-                <View style={styles.likeContainer}>
-                  <TouchableOpacity onPress={handleLike} disabled={likeLoading} style={styles.likeButton}>
-                    <Text style={[styles.likeText, isLiked && styles.likedText]}>❤️</Text>
-                  </TouchableOpacity>
-                  <Text style={styles.statValue}>{likeCount}</Text>
-                </View>
               </View>
             </View>
           </>
@@ -491,5 +499,59 @@ const styles = StyleSheet.create({
   },
   likedText: {
     color: '#ff6b6b',
+  },
+  collapseIcon: {
+    fontSize: 14,
+    color: '#666',
+  },
+  titleContainer: {
+    position: 'absolute',
+    top: 50,
+    left: 70,
+    right: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    zIndex: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 16,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 3,
+  },
+  titleText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    flex: 1,
+  },
+  likeSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginLeft: 10,
+  },
+  heartButton: {
+    padding: 4,
+  },
+  heartIcon: {
+    fontSize: 20,
+  },
+  heartIconLiked: {
+    textShadowColor: 'rgba(255, 107, 107, 0.5)',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 4,
+  },
+  likeCountText: {
+    fontSize: 14,
+    color: '#666',
+    marginLeft: 4,
+    fontWeight: '600',
   },
 });
