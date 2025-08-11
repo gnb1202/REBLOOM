@@ -12,6 +12,7 @@ import {
   Platform,
   ScrollView,
 } from 'react-native';
+import { useRouter } from 'expo-router';
 
 import HomeScreenshot from '../../assets/images/HomeBackgroundImages/BasicHomepage.png';
 import flowerbed from '../../assets/images/flowerbed/flowerbed.png';
@@ -300,6 +301,7 @@ const getFlowerbedRect = (W: number, H: number) => {
 
 export default function HelpPage() {
   const [canvasSize, setCanvasSize] = useState({ w: 0, h: 0 });
+  const router = useRouter();
 
   return (
     <View style={styles.container}>
@@ -371,14 +373,14 @@ export default function HelpPage() {
             style={{ ...RIGHT_DOOR_RECT, position: 'absolute', zIndex: 8 } as any}
           />
 
-          {/* Flowerbed */}
+          {/* Flowerbed - 초록색 */}
           {canvasSize.w > 0 && canvasSize.h > 0 && (() => {
             const rect = getFlowerbedRect(canvasSize.w, canvasSize.h);
             return (
               <HoverableImage
                 source={flowerbed}
                 tooltip="Flowerbed: Check grow flowers."
-                glowColor="#A3E635" // 초록색 계열
+                glowColor="#A3E635"
                 hoverArea={0.4}
                 tooltipPosition={{ bottom: '76%', left: 250, maxWidth: 200 }}
                 style={{
@@ -392,12 +394,12 @@ export default function HelpPage() {
             );
           })()}
 
-          {/* Mailbox */}
+          {/* Mailbox - 초록색 */}
           {canvasSize.w > 0 && canvasSize.h > 0 && (
             <HoverableImage
               source={mailbox_A_black}
               tooltip="Mailbox: Check for Quest and Health Report"
-              glowColor="#A3E635" // 초록색 계열
+              glowColor="#A3E635"
               hoverArea={0.7}
               tooltipPosition={{ bottom: '85%', left: 20, maxWidth: 250 }}
               style={{
@@ -411,6 +413,14 @@ export default function HelpPage() {
           )}
         </View>
       </ScrollView>
+
+      {/* 돌아가기 버튼 */}
+      <Pressable
+        onPress={() => router.push('/Home_page/Homepage')}
+        style={styles.backButton}
+      >
+        <Text style={styles.backButtonText}>Back</Text>
+      </Pressable>
     </View>
   );
 }
@@ -488,4 +498,24 @@ const styles = StyleSheet.create({
     borderRadius: 2,
   },
   tooltipArrowInline: { left: 16 },
+
+  backButton: {
+    position: 'absolute',
+    bottom: 30,
+    alignSelf: 'center',
+    backgroundColor: '#F8BBD0',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 25,
+    shadowColor: '#000',
+    shadowOpacity: 0.2,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  backButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
 });
