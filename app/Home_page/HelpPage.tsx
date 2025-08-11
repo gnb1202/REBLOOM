@@ -309,7 +309,7 @@ export default function HelpPage() {
           label="?"
           desc="Help"
           glowColor="#00BFFF"
-          containerStyle={{ width: 40, height: 40, borderRadius: 22, backgroundColor: '#FFFFFF' }}
+          containerStyle={{ width: 50, height: 40, borderRadius: 22, backgroundColor: '#FFFFFF' }}
           style={{ marginLeft: 12, marginTop: 6 }}
         />
         <GlowHotspot
@@ -335,7 +335,7 @@ export default function HelpPage() {
           label="Shop"
           desc="Go to the shop"
           glowColor="#FF4D6D"
-          containerStyle={{ paddingVertical: 10, paddingHorizontal: 14, borderRadius: 20, backgroundColor: '#FFFFFF' }}
+          containerStyle={{ width:80, paddingVertical: 10, paddingHorizontal: 14, borderRadius: 20, backgroundColor: '#FFFFFF' }}
         />
       </View>
 
@@ -378,7 +378,7 @@ export default function HelpPage() {
               <HoverableImage
                 source={flowerbed}
                 tooltip="Flowerbed: Check grow flowers."
-                glowColor="#A3E635"
+                glowColor="#A3E635" // 초록색 계열
                 hoverArea={0.4}
                 tooltipPosition={{ bottom: '76%', left: 250, maxWidth: 200 }}
                 style={{
@@ -397,7 +397,7 @@ export default function HelpPage() {
             <HoverableImage
               source={mailbox_A_black}
               tooltip="Mailbox: Check for Quest and Health Report"
-              glowColor="#00E0FF"
+              glowColor="#A3E635" // 초록색 계열
               hoverArea={0.7}
               tooltipPosition={{ bottom: '85%', left: 20, maxWidth: 250 }}
               style={{
@@ -429,7 +429,7 @@ const styles = StyleSheet.create({
   topRightRow: {
     position: 'absolute',
     top: 50,
-    right: '17.5%',
+    right: '17%',
     zIndex: 20,
     flexDirection: 'row',
     gap: 10,
