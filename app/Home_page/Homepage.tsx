@@ -106,6 +106,8 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
   const [showDropdown, setShowDropdown] = useState(false);
   const [dimensions, setDimensions] = useState(Dimensions.get('window'));
   const [hasNewHealthCheck, setHasNewHealthCheck] = useState(false);
+  const [likeCount, setLikeCount] = useState(0);
+  const [isLiked, setIsLiked] = useState(false);
 
   const [fontsLoaded] = useFonts({
     OpenSans_700Bold_Italic,
@@ -119,7 +121,7 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
     selectedDecoration,
   } = useProgress();
 
-  const { userProfile } = useAuth();
+  const { user, userProfile } = useAuth();
 
   const minScale = dimensions.height / ORIGINAL_HEIGHT;
   const imageScaledWidth = ORIGINAL_WIDTH * minScale;
@@ -132,15 +134,15 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
     });
     checkHealthCheckStatus();
     checkAutoShowHealthCheck();
+    loadShopLikeData();
     return () => subscription?.remove?.();
-  }, []);
+  }, [user]);
 
   const checkHealthCheckStatus = async () => {
     try {
-      const { getTodayHealthCheck } = await import('../../firebase.config');
-      const { user } = await import('../../context/AuthContext').then(m => m.useAuth.getState());
       if (!user) return;
       
+      const { getTodayHealthCheck } = await import('../../firebase.config');
       const todayCheck = await getTodayHealthCheck(user.uid);
       if (!todayCheck) {
         setHasNewHealthCheck(true);
@@ -176,6 +178,45 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
       }
     } catch (error) {
       console.error('Failed to check auto-show:', error);
+    }
+  };
+
+  const loadShopLikeData = async () => {
+    try {
+      if (!user) return;
+      
+      const { getShopLikeData } = await import('../../firebase.config');
+      const likeData = await getShopLikeData(user.uid, user.uid);
+      
+      setLikeCount(likeData.likeCount);
+      setIsLiked(likeData.isLiked);
+    } catch (error) {
+      console.error('Failed to load shop like data:', error);
+    }
+  };
+
+  const handleLikePress = async () => {
+    try {
+      if (!user) return;
+      
+      const newIsLiked = !isLiked;
+      
+      // Update UI immediately for responsiveness
+      setIsLiked(newIsLiked);
+      setLikeCount(prev => newIsLiked ? prev + 1 : Math.max(0, prev - 1));
+      
+      // Update Firebase
+      const { updateShopLike } = await import('../../firebase.config');
+      const result = await updateShopLike(user.uid, user.uid, newIsLiked);
+      
+      // Update with actual values from Firebase
+      setLikeCount(result.likeCount);
+      setIsLiked(result.isLiked);
+    } catch (error) {
+      console.error('Failed to update shop like:', error);
+      // Revert on error
+      setIsLiked(isLiked);
+      setLikeCount(prev => isLiked ? prev + 1 : Math.max(0, prev - 1));
     }
   };
 
@@ -437,6 +478,30 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
         >
           {userProfile?.nickname || userProfile?.profile?.nickname || 'Guest'}'s Flower Shop
         </Text>
+
+        {/* 좋아요 버튼 */}
+        <TouchableOpacity
+          onPress={handleLikePress}
+          style={{
+            position: 'absolute',
+            left: imageScaledWidth * 0.76 - 50,
+            top: imageScaledHeight * 0.055 + 20,
+            flexDirection: 'row',
+            alignItems: 'center',
+            backgroundColor: 'rgba(255, 255, 255, 0.9)',
+            paddingHorizontal: 12,
+            paddingVertical: 8,
+            borderRadius: 20,
+            zIndex: 10,
+          }}
+        >
+          <Text style={{ fontSize: 24, marginRight: 4 }}>
+            {isLiked ? '❤️' : '🤍'}
+          </Text>
+          <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#4A4A4A' }}>
+            {likeCount}
+          </Text>
+        </TouchableOpacity>
       </ImageZoom>
 
       {/* 메뉴 버튼 */}

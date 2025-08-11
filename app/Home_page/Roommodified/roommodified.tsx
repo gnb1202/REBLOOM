@@ -228,7 +228,7 @@ export default function RoomModified() {
     try {
       await setSelectedRoom(tempSelectedRoom);
       await setSelectedDecoration(tempSelectedDecoration);
-      setToastMessage('저장 완료!');
+      setToastMessage('Saved!');
       setToastType('success');
       setToastVisible(true);
       setTimeout(() => {

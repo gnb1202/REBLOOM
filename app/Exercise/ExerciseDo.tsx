@@ -119,6 +119,12 @@ export default function ExerciseDo() {
       if (response.ok) {
         const data = await response.json();
         setExerciseData(data);
+        
+        // 현재 운동의 목표 카운트에 도달하면 자동으로 다음 운동으로 이동
+        if (currentExercise && data.count >= currentExercise.count) {
+          console.log(`운동 완료: ${currentExercise.title} (${data.count}/${currentExercise.count})`);
+          stopExercise(true); // 자동으로 다음 단계로 진행
+        }
       }
     } catch (error) {
       console.log('운동 데이터 조회 실패:', error);
@@ -239,7 +245,10 @@ export default function ExerciseDo() {
       <View style={styles.dataOverlay}>
         {isExerciseActive && exerciseData && (
           <>
-            <View style={styles.dataItem}><Text style={styles.dataLabel}>Number of times</Text><Text style={styles.dataValue}>{exerciseData.count}</Text></View>
+            <View style={styles.dataItem}>
+              <Text style={styles.dataLabel}>Number of times</Text>
+              <Text style={styles.dataValue}>{exerciseData.count}/{currentExercise.count}</Text>
+            </View>
             <View style={styles.dataItem}><Text style={styles.dataLabel}>Accuracy</Text><Text style={styles.dataValue}>{exerciseData.accuracy}%</Text></View>
             <View style={styles.dataItem}><Text style={styles.dataLabel}>Present exercise</Text><Text style={styles.dataValue}>{formatTime(exerciseData.elapsed_time)}</Text></View>
           </>

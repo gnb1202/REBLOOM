@@ -15,9 +15,14 @@ import { useExercise } from '../../context/ExerciseContext';
 
 // 운동 ID와 비디오 파일을 매핑
 const videoSources: { [key: string]: any } = {
-  shoulder_flexion: require('../../assets/images/animations/demo.mp4'),
-  shoulder_abduction_1: require('../../assets/images/animations/demo.mp4'),
-  // ... 다른 운동 비디오들도 여기에 추가 ...
+  biceps_curl: require('../../assets/guidevideo/Bicep_curl_guide.mp4'),
+  neck_stretch: require('../../assets/guidevideo/Neck_Stretching_guide.mp4'),
+  lateral_raise: require('../../assets/guidevideo/Lateral_raise_guide.mp4'),
+  shoulder_abduction_1: require('../../assets/guidevideo/Shoulder_abduction1_guide.mp4'),
+  shoulder_abduction_2: require('../../assets/guidevideo/Shoulder_abduction2_guide.mp4'),
+  shoulder_external_rotation_2: require('../../assets/guidevideo/Shoulder_External_Rotation2_guide.mp4'),
+  shoulder_external_rotation_3: require('../../assets/guidevideo/Shoulder_External_Rotation3_guide.mp4'),
+  shoulder_flexion: require('../../assets/guidevideo/Shoulder_flexion_guide.mp4'),
   default: require('../../assets/images/animations/demo.mp4'),
 };
 
@@ -94,16 +99,18 @@ export default function ExerciseVideoPage() {
 
       {/* 시범 영상 */}
       <View style={[styles.previewBox, isExpanded && styles.previewBoxExpanded]}>
-        <Video
-          ref={videoRef}
-          source={videoSource}
-          style={StyleSheet.absoluteFill}
-          resizeMode={ResizeMode.COVER}
-          shouldPlay
-          isLooping
-          useNativeControls={false}
-          onPlaybackStatusUpdate={status => setVideoStatus(status)}
-        />
+        <View style={styles.videoWrapper}>
+          <Video
+            ref={videoRef}
+            source={videoSource}
+            style={styles.videoStyle}
+            resizeMode={ResizeMode.CONTAIN}
+            shouldPlay
+            isLooping
+            useNativeControls={false}
+            onPlaybackStatusUpdate={status => setVideoStatus(status)}
+          />
+        </View>
         <View style={styles.previewOverlay}>
           <Text style={styles.previewText}>Demonstration Video</Text>
         </View>
@@ -190,6 +197,21 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     marginBottom: 12,
     position: 'relative',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  videoWrapper: {
+    flex: 1,
+    width: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  videoStyle: {
+    width: '100%',
+    aspectRatio: 16/9,  // 1280x720 가로 비디오 비율
+    maxHeight: '100%',
+    alignSelf: 'center',
+    transform: [{ translateX: 300 }, { translateY: 5 }],  // 위치 보정: 오른쪽 300px, 아래 5px
   },
   previewBoxExpanded: {
     position: 'absolute',

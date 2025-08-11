@@ -234,31 +234,6 @@ export default function VisitedRoomPage() {
 
   return (
     <View style={styles.container}>
-      {/* 뒤로가기 버튼 */}
-      <TouchableOpacity 
-        onPress={() => router.back()} 
-        style={styles.backButtonCircle}
-      >
-        <Text style={styles.backText}>{'←'}</Text>
-      </TouchableOpacity>
-
-      {/* 닉네임's Flower Shop 타이틀 */}
-      <View style={styles.titleContainer}>
-        <Text style={styles.titleText}>{nickname}'s Flower Shop</Text>
-        <View style={styles.likeSection}>
-          <TouchableOpacity 
-            onPress={handleLike} 
-            disabled={likeLoading}
-            style={styles.heartButton}
-          >
-            <Text style={[styles.heartIcon, isLiked && styles.heartIconLiked]}>
-              {isLiked ? '❤️' : '🤍'}
-            </Text>
-          </TouchableOpacity>
-          <Text style={styles.likeCountText}>{likeCount}</Text>
-        </View>
-      </View>
-
       {/* 메인 방 영역 */}
       <View style={styles.roomContainer}>
         <ImageZoom
@@ -280,6 +255,48 @@ export default function VisitedRoomPage() {
               style={{ width: imageScaledWidth, height: imageScaledHeight }}
               resizeMode="cover"
             />
+            
+            {/* 닉네임's Flower Shop 타이틀 */}
+            <Text
+              style={{
+                position: 'absolute',
+                left: imageScaledWidth * 0.25,
+                top: imageScaledHeight * 0.05,
+                fontSize: 54,
+                fontFamily: 'OpenSans_700Bold_Italic',
+                color: '#4A4A4A',
+                textAlign: 'center',
+                width: imageScaledWidth * 0.5,
+                zIndex: 10,
+              }}
+            >
+              {nickname}'s Flower Shop
+            </Text>
+
+            {/* 좋아요 버튼 */}
+            <TouchableOpacity
+              onPress={handleLike}
+              disabled={likeLoading}
+              style={{
+                position: 'absolute',
+                left: imageScaledWidth * 0.76 - 50,
+                top: imageScaledHeight * 0.055 + 20,
+                flexDirection: 'row',
+                alignItems: 'center',
+                backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                paddingHorizontal: 12,
+                paddingVertical: 8,
+                borderRadius: 20,
+                zIndex: 10,
+              }}
+            >
+              <Text style={{ fontSize: 24, marginRight: 4 }}>
+                {isLiked ? '❤️' : '🤍'}
+              </Text>
+              <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#4A4A4A' }}>
+                {likeCount}
+              </Text>
+            </TouchableOpacity>
             
             {/* 배치된 꽃들 */}
             {roomData.flowers.map((flower, index) => {
@@ -333,6 +350,14 @@ export default function VisitedRoomPage() {
           </View>
         </ImageZoom>
       </View>
+      
+      {/* 뒤로가기 버튼 */}
+      <TouchableOpacity 
+        onPress={() => router.back()} 
+        style={styles.backButtonCircle}
+      >
+        <Text style={styles.backText}>{'←'}</Text>
+      </TouchableOpacity>
 
       {/* 하단 정보 */}
       <View style={[styles.infoContainer, infoCollapsed && styles.infoContainerCollapsed]}>
@@ -503,55 +528,5 @@ const styles = StyleSheet.create({
   collapseIcon: {
     fontSize: 14,
     color: '#666',
-  },
-  titleContainer: {
-    position: 'absolute',
-    top: 50,
-    left: 70,
-    right: 20,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    zIndex: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 16,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 3,
-  },
-  titleText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-    flex: 1,
-  },
-  likeSection: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginLeft: 10,
-  },
-  heartButton: {
-    padding: 4,
-  },
-  heartIcon: {
-    fontSize: 20,
-  },
-  heartIconLiked: {
-    textShadowColor: 'rgba(255, 107, 107, 0.5)',
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 4,
-  },
-  likeCountText: {
-    fontSize: 14,
-    color: '#666',
-    marginLeft: 4,
-    fontWeight: '600',
   },
 });

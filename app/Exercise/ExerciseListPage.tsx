@@ -1,6 +1,6 @@
 
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Image,
   ScrollView,
@@ -8,116 +8,59 @@ import {
   Text,
   TouchableOpacity,
   View,
+  ActivityIndicator,
 } from 'react-native';
 import { useExercise, ExerciseItem } from '../../context/ExerciseContext';
+import { useAuth } from '../../context/AuthContext';
+import { generateExerciseRecommendations, type RecommendedExercise } from '../../utils/recommendation';
+import { EXERCISE_INSTRUCTIONS } from '../../utils/exerciseInstructions';
 
-const exerciseList: ExerciseItem[] = [
-  {
-    id: 'shoulder_flexion',
-    title: 'Shoulder Flexion',
-    description: 'Shoulder flexion exercise to improve forward range of motion',
-    duration: '3 min',
-    difficulty: 'EASY',
-    target: 'SHOULDER',
-    imageUrl: require('../../assets/images/icon.png'),
-    count: 8,
-  },
-  {
-    id: 'shoulder_abduction_1',
-    title: 'Shoulder Abduction 1',
-    description: 'Shoulder abduction exercise to improve lateral mobility',
-    duration: '3 min',
-    difficulty: 'EASY',
-    target: 'SHOULDER',
-    imageUrl: require('../../assets/images/icon.png'),
-    count: 6,
-  },
-  {
-    id: 'shoulder_abduction_2',
-    title: 'Shoulder Abduction 2',
-    description: 'Shoulder support exercise using lower extremity movements',
-    duration: '3 min',
-    difficulty: 'MEDIUM',
-    target: 'SHOULDER',
-    imageUrl: require('../../assets/images/icon.png'),
-    count: 10,
-  },
-  {
-    id: 'shoulder_external_rotation_1',
-    title: 'Shoulder External Rotation 1',
-    description: 'Shoulder external rotation exercise to strengthen rotator cuff',
-    duration: '3 min',
-    difficulty: 'MEDIUM',
-    target: 'SHOULDER',
-    imageUrl: require('../../assets/images/icon.png'),
-    count: 7,
-  },
-  {
-    id: 'shoulder_external_rotation_2',
-    title: 'Shoulder External Rotation 2',
-    description: 'Reverse direction shoulder external rotation exercise',
-    duration: '3 min',
-    difficulty: 'MEDIUM',
-    target: 'SHOULDER',
-    imageUrl: require('../../assets/images/icon.png'),
-    count: 9,
-  },
-  {
-    id: 'shoulder_external_rotation',
-    title: 'Shoulder External Rotation',
-    description: 'Basic shoulder external rotation exercise',
-    duration: '3 min',
-    difficulty: 'EASY',
-    target: 'SHOULDER',
-    imageUrl: require('../../assets/images/icon.png'),
-    count: 5,
-  },
-  {
-    id: 'shoulder_abduction_3',
-    title: 'Shoulder Abduction 3',
-    description: 'Advanced shoulder abduction exercise',
-    duration: '3 min',
-    difficulty: 'HARD',
-    target: 'SHOULDER',
-    imageUrl: require('../../assets/images/icon.png'),
-    count: 10,
-  },
-  {
-    id: 'side_stretch',
-    title: 'Side Stretch',
-    description: 'Side stretching to relax torso and shoulder muscles',
-    duration: '2 min',
-    difficulty: 'EASY',
-    target: 'STRETCH',
-    imageUrl: require('../../assets/images/icon.png'),
-    count: 6,
-  },
-  {
-    id: 'elbow_exercise',
-    title: 'Elbow Exercise',
-    description: 'Elbow flexion exercise to improve arm mobility',
-    duration: '2 min',
-    difficulty: 'EASY',
-    target: 'ARM',
-    imageUrl: require('../../assets/images/icon.png'),
-    count: 8,
-  },
-  {
-    id: 'shoulder_joint',
-    title: 'Shoulder Joint Exercise',
-    description: 'Comprehensive exercise to improve overall shoulder joint mobility',
-    duration: '4 min',
-    difficulty: 'MEDIUM',
-    target: 'SHOULDER',
-    imageUrl: require('../../assets/images/icon.png'),
-    count: 7,
-  }
-];
+// Convert exercise instructions to ExerciseItem format
+const exerciseList: ExerciseItem[] = Object.values(EXERCISE_INSTRUCTIONS).map(instruction => ({
+  id: instruction.id,
+  title: instruction.name,
+  description: instruction.instructions.join(' '),
+  duration: instruction.duration,
+  difficulty: instruction.difficulty.toUpperCase() as 'EASY' | 'MEDIUM' | 'HARD',
+  target: instruction.targetArea.toUpperCase(),
+  imageUrl: require('../../assets/images/icon.png'),
+  count: instruction.repetitions,
+}));
 
 export default function ExerciseListPage() {
   const router = useRouter();
   const { startExerciseQueue } = useExercise(); // ExerciseContext 사용
+  const { user } = useAuth();
   const [selectedExercises, setSelectedExercises] = useState<string[]>([]);
+  const [recommendedExercises, setRecommendedExercises] = useState<RecommendedExercise[]>([]);
+  const [loadingRecommendations, setLoadingRecommendations] = useState(true);
+  const [targetBodyPart, setTargetBodyPart] = useState<string>('');
+
+  useEffect(() => {
+    loadRecommendations();
+  }, [user]);
+
+  const loadRecommendations = async () => {
+    if (!user) {
+      setLoadingRecommendations(false);
+      return;
+    }
+
+    try {
+      setLoadingRecommendations(true);
+      const result = await generateExerciseRecommendations(user.uid);
+      
+      if (result.recommendations.length > 0) {
+        setRecommendedExercises(result.recommendations);
+        setTargetBodyPart(result.targetBodyPart);
+        console.log('Loaded recommendations:', result.recommendations.length);
+      }
+    } catch (error) {
+      console.error('Failed to load recommendations:', error);
+    } finally {
+      setLoadingRecommendations(false);
+    }
+  };
 
   const handleExerciseSelect = (exerciseId: string) => {
     setSelectedExercises(prev => {
@@ -173,50 +116,68 @@ export default function ExerciseListPage() {
       </View>
 
       <ScrollView style={styles.exerciseList}>
-        {/* Recommended Exercises Section */}
+        {/* AI Recommended Exercises Section */}
         <View style={styles.recommendedSection}>
-          <Text style={styles.sectionTitle}>💫 Recommended Exercises</Text>
-          {exerciseList
-              .filter(ex => ex.target === 'SHOULDER' && ex.difficulty === 'EASY')
-            .slice(0, 3)
-            .map((exercise) => (
-          <TouchableOpacity
-            key={exercise.id}
-            style={[
-              styles.exerciseCard,
-              selectedExercises.includes(exercise.id) && styles.selectedCard,
-            ]}
-            onPress={() => handleExerciseSelect(exercise.id)}
-          >
-            <Image source={exercise.imageUrl} style={styles.exerciseImage} />
-            <View style={styles.exerciseInfo}>
-              <View style={styles.titleContainer}>
-                <Text style={styles.exerciseTitle}>{exercise.title}</Text>
-                {getExerciseOrder(exercise.id) && (
-                  <View style={styles.orderBadge}>
-                    <Text style={styles.orderText}>{getExerciseOrder(exercise.id)}</Text>
-                  </View>
-                )}
-              </View>
-              <Text style={styles.exerciseDescription}>
-                {exercise.description}
-              </Text>
-              <View style={styles.exerciseDetails}>
-                <Text style={styles.exerciseTarget}>{exercise.target}</Text>
-                <Text style={styles.exerciseDuration}>⏱ {exercise.duration}</Text>
-                <Text style={styles.exerciseCount}>🔄 {exercise.count} reps</Text>
-                <Text
-                  style={[
-                    styles.exerciseDifficulty,
-                    { color: getDifficultyColor(exercise.difficulty) },
-                  ]}
-                >
-                  Difficulty: {exercise.difficulty}
-                </Text>
-              </View>
+          <Text style={styles.sectionTitle}>🤖 AI Recommended for You</Text>
+          {targetBodyPart && (
+            <Text style={styles.targetPartText}>Today's focus: {targetBodyPart.toUpperCase()}</Text>
+          )}
+          {loadingRecommendations ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="small" color="#5C7BEE" />
+              <Text style={styles.loadingText}>Analyzing your condition...</Text>
             </View>
-          </TouchableOpacity>
-        ))}
+          ) : recommendedExercises.length > 0 ? (
+            recommendedExercises.map((rec) => {
+              const exercise = exerciseList.find(ex => ex.id === rec.exercise.id);
+              if (!exercise) return null;
+              
+              return (
+                <TouchableOpacity
+                  key={exercise.id}
+                  style={[
+                    styles.exerciseCard,
+                    styles.recommendedCard,
+                    selectedExercises.includes(exercise.id) && styles.selectedCard,
+                  ]}
+                  onPress={() => handleExerciseSelect(exercise.id)}
+                >
+                  <View style={styles.recommendedBadge}>
+                    <Text style={styles.scoreText}>Score: {rec.score}</Text>
+                  </View>
+                  <Image source={exercise.imageUrl} style={styles.exerciseImage} />
+                  <View style={styles.exerciseInfo}>
+                    <View style={styles.titleContainer}>
+                      <Text style={styles.exerciseTitle}>{exercise.title}</Text>
+                      {getExerciseOrder(exercise.id) && (
+                        <View style={styles.orderBadge}>
+                          <Text style={styles.orderText}>{getExerciseOrder(exercise.id)}</Text>
+                        </View>
+                      )}
+                    </View>
+                    <Text style={styles.exerciseDescription}>
+                      {exercise.description}
+                    </Text>
+                    <View style={styles.exerciseDetails}>
+                      <Text style={styles.exerciseTarget}>{exercise.target}</Text>
+                      <Text style={styles.exerciseDuration}>⏱ {exercise.duration}</Text>
+                      <Text style={styles.exerciseCount}>🔄 {exercise.count} reps</Text>
+                      <Text
+                        style={[
+                          styles.exerciseDifficulty,
+                          { color: getDifficultyColor(exercise.difficulty) },
+                        ]}
+                      >
+                        Difficulty: {exercise.difficulty}
+                      </Text>
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              );
+            })
+          ) : (
+            <Text style={styles.noRecommendationsText}>No personalized recommendations available</Text>
+          )}
         </View>
 
         {/* All Exercises Section */}
@@ -247,6 +208,7 @@ export default function ExerciseListPage() {
                 <View style={styles.exerciseDetails}>
                   <Text style={styles.exerciseTarget}>{exercise.target}</Text>
                   <Text style={styles.exerciseDuration}>⏱ {exercise.duration}</Text>
+                  <Text style={styles.exerciseCount}>🔄 {exercise.count} reps</Text>
                   <Text
                     style={[
                       styles.exerciseDifficulty,
@@ -419,5 +381,61 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  recommendedCard: {
+    borderWidth: 2,
+    borderColor: '#FFD700',
+    backgroundColor: '#FFFEF0',
+  },
+  recommendedBadge: {
+    position: 'absolute',
+    top: -10,
+    right: 10,
+    backgroundColor: '#5C7BEE',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    zIndex: 1,
+  },
+  scoreText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  targetPartText: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
+    marginBottom: 10,
+    fontStyle: 'italic',
+  },
+  loadingContainer: {
+    padding: 20,
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 10,
+    fontSize: 14,
+    color: '#666',
+  },
+  recommendationReason: {
+    fontSize: 12,
+    color: '#4CAF50',
+    marginTop: 4,
+    marginBottom: 4,
+    fontStyle: 'italic',
+  },
+  cautionText: {
+    fontSize: 12,
+    color: '#FF9800',
+    marginBottom: 4,
+    fontStyle: 'italic',
+  },
+  noRecommendationsText: {
+    fontSize: 14,
+    color: '#999',
+    textAlign: 'center',
+    padding: 20,
+    fontStyle: 'italic',
   },
 });

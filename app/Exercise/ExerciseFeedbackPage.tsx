@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import { useAuth } from '../../context/AuthContext';
 import { useExercise } from '../../context/ExerciseContext';
 import { saveExerciseSession } from '../../firebase.config';
+import { updateWeightsAfterExercise, saveExerciseFeedbackRating } from '../../utils/recommendation';
 
 export default function ExerciseFeedbackPage() {
   const router = useRouter();
@@ -62,6 +63,25 @@ export default function ExerciseFeedbackPage() {
       // Firebase에 데이터 저장
       const sessionId = await saveExerciseSession(user.uid, sessionData);
       console.log('Exercise session saved with ID:', sessionId);
+
+      // 추천 시스템 업데이트
+      try {
+        // 1. 완료한 운동들의 ID 배열 생성
+        const completedExerciseIds = exerciseQueue.map(ex => ex.id);
+        
+        // 2. 부위별 가중치 업데이트 (피드백 포함)
+        await updateWeightsAfterExercise(user.uid, completedExerciseIds, labels[selected]);
+        console.log('Updated body part weights with feedback:', labels[selected]);
+        
+        // 3. 각 운동에 대한 피드백 저장
+        for (const exercise of exerciseQueue) {
+          await saveExerciseFeedbackRating(user.uid, exercise.id, feedbackRating);
+        }
+        console.log('Saved exercise feedback ratings');
+      } catch (error) {
+        console.error('Failed to update recommendation system:', error);
+        // 추천 시스템 업데이트 실패해도 계속 진행
+      }
 
       // 운동 큐를 비우지 않고 홈으로 이동
       // (다음 운동 세션 시작 시 자동으로 새로운 큐로 교체됨)

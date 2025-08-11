@@ -1,7 +1,8 @@
-import { StyleSheet, Text, TouchableOpacity, View, ActivityIndicator } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View, ActivityIndicator, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useExercise } from '../../context/ExerciseContext';
 import { useEffect } from 'react';
+import { getExerciseInstruction } from '../../utils/exerciseInstructions';
 
 export default function ExerciseIntroPage() {
   const router = useRouter();
@@ -27,6 +28,8 @@ export default function ExerciseIntroPage() {
     );
   }
 
+  const exerciseInstruction = getExerciseInstruction(currentExercise.id);
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -35,16 +38,30 @@ export default function ExerciseIntroPage() {
         </Text>
       </View>
 
-      <View style={styles.contentBox}>
-        <Text style={styles.title}>{`${currentExerciseIndex + 1}. ${currentExercise.title}`}</Text>
-        <View style={styles.bulletList}>
-          <Text style={styles.bullet}>🎯 Target: {currentExercise.target}</Text>
-          <Text style={styles.bullet}>💪 Difficulty: {currentExercise.difficulty}</Text>
-          <Text style={styles.bullet}>⏱️ Duration: {currentExercise.duration}</Text>
-          <Text style={styles.bullet}>🔄 Repetitions: {currentExercise.count} reps</Text>
-          <Text style={styles.bulletDescription}>{currentExercise.description}</Text>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        <View style={styles.contentBox}>
+          <Text style={styles.title}>{`${currentExerciseIndex + 1}. ${currentExercise.title}`}</Text>
+          <View style={styles.bulletList}>
+            <Text style={styles.bullet}>🎯 Target: {currentExercise.target}</Text>
+            <Text style={styles.bullet}>💪 Difficulty: {currentExercise.difficulty}</Text>
+            <Text style={styles.bullet}>⏱️ Duration: {currentExercise.duration}</Text>
+            <Text style={styles.bullet}>🔄 Repetitions: {currentExercise.count} reps</Text>
+            {exerciseInstruction?.holdTime && (
+              <Text style={styles.bullet}>⏳ Hold Time: {exerciseInstruction.holdTime} seconds</Text>
+            )}
+          </View>
+          
+          <View style={styles.instructionsSection}>
+            <Text style={styles.instructionsTitle}>Instructions:</Text>
+            {exerciseInstruction?.instructions.map((instruction, index) => (
+              <View key={index} style={styles.instructionItem}>
+                <Text style={styles.instructionNumber}>{index + 1}.</Text>
+                <Text style={styles.instructionText}>{instruction}</Text>
+              </View>
+            ))}
+          </View>
         </View>
-      </View>
+      </ScrollView>
 
       {/* 하단 버튼 */}
       <TouchableOpacity
@@ -78,6 +95,12 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     color: '#5C7BEE',
+  },
+  scrollContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingBottom: 100,
   },
   contentBox: {
     backgroundColor: '#fff',
@@ -113,6 +136,34 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderColor: '#eee',
     paddingTop: 15,
+  },
+  instructionsSection: {
+    marginTop: 20,
+    width: '100%',
+  },
+  instructionsTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 12,
+  },
+  instructionItem: {
+    flexDirection: 'row',
+    marginBottom: 10,
+    paddingRight: 10,
+  },
+  instructionNumber: {
+    fontSize: 15,
+    fontWeight: 'bold',
+    color: '#5C7BEE',
+    marginRight: 8,
+    minWidth: 20,
+  },
+  instructionText: {
+    fontSize: 15,
+    color: '#555',
+    lineHeight: 22,
+    flex: 1,
   },
   nextButton: {
     position: 'absolute',
