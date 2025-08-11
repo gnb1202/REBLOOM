@@ -63,7 +63,8 @@ async def configure_exercise(exercise_type: str = None, kpts: list = None, up_an
             exercise_type=exercise_type,
             kpts=kpts,
             up_angle=up_angle,
-            down_angle=down_angle
+            down_angle=down_angle,
+            #show=False
         )
         return {"status": "configured", "config": config}
     except Exception as e:
