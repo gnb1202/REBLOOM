@@ -27,7 +27,9 @@ export default function Report() {
       if (existingReport) {
         setReportData(existingReport);
       } else {
-        await generateNewReport();
+        // Use mock data for demo if no existing report
+        const mockData = getMockReportData();
+        setReportData(mockData);
       }
     } catch (error) {
       console.error('Failed to load report:', error);
@@ -37,19 +39,81 @@ export default function Report() {
     }
   };
 
+  // Mock data for demo purposes
+  const getMockReportData = () => {
+    const today = new Date();
+    const weekStart = new Date(today);
+    weekStart.setDate(today.getDate() - 7);
+    
+    return {
+      weekStart: weekStart.toISOString(),
+      weekEnd: today.toISOString(),
+      isAIGenerated: true,
+      
+      // AI Summary
+      aiSummary: "Great progress this week! You've maintained consistent exercise routine with 5 sessions completed. Your shoulder mobility has improved by 15%, and pain levels have decreased. Keep up the excellent work on your recovery journey.",
+      
+      wellbeingCheck: "Your mental resilience is remarkable. Remember to celebrate small victories - every exercise completed brings you closer to full recovery.",
+      
+      // Weekly Highlights
+      achievements: [
+        "Completed 5 exercise sessions this week (+2 from last week)",
+        "Achieved 3 consecutive days of rehabilitation exercises",
+        "Shoulder flexibility improved - reached 120° range of motion",
+        "Pain level reduced from 4/10 to 2/10 during exercises",
+        "Earned 'Consistent Warrior' badge for daily check-ins"
+      ],
+      
+      // Health Metrics
+      healthMetrics: {
+        totalCheckins: 6,
+        averageCondition: "3.8",
+        averageSwelling: "1.2",
+        commonPainAreas: [
+          { area: "Shoulder", count: 4 },
+          { area: "Upper Arm", count: 2 },
+          { area: "Neck", count: 1 }
+        ]
+      },
+      
+      // Exercise Metrics
+      exerciseMetrics: {
+        completionRate: 85,
+        totalExercises: 35,
+        totalDuration: 180,
+        averageFeedback: "4.2"
+      },
+      
+      // AI Recommendations
+      recommendations: [
+        "Try adding 'Lateral Raise' exercise next week as your strength improves",
+        "Consider gentle stretching before bed to reduce morning stiffness",
+        "Your progress suggests you're ready for Medium difficulty exercises",
+        "Ice therapy after exercises can help reduce any residual swelling"
+      ],
+      
+      // Support Message
+      supportMessage: "You're doing amazingly well! Recovery is a journey, not a race. Every small step forward is a victory worth celebrating. We're here with you every step of the way. 💙"
+    };
+  };
+
   const generateNewReport = async () => {
     if (!user) return;
     setGenerating(true);
     try {
+      // Try to get report from server first
       const newReport = await generateEnhancedWeeklyReportClient(user.uid);
       setReportData(newReport);
       const alertMessage = newReport?.isAIGenerated 
-        ? 'AI가 분석한 새로운 주간 리포트가 생성되었습니다! 🤖📊'
+        ? 'AI-powered weekly report has been generated! 🤖📊'
         : 'New weekly report has been generated! 📊';
       Alert.alert('Complete', alertMessage);
     } catch (error) {
       console.error('Failed to generate report:', error);
-      Alert.alert('Error', 'Failed to generate report.');
+      // Use mock data as fallback
+      const mockData = getMockReportData();
+      setReportData(mockData);
+      Alert.alert('Demo Mode', 'Using sample report data for demonstration.');
     } finally {
       setGenerating(false);
     }

@@ -34,57 +34,57 @@ class ExerciseAI:
             "exercise_type": "shoulder_flexion"
         }
         
-        # 운동별 사전 정의된 설정
+        # 운동별 사전 정의된 설정 (실제 운동 리스트에 맞춤)
         self.predefined_configs = {
-            "shoulder_flexion": {
+            # ARM EXERCISES
+            "biceps_curl": {
                 "kpts": [6, 8, 10],  # 왼쪽 어깨-팔꿈치-손목
-                "up_angle": 130,
-                "down_angle": 90
+                "up_angle": 40,      # 팔을 완전히 구부린 상태
+                "down_angle": 160    # 팔을 편 상태
             },
-            "shoulder_abduction_1": {
-                "kpts": [6, 8, 10],  # 오른쪽 어깨-팔꿈치-손목  
-                "up_angle": 130,
-                "down_angle": 90
+            
+            # NECK EXERCISE
+            "neck_stretch": {
+                "kpts": [0, 5, 6],    # 코-왼쪽어깨-오른쪽어깨 (목 운동)
+                "up_angle": 120,      # 목을 옆으로 기울인 상태
+                "down_angle": 90      # 목을 똑바로 한 상태
             },
-            "shoulder_abduction_2": {
-                "kpts": [6, 8, 10],  # 왼쪽 엉덩이-무릎-발목
-                "up_angle": 130,
-                "down_angle": 90
-            },
-            "shoulder_external_rotation_1": {
+            
+            # SHOULDER EXERCISES
+            "lateral_raise": {
                 "kpts": [6, 8, 10],   # 왼쪽 어깨-팔꿈치-손목
-                "up_angle": 130,
-                "down_angle": 90
+                "up_angle": 90,       # 팔을 옆으로 들어올린 상태 (어깨 높이)
+                "down_angle": 170     # 팔을 내린 상태
             },
+            
+            "shoulder_abduction_1": {
+                "kpts": [6, 8, 10],   # 왼쪽 어깨-팔꿈치-손목
+                "up_angle": 90,       # 팔을 90도까지 들어올린 상태
+                "down_angle": 170     # 팔을 내린 상태
+            },
+            
+            "shoulder_abduction_2": {
+                "kpts": [6, 8, 10],   # 왼쪽 어깨-팔꿈치-손목
+                "up_angle": 30,       # 팔을 머리 위로 완전히 들어올린 상태
+                "down_angle": 170     # 팔을 내린 상태
+            },
+            
             "shoulder_external_rotation_2": {
                 "kpts": [6, 8, 10],   # 왼쪽 어깨-팔꿈치-손목
-                "up_angle": 130,
-                "down_angle": 90
+                "up_angle": 90,       # 손이 이마에 닿는 상태 (팔꿈치 90도)
+                "down_angle": 170     # 팔을 내린 상태
             },
-            "shoulder_external_rotation": {
+            
+            "shoulder_external_rotation_3": {
                 "kpts": [6, 8, 10],   # 왼쪽 어깨-팔꿈치-손목
-                "up_angle": 130,
-                "down_angle": 90
+                "up_angle": 45,       # 손이 목 뒤에 닿는 상태
+                "down_angle": 170     # 팔을 내린 상태
             },
-            "shoulder_abduction_3": {
+            
+            "shoulder_flexion": {
                 "kpts": [6, 8, 10],   # 왼쪽 어깨-팔꿈치-손목
-                "up_angle": 130,
-                "down_angle": 90
-            },
-            "side_stretch": {
-                "kpts": [6, 8, 10],   # 왼쪽 어깨-팔꿈치-손목
-                "up_angle": 130,
-                "down_angle": 90
-            },
-            "elbow_exercise": {
-                "kpts": [6, 8, 10],   # 왼쪽 어깨-팔꿈치-손목
-                "up_angle": 130,
-                "down_angle": 90
-            },
-            "shoulder_joint": {
-                "kpts": [6, 8, 10],   # 왼쪽 어깨-팔꿈치-손목
-                "up_angle": 130,
-                "down_angle": 90
+                "up_angle": 30,       # 팔을 앞으로 들어올린 상태
+                "down_angle": 170     # 팔을 내린 상태
             },
         }
         

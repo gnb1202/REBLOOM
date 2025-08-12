@@ -62,16 +62,21 @@ export default function PlantRewardPage() {
   const image = flowerImages[imageKey];
 
   useEffect(() => {
-    // 1. 애니메이션 효과
+    // 1. 현재 진행도에서 10% 증가한 목표값 계산
+    const targetProgress = Math.min(progress + 10, 100);
+    
+    // 2. 애니메이션 효과 (현재 진행도에서 목표 진행도까지만 증가)
     const interval = setInterval(() => {
       setLocalProgress((prev) => {
-        if (prev < 100) return prev + 2;
+        if (prev < targetProgress) {
+          return Math.min(prev + 1, targetProgress);
+        }
         clearInterval(interval);
-        return 100;
+        return targetProgress;
       });
     }, 20);
 
-    // 2. 실제 진행도 반영 및 이동 (하루에 한 번만 성장 허용)
+    // 3. 실제 진행도 반영 및 이동 (하루에 한 번만 성장 허용)
     const timeout = setTimeout(async () => {
       const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD 형식
       const lastGrowthDate = await AsyncStorage.getItem('@lastFlowerGrowthDate');
@@ -85,6 +90,9 @@ export default function PlantRewardPage() {
       // 하루에 한 번 성장 제한과 관계없이 보상 페이지로 이동
       router.push('/Exercise/CoinRewardPage');
     }, 2000);
+
+    // 4. 초기 로컬 진행도를 현재 진행도로 설정
+    setLocalProgress(progress);
 
     return () => {
       clearInterval(interval);

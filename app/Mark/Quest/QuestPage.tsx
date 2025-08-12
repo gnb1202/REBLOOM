@@ -29,9 +29,9 @@ const getBadgeImage = (level: number) => {
 };
 
 const feedbackSteps = [
-  { id: 'feedback-3', emoji: '🗣️', text: 'Complete 3 feedbacks!' },
-  { id: 'feedback-5', emoji: '🗣️', text: 'Complete 5 feedbacks!' },
-  { id: 'feedback-7', emoji: '🗣️', text: 'Complete 7 feedbacks!' },
+  { id: 'feedback-3', emoji: '🗣️', text: 'Record 3 exercise feedback sessions' },
+  { id: 'feedback-5', emoji: '🗣️', text: 'Complete 5 recovery assessments' },
+  { id: 'feedback-7', emoji: '🗣️', text: 'Submit 7 rehabilitation progress reports' },
 ];
 
 export default function QuestPage() {
@@ -53,21 +53,21 @@ export default function QuestPage() {
   const [recentlyCompletedId, setRecentlyCompletedId] = useState<string | null>(null);
 
   const flowerChallengeSteps = [
-    { id: 'flower-1', emoji: '🌸', text: 'Fully grow 1 flower' },
-    { id: 'flower-2', emoji: '🌸', text: 'Fully grow 2 flowers' },
-    { id: 'flower-3', emoji: '🌸', text: 'Fully grow 3 flowers' },
-    { id: 'flower-4', emoji: '🌸', text: 'Fully grow 4 flowers' },
+    { id: 'flower-1', emoji: '🌸', text: 'Complete first rehabilitation milestone (1 flower)' },
+    { id: 'flower-2', emoji: '🌸', text: 'Reach second recovery stage (2 flowers)' },
+    { id: 'flower-3', emoji: '🌸', text: 'Achieve advanced recovery (3 flowers)' },
+    { id: 'flower-4', emoji: '🌸', text: 'Master rehabilitation program (4 flowers)' },
   ];
   const exerciseSteps = [
-    { id: 'time-100', emoji: '⏱️', text: 'Achieve 100 minutes of exercise' },
-    { id: 'time-300', emoji: '⏱️', text: 'Break through 300 minutes of exercise!' },
-    { id: 'time-500', emoji: '⏱️', text: '500 minutes of exercise! Amazing' },
+    { id: 'time-100', emoji: '⏱️', text: 'Complete 100 minutes of rehabilitation exercises' },
+    { id: 'time-300', emoji: '⏱️', text: 'Achieve 300 minutes of therapeutic activity' },
+    { id: 'time-500', emoji: '⏱️', text: 'Reach 500 minutes of recovery exercises' },
   ];
   const attendanceSteps = [
-    { id: 'attend-3', emoji: '📅', text: '3 consecutive days attendance' },
-    { id: 'attend-5', emoji: '📅', text: '5 consecutive days attendance challenge' },
-    { id: 'attend-7', emoji: '📅', text: '7 consecutive days perfect attendance!' },
-    { id: 'attend-14', emoji: '📅', text: '14 days perfect attendance! Excellent' },
+    { id: 'attend-3', emoji: '📅', text: '3 days consistent rehabilitation' },
+    { id: 'attend-5', emoji: '📅', text: '5 days continuous recovery routine' },
+    { id: 'attend-7', emoji: '📅', text: 'Complete 1 week of daily exercises' },
+    { id: 'attend-14', emoji: '📅', text: '2 weeks of dedicated rehabilitation' },
   ];
 
   const challengeQuests = [
@@ -78,10 +78,14 @@ export default function QuestPage() {
   ];
 
   const allQuests = [
-    { id: '1', emoji: '☕️', text: 'Have a warm cup of tea', type: 'Daily' },
-    { id: '2', emoji: '🌱', text: 'Pet plants 3 times', type: 'Daily' },
-    { id: '3', emoji: '❓', text: 'Solve today\'s quiz', type: 'Weekly' },
-    { id: '4', emoji: '💰', text: 'Earn 600 coins', type: 'Monthly' },
+    { id: '1', emoji: '💊', text: 'Take prescribed medication', type: 'Daily' },
+    { id: '2', emoji: '🚶', text: 'Complete 10 minutes of gentle walking', type: 'Daily' },
+    { id: '3', emoji: '💪', text: 'Perform 5 shoulder exercises', type: 'Daily' },
+    { id: '4', emoji: '📝', text: 'Log pain level in recovery diary', type: 'Daily' },
+    { id: '5', emoji: '🎯', text: 'Complete 3 full exercise sessions', type: 'Weekly' },
+    { id: '6', emoji: '📊', text: 'Submit weekly progress report', type: 'Weekly' },
+    { id: '7', emoji: '🏥', text: 'Attend follow-up appointment', type: 'Monthly' },
+    { id: '8', emoji: '🎖️', text: 'Achieve 80% exercise compliance', type: 'Monthly' },
     ...challengeQuests.filter(Boolean).map((q) => ({ ...q, type: 'Challenge' })),
   ];
 
