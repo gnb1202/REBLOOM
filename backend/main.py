@@ -149,6 +149,30 @@ async def stop_exercise():
     
     return {"status": "stopped", "summary": final_data}
 
+# 운동 준비 (사전 초기화)
+@app.post("/exercise/warmup")
+async def warmup_exercise(exercise_type: str = None):
+    """AI 모델과 카메라를 미리 초기화하여 실제 운동 시작 시 지연을 줄입니다."""
+    try:
+        # 운동 타입이 주어졌다면 설정
+        if exercise_type:
+            exercise_ai.configure_exercise(exercise_type=exercise_type)
+        
+        # AI Gym 미리 초기화 (백그라운드)
+        success = exercise_ai.setup_ai_gym()
+        
+        # 카메라도 미리 초기화 시도
+        exercise_ai.try_camera_init()
+        
+        return {
+            "status": "warmed_up",
+            "ai_ready": success,
+            "exercise_type": exercise_type or exercise_ai.get_exercise_config()["exercise_type"]
+        }
+    except Exception as e:
+        # 워밍업 실패해도 운동은 가능하도록 에러를 숨김
+        return {"status": "warmup_failed", "ai_ready": False, "detail": str(e)}
+
 # 헬스체크
 @app.get("/health")
 async def health_check():

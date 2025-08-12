@@ -93,10 +93,8 @@ class ExerciseAI:
     
     def configure_exercise(self, exercise_type=None, kpts=None, up_angle=None, down_angle=None):
         """운동 설정을 동적으로 구성"""
-        # 기존 AI Gym 인스턴스 제거 (새로운 설정 적용을 위해)
-        if self.gym:
-            self.gym = None
-            print("기존 AI Gym 인스턴스 제거")
+        # 이전 설정 저장 (같은 설정이면 AI Gym 재사용)
+        prev_config = self.exercise_config.copy()
         
         # 사전 정의된 운동 타입 확인
         if exercise_type and exercise_type in self.predefined_configs:
@@ -115,6 +113,16 @@ class ExerciseAI:
         if down_angle is not None:
             self.exercise_config["down_angle"] = down_angle
             print(f"하단 각도 설정: {down_angle}")
+        
+        # 설정이 변경되었을 때만 AI Gym 재초기화
+        if (prev_config.get("kpts") != self.exercise_config["kpts"] or
+            prev_config.get("up_angle") != self.exercise_config["up_angle"] or
+            prev_config.get("down_angle") != self.exercise_config["down_angle"]):
+            if self.gym:
+                self.gym = None
+                print("운동 설정 변경으로 AI Gym 인스턴스 제거")
+        else:
+            print("동일한 운동 설정 - AI Gym 인스턴스 재사용")
         
         print(f"최종 운동 설정: {self.exercise_config}")
         return self.exercise_config.copy()
@@ -228,6 +236,21 @@ class ExerciseAI:
             self.gym = None
             return False
     
+    def try_camera_init(self):
+        """카메라를 미리 초기화 시도 (warmup용)"""
+        if self.cap and self.cap.isOpened():
+            print("카메라가 이미 초기화되어 있습니다.")
+            return True
+            
+        print("카메라 사전 초기화 시도...")
+        self.cap = self._init_camera()
+        if self.cap:
+            print("카메라 사전 초기화 성공")
+            return True
+        else:
+            print("카메라 사전 초기화 실패 - 운동 시작 시 재시도합니다.")
+            return False
+    
     def is_ready(self):
         """AI 모델이 준비되었는지 확인"""
         return ULTRALYTICS_AVAILABLE or True  # 시뮬레이션 모드도 준비 완료로 처리
@@ -302,13 +325,15 @@ class ExerciseAI:
         """AI 분석이 포함된 비디오 스트리밍 생성기"""
         print(f"AI 비디오 스트리밍 시작 - Ultralytics: {ULTRALYTICS_AVAILABLE}")
         
-        # 카메라 초기화 시도
-        if not self.cap:
+        # 카메라 초기화 시도 (이미 초기화되어 있으면 재사용)
+        if not self.cap or not self.cap.isOpened():
             print("카메라 초기화를 시도합니다...")
             self.cap = self._init_camera()
             if not self.cap:
                 print("카메라 초기화 실패. 더미 스트림으로 대체합니다.")
                 return self._generate_dummy_stream(exercise_session)
+        else:
+            print("기존 카메라 인스턴스를 재사용합니다.")
         
         print("카메라 스트리밍을 시작합니다.")
         return self._camera_stream_with_ai(exercise_session)

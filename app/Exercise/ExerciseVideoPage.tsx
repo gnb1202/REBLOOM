@@ -32,6 +32,7 @@ export default function ExerciseVideoPage() {
   
   const [isPlaying, setIsPlaying] = useState(true);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isWarmingUp, setIsWarmingUp] = useState(false);
   const videoRef = useRef<Video>(null);
   const [videoStatus, setVideoStatus] = useState<any>(null);
 
@@ -52,6 +53,37 @@ export default function ExerciseVideoPage() {
     );
     return () => backHandler.remove();
   }, [isExpanded]);
+
+  // 페이지 로드 시 백그라운드에서 AI 워밍업 시작
+  useEffect(() => {
+    if (currentExercise) {
+      warmupExercise();
+    }
+  }, [currentExercise]);
+
+  const warmupExercise = async () => {
+    if (!currentExercise) return;
+    
+    try {
+      setIsWarmingUp(true);
+      const response = await fetch('http://localhost:8888/exercise/warmup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          exercise_type: currentExercise.id
+        }),
+      });
+      
+      const data = await response.json();
+      console.log('AI Warmup completed:', data);
+    } catch (error) {
+      console.log('Warmup failed (non-critical):', error);
+    } finally {
+      setIsWarmingUp(false);
+    }
+  };
 
   if (!currentExercise) {
     return (
