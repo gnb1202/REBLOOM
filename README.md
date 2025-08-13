@@ -10,7 +10,7 @@
   [![Expo](https://img.shields.io/badge/Expo-SDK%2051-black.svg)](https://expo.dev/)
   [![Python](https://img.shields.io/badge/Python-3.8+-green.svg)](https://python.org/)
   [![FastAPI](https://img.shields.io/badge/FastAPI-0.104+-red.svg)](https://fastapi.tiangolo.com/)
-  [![YOLO](https://img.shields.io/badge/YOLO-v8-orange.svg)](https://ultralytics.com/)
+  [![YOLO](https://img.shields.io/badge/YOLO-11-orange.svg)](https://ultralytics.com/)
 </div>
 
 ---
@@ -21,7 +21,7 @@ This innovative mobile application leverages **AI-powered computer vision** to p
 
 ### 🔬 Research Contributions
 
-- **Real-time Pose Detection**: Integration of Ultralytics YOLO v8 for accurate human pose estimation
+- **Real-time Pose Detection**: Integration of Ultralytics YOLO 11 for accurate human pose estimation
 - **Intelligent Exercise Monitoring**: AI-driven repetition counting and form analysis
 - **Adaptive User Interface**: Context-aware UI with personalized feedback systems
 - **Gamified Rehabilitation**: Point-based reward system with virtual shop integration
@@ -58,7 +58,7 @@ This innovative mobile application leverages **AI-powered computer vision** to p
 ## 🚀 Key Features
 
 ### 💪 AI-Powered Exercise Tracking
-- **Real-time pose detection** using Ultralytics YOLO v8
+- **Real-time pose detection** using Ultralytics YOLO 11
 - **Automatic repetition counting** with 85%+ accuracy
 - **Form analysis** and corrective feedback
 - **Multi-exercise support** (squats, push-ups, arm raises, etc.)
@@ -95,7 +95,7 @@ This innovative mobile application leverages **AI-powered computer vision** to p
 ### Backend (AI & API)
 - **Python** 3.8+ - Core backend language
 - **FastAPI** 0.104+ - Modern web framework for APIs
-- **Ultralytics** YOLO v8 - Computer vision and pose detection
+- **Ultralytics** YOLO 11 - Computer vision and pose detection
 - **OpenCV** - Image processing and camera handling
 - **Pydantic** - Data validation and serialization
 
@@ -202,7 +202,7 @@ python -m pytest         # Run backend tests
 ## 🔬 Research Innovation
 
 ### Technical Contributions
-1. **Mobile-Optimized YOLO Integration**: Custom implementation of Ultralytics YOLO for real-time mobile pose detection
+1. **Mobile-Optimized YOLO Integration**: Custom implementation of Ultralytics YOLO 11 for real-time mobile pose detection
 2. **Context-Aware Exercise Recognition**: AI system that adapts to different exercise types and user capabilities
 3. **Gamified Rehabilitation Framework**: Novel approach combining serious gaming with therapeutic exercise
 4. **Cross-Platform Accessibility**: Universal design principles applied to rehabilitation technology
