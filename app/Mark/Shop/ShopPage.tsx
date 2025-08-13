@@ -269,7 +269,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     marginTop: 10,
-    fontSize: 14,
+    fontSize: 18,
     color: '#3F5C45',
   },
   header: {
@@ -280,12 +280,12 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   title: {
-    fontSize: 22,
+    fontSize: 26,
     fontWeight: '700',
     color: '#2F4034',
   },
   coinText: {
-    fontSize: 14,
+    fontSize: 18,
     fontWeight: 'bold',
     color: '#3F5C45',
   },
@@ -311,7 +311,7 @@ const styles = StyleSheet.create({
   tabText: {
     color: '#3F5C45',
     fontWeight: 'bold',
-    fontSize: 14,
+    fontSize: 18,
   },
   activeTabText: {
     color: '#fff',
@@ -333,7 +333,7 @@ const styles = StyleSheet.create({
     height: 100,
   },
   itemName: {
-    fontSize: 12,
+    fontSize: 16,
     fontWeight: 'bold',
     color: '#2F4034',
     marginTop: 4,
@@ -346,7 +346,7 @@ const styles = StyleSheet.create({
     paddingVertical: 50,
   },
   emptyText: {
-    fontSize: 14,
+    fontSize: 18,
     color: '#888',
     textAlign: 'center',
   },
@@ -360,11 +360,11 @@ const styles = StyleSheet.create({
   buyText: {
     color: 'white',
     fontWeight: 'bold',
-    fontSize: 12,
+    fontSize: 16,
   },
   ownedText: {
     marginTop: 8,
-    fontSize: 12,
+    fontSize: 16,
     color: '#888',
     fontWeight: 'bold',
   },
@@ -380,6 +380,6 @@ const styles = StyleSheet.create({
   closeButtonText: {
     color: 'white',
     fontWeight: 'bold',
-    fontSize: 14,
+    fontSize: 18,
   },
 });

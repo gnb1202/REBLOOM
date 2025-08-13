@@ -102,7 +102,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   title: {
-    fontSize: 20,
+    fontSize: 26,
     fontWeight: 'bold',
     marginBottom: 32,
   },
@@ -112,7 +112,8 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     padding: 12,
     marginBottom: 12,
-     color: '#222',
+    color: '#222',
+    fontSize: 16,
   },
   loginButton: {
     backgroundColor: '#4F73FF',
@@ -124,7 +125,7 @@ const styles = StyleSheet.create({
   },
   loginButtonText: {
     color: '#fff',
-    fontSize: 16,
+    fontSize: 20,
     fontWeight: 'bold',
   },
   loginButtonDisabled: {
@@ -141,7 +142,7 @@ const styles = StyleSheet.create({
   },
   testButtonText: {
     color: '#fff',
-    fontSize: 14,
+    fontSize: 18,
     fontWeight: 'bold',
   },
   linkContainer: {
@@ -151,7 +152,7 @@ const styles = StyleSheet.create({
   },
   linkText: {
     color: '#222',
-    fontSize: 13,
+    fontSize: 16,
   },
   divider: {
     marginHorizontal: 6,

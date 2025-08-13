@@ -60,6 +60,10 @@ type ProgressContextType = {
   setPlacedDecorationsLocal: (items: { x: number; y: number; id: string }[]) => void;
   selectedDecoration: string | null;
   setSelectedDecoration: (id: string | null) => void;
+  // Attendance 관련 기능
+  attendanceStreak: number;
+  checkDailyAttendance: () => Promise<void>;
+  todayAttended: boolean;
 };
 
 const defaultProgressContext: ProgressContextType = {
@@ -103,6 +107,9 @@ const defaultProgressContext: ProgressContextType = {
   setPlacedDecorationsLocal: () => {},
   selectedDecoration: null,
   setSelectedDecoration: () => {},
+  attendanceStreak: 0,
+  checkDailyAttendance: async () => {},
+  todayAttended: false,
 };
 
 const ProgressContext = createContext<ProgressContextType>(defaultProgressContext);
@@ -127,6 +134,9 @@ export const ProgressProvider = ({ children }: { children: React.ReactNode }) =>
   const [obtainedDecorationsState, setObtainedDecorationsState] = useState<string[]>([]);
   const [placedDecorationsState, setPlacedDecorationsState] = useState<{ x: number; y: number; id: string }[]>([]);
   const [selectedDecorationState, setSelectedDecorationState] = useState<string | null>(null);
+  const [attendanceStreak, setAttendanceStreak] = useState(0);
+  const [lastAttendanceDate, setLastAttendanceDate] = useState<string | null>(null);
+  const [todayAttended, setTodayAttended] = useState(false);
 
   useEffect(() => {
     const loadData = async () => {
@@ -148,11 +158,15 @@ export const ProgressProvider = ({ children }: { children: React.ReactNode }) =>
         const savedObtainedDecorations = await AsyncStorage.getItem('@obtainedDecorations');
         const savedPlacedDecorations = await AsyncStorage.getItem('@placedDecorations');
         const savedSelectedDecoration = await AsyncStorage.getItem('@selectedDecoration');
+        const savedAttendanceStreak = await AsyncStorage.getItem('@attendanceStreak');
+        const savedLastAttendanceDate = await AsyncStorage.getItem('@lastAttendanceDate');
+        const savedTodayAttended = await AsyncStorage.getItem('@todayAttended');
 
         console.log('[ProgressContext] 초기 로드', {
           savedProgress, savedFlowerId, savedObtained, savedFurniture, savedRooms, savedSelectedRoom,
           savedHasChair, savedHasStand, savedCoins, savedBadgeLevel, savedCompletedChallenges, savedFeedbackCount,
-          savedPlacedFlowers, savedPlacedFurniture, savedObtainedDecorations, savedPlacedDecorations, savedSelectedDecoration
+          savedPlacedFlowers, savedPlacedFurniture, savedObtainedDecorations, savedPlacedDecorations, savedSelectedDecoration,
+          savedAttendanceStreak, savedLastAttendanceDate, savedTodayAttended
         });
 
         if (savedRooms !== null) setObtainedRoomsState(JSON.parse(savedRooms));
@@ -178,6 +192,9 @@ export const ProgressProvider = ({ children }: { children: React.ReactNode }) =>
         if (savedObtainedDecorations !== null) setObtainedDecorationsState(JSON.parse(savedObtainedDecorations));
         if (savedPlacedDecorations !== null) setPlacedDecorationsState(JSON.parse(savedPlacedDecorations));
         if (savedSelectedDecoration !== null) setSelectedDecorationState(savedSelectedDecoration);
+        if (savedAttendanceStreak !== null) setAttendanceStreak(JSON.parse(savedAttendanceStreak));
+        if (savedLastAttendanceDate !== null) setLastAttendanceDate(savedLastAttendanceDate);
+        if (savedTodayAttended !== null) setTodayAttended(JSON.parse(savedTodayAttended));
 
         if (savedFlowerId !== null) {
           setCurrentFlowerIdState(savedFlowerId);
@@ -433,6 +450,71 @@ export const ProgressProvider = ({ children }: { children: React.ReactNode }) =>
     }
   };
 
+  const checkDailyAttendance = async () => {
+    try {
+      const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD 형식
+      
+      if (todayAttended) {
+        console.log('[ProgressContext] 오늘 이미 출석체크 완료');
+        return;
+      }
+      
+      let newStreak = 1;
+      
+      if (lastAttendanceDate) {
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        const yesterdayStr = yesterday.toISOString().split('T')[0];
+        
+        if (lastAttendanceDate === yesterdayStr) {
+          // 연속 출석
+          newStreak = attendanceStreak + 1;
+        } else if (lastAttendanceDate === today) {
+          // 오늘 이미 출석함
+          return;
+        }
+        // else: 연속성이 끊어짐, newStreak = 1
+      }
+      
+      setAttendanceStreak(newStreak);
+      setLastAttendanceDate(today);
+      setTodayAttended(true);
+      
+      await AsyncStorage.setItem('@attendanceStreak', JSON.stringify(newStreak));
+      await AsyncStorage.setItem('@lastAttendanceDate', today);
+      await AsyncStorage.setItem('@todayAttended', JSON.stringify(true));
+      
+      console.log('[ProgressContext] 출석체크 완료', { newStreak, today });
+      
+      // 출석 관련 도전과제 체크
+      if (newStreak === 3) await completeChallenge('attend-3');
+      else if (newStreak === 5) await completeChallenge('attend-5');
+      else if (newStreak === 7) await completeChallenge('attend-7');
+      else if (newStreak === 14) await completeChallenge('attend-14');
+      
+      if (user && isLoaded) {
+        setTimeout(autoSyncToFirebase, 100);
+      }
+    } catch (e) {
+      console.error('[ProgressContext] 출석체크 실패:', e);
+    }
+  };
+
+  // 매일 자정에 todayAttended 리셋
+  useEffect(() => {
+    const checkDateChange = () => {
+      const today = new Date().toISOString().split('T')[0];
+      if (lastAttendanceDate && lastAttendanceDate !== today && todayAttended) {
+        setTodayAttended(false);
+        AsyncStorage.setItem('@todayAttended', JSON.stringify(false));
+        console.log('[ProgressContext] 날짜 변경으로 출석상태 리셋');
+      }
+    };
+    
+    const interval = setInterval(checkDateChange, 60000); // 1분마다 체크
+    return () => clearInterval(interval);
+  }, [lastAttendanceDate, todayAttended]);
+
   const syncWithFirebase = async (userId: string) => {
     try {
       await saveUserRoomData(userId, {
@@ -453,6 +535,9 @@ export const ProgressProvider = ({ children }: { children: React.ReactNode }) =>
         decorations: placedDecorationsState,
         obtainedDecorations: obtainedDecorationsState,
         selectedDecoration: selectedDecorationState,
+        attendanceStreak: attendanceStreak,
+        lastAttendanceDate: lastAttendanceDate,
+        todayAttended: todayAttended,
       });
       console.log('[ProgressContext] syncWithFirebase 완료');
     } catch (error) {
@@ -481,6 +566,9 @@ export const ProgressProvider = ({ children }: { children: React.ReactNode }) =>
         if (roomData.completedChallenges) setCompletedChallenges(roomData.completedChallenges);
         if (roomData.exerciseFeedbackCount !== undefined) setExerciseFeedbackCount(roomData.exerciseFeedbackCount);
         if (roomData.selectedDecoration !== undefined) setSelectedDecorationState(roomData.selectedDecoration);
+        if (roomData.attendanceStreak !== undefined) setAttendanceStreak(roomData.attendanceStreak);
+        if (roomData.lastAttendanceDate !== undefined) setLastAttendanceDate(roomData.lastAttendanceDate);
+        if (roomData.todayAttended !== undefined) setTodayAttended(roomData.todayAttended);
         console.log('[ProgressContext] loadFromFirebase', roomData);
       }
     } catch (error) {
@@ -510,13 +598,17 @@ export const ProgressProvider = ({ children }: { children: React.ReactNode }) =>
         obtainedDecorations: obtainedDecorationsState,
         placedDecorations: placedDecorationsState,
         selectedDecoration: selectedDecorationState,
+        attendanceStreak,
+        lastAttendanceDate,
+        todayAttended,
       });
     }
   }, [
     progress, currentFlowerId, obtainedFlowersState, obtainedFurnitureState,
     obtainedRoomsState, selectedRoom, hasChair, hasStand, coins, isLoaded,
     flowerBadgeLevel, completedChallenges, exerciseFeedbackCount, placedFlowers,
-    placedFurniture, obtainedDecorationsState, placedDecorationsState, selectedDecorationState
+    placedFurniture, obtainedDecorationsState, placedDecorationsState, selectedDecorationState,
+    attendanceStreak, lastAttendanceDate, todayAttended
   ]);
 
   return (
@@ -569,6 +661,9 @@ export const ProgressProvider = ({ children }: { children: React.ReactNode }) =>
         setPlacedDecorationsLocal,
         selectedDecoration: selectedDecorationState,
         setSelectedDecoration,
+        attendanceStreak,
+        checkDailyAttendance,
+        todayAttended,
       }}
     >
       {children}

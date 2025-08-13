@@ -14,6 +14,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useExercise } from '../../context/ExerciseContext';
+import { useMusicPlayer } from '../../context/MusicContext';
 
 const BACKEND_URL = 'http://127.0.0.1:8888';
 
@@ -39,6 +40,7 @@ export default function ExerciseDo() {
     recordExerciseEnd,
     getActualDuration
   } = useExercise();
+  const { switchTheme } = useMusicPlayer();
 
   const currentExercise = getCurrentExercise();
   
@@ -120,14 +122,31 @@ export default function ExerciseDo() {
         const data = await response.json();
         setExerciseData(data);
         
-        // 현재 운동의 목표 카운트에 도달하면 자동으로 다음 운동으로 이동
-        if (currentExercise && data.count >= currentExercise.count) {
-          console.log(`운동 완료: ${currentExercise.title} (${data.count}/${currentExercise.count})`);
-          stopExercise(true); // 자동으로 다음 단계로 진행
+        // 강화된 자동 완료 체크
+        if (currentExercise && typeof data.count === 'number' && typeof currentExercise.count === 'number') {
+          console.log(`📊 [DEBUG] 현재: ${data.count}, 목표: ${currentExercise.count}, 운동: ${currentExercise.title}`);
+          
+          // 목표 달성 체크 (>= 조건)
+          if (data.count >= currentExercise.count) {
+            console.log(`🎯 [AUTO-COMPLETE] 운동 자동 완료 트리거!`);
+            console.log(`🎯 [AUTO-COMPLETE] 조건: ${data.count} >= ${currentExercise.count}`);
+            
+            // 중복 실행 방지를 위한 상태 체크
+            if (isExerciseActive) {
+              console.log(`🎯 [AUTO-COMPLETE] 운동 종료 실행 중...`);
+              await stopExercise(true);
+              return;
+            }
+          }
+        }
+        
+        // 진행 상황 로그 (모든 카운트 표시)
+        if (currentExercise && data.count >= 0) {
+          console.log(`🔄 운동 진행: ${data.count}/${currentExercise.count} (${currentExercise.title})`);
         }
       }
     } catch (error) {
-      console.log('운동 데이터 조회 실패:', error);
+      console.log('❌ 운동 데이터 조회 실패:', error);
     }
   };
 
@@ -137,21 +156,28 @@ export default function ExerciseDo() {
       return;
     }
     try {
+      console.log(`🏃‍♂️ 운동 시작: ${currentExercise.title}, 목표 횟수: ${currentExercise.count}`);
+      
       const response = await fetch(`${BACKEND_URL}/exercise/start?exercise_type=${currentExercise.id}`, {
         method: 'POST',
       });
       if (response.ok) {
         setIsExerciseActive(true);
         intervalRef.current = setInterval(pollExerciseData, 1000);
+        console.log('✅ 운동 세션 활성화 및 모니터링 시작');
       } else {
         Alert.alert('Error', 'Failure to start exercising');
       }
     } catch (error) {
       Alert.alert('Error', 'Unable to communicate with the server.');
+      console.log('❌ 운동 시작 실패:', error);
     }
   };
 
   const stopExercise = async (proceedToNext: boolean = true) => {
+    console.log(`🛑 [STOP] 운동 종료 시작... (proceedToNext: ${proceedToNext})`);
+    
+    // 즉시 상태 변경으로 중복 실행 방지
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
       intervalRef.current = null;
@@ -161,14 +187,21 @@ export default function ExerciseDo() {
     try {
       const response = await fetch(`${BACKEND_URL}/exercise/stop`, { method: 'POST' });
       if (!response.ok) {
+        console.log('❌ 백엔드 운동 종료 실패');
         Alert.alert('Error', 'Failure to end exercising');
+      } else {
+        console.log('✅ 백엔드 운동 종료 성공');
       }
     } catch (error) {
+      console.log('❌ 백엔드 통신 실패:', error);
       Alert.alert('Error', 'Unable to communicate with the server.');
     }
 
     if (proceedToNext) {
+      console.log('➡️ [STOP] 다음 단계로 진행 중...');
       handleNextStep();
+    } else {
+      console.log('🏃‍♂️ [STOP] 운동만 종료, 페이지 유지');
     }
   };
 
@@ -181,13 +214,28 @@ export default function ExerciseDo() {
       const actualDuration = getActualDuration();
       const minutes = Math.floor(actualDuration / 60);
       const seconds = actualDuration % 60;
-      Alert.alert('Exercise Complete!', `All exercises completed successfully.\nTotal time : ${minutes}min ${seconds}sec`);
-      router.replace('/Exercise/ExerciseSummaryPage');
+      
+      console.log('🎉 모든 운동 완료!');
+      // 운동 완료 시 메인 테마로 전환
+      switchTheme('main');
+      
+      Alert.alert('Exercise Complete!', `All exercises completed successfully.\nTotal time : ${minutes}min ${seconds}sec`, [
+        {
+          text: 'OK',
+          onPress: () => router.replace('/Exercise/ExerciseSummaryPage')
+        }
+      ]);
     } else {
       // 아직 남은 운동이 있으므로 다음 운동으로 상태를 업데이트하고 소개 페이지로 이동합니다.
       advanceToNextExercise();
-      Alert.alert('Success!', 'Moving on to the next exercise');
-      router.replace('/Exercise/ExerciseIntroPage');
+      console.log(`➡️ 다음 운동으로 이동: ${exerciseQueue[nextIndex]?.title || 'Unknown'}`);
+      
+      Alert.alert('Exercise Complete! 🎯', 'Great job! Moving on to the next exercise.', [
+        {
+          text: 'Continue',
+          onPress: () => router.replace('/Exercise/ExerciseIntroPage')
+        }
+      ]);
     }
   };
 

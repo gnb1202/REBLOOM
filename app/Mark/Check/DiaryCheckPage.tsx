@@ -93,16 +93,8 @@ export default function DiaryCheckPage() {
         timestamp: new Date().toISOString()
       });
 
-      Alert.alert(
-        'Complete!',
-        'Today\'s health check completed! 💪',
-        [
-          {
-            text: 'OK',
-            onPress: () => router.push('/Home_page/Homepage')
-          }
-        ]
-      );
+      // Immediately navigate to homepage after successful save
+      router.push('/Home_page/Homepage');
     } catch (error) {
       console.error('Failed to save health check:', error);
       Alert.alert('Error', 'Save failed. Please try again.');

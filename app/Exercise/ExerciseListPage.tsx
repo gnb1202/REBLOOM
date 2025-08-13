@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { useExercise, ExerciseItem } from '../../context/ExerciseContext';
 import { useAuth } from '../../context/AuthContext';
+import { useMusicPlayer } from '../../context/MusicContext';
 import { generateExerciseRecommendations, type RecommendedExercise } from '../../utils/recommendation';
 import { EXERCISE_INSTRUCTIONS } from '../../utils/exerciseInstructions';
 
@@ -27,10 +28,31 @@ const exerciseList: ExerciseItem[] = Object.values(EXERCISE_INSTRUCTIONS).map(in
   count: instruction.repetitions,
 }));
 
+// 운동 데이터 검증 및 기본값 설정 함수
+const validateExerciseData = (exercise: ExerciseItem): ExerciseItem => ({
+  ...exercise,
+  id: exercise.id || `exercise_${Date.now()}`,
+  title: exercise.title || 'Untitled Exercise',
+  description: exercise.description || 'No description available',
+  duration: exercise.duration || '5 minutes',
+  difficulty: exercise.difficulty || 'EASY',
+  target: exercise.target || 'GENERAL',
+  count: exercise.count || 10,
+});
+
+// 추천 운동 데이터 검증 함수
+const validateRecommendedExercise = (rec: RecommendedExercise): RecommendedExercise => ({
+  ...rec,
+  score: typeof rec.score === 'number' ? rec.score : 0,
+  exercise: validateExerciseData(rec.exercise),
+  reason: rec.reason || 'Recommended for you',
+});
+
 export default function ExerciseListPage() {
   const router = useRouter();
   const { startExerciseQueue } = useExercise(); // ExerciseContext 사용
   const { user } = useAuth();
+  const { switchTheme } = useMusicPlayer(); // 음악 플레이어 사용
   const [selectedExercises, setSelectedExercises] = useState<string[]>([]);
   const [recommendedExercises, setRecommendedExercises] = useState<RecommendedExercise[]>([]);
   const [loadingRecommendations, setLoadingRecommendations] = useState(true);
@@ -38,6 +60,9 @@ export default function ExerciseListPage() {
 
   useEffect(() => {
     loadRecommendations();
+    // 운동 페이지에 들어오면 운동 테마로 전환
+    switchTheme('exercise');
+    console.log('🎵 운동 페이지 진입 - 운동 테마 재생');
   }, [user]);
 
   const loadRecommendations = async () => {
@@ -108,19 +133,24 @@ export default function ExerciseListPage() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.replace('/Home_page/Homepage')}>
+        <TouchableOpacity onPress={() => {
+          switchTheme('main'); // 메인 테마로 전환
+          router.replace('/Home_page/Homepage');
+        }}>
           <Text style={styles.backButton}>{'<'}</Text>
         </TouchableOpacity>
         <Text style={styles.title}>Plan your Exercise Session!</Text>
-        <View style={{width:24}}/>
+        <View style={styles.spacer}/>
       </View>
 
       <ScrollView style={styles.exerciseList}>
         {/* AI Recommended Exercises Section */}
         <View style={styles.recommendedSection}>
-          <Text style={styles.sectionTitle}>🤖 AI Recommended for You</Text>
-          {targetBodyPart && (
-            <Text style={styles.targetPartText}>Today's focus: {targetBodyPart.toUpperCase()}</Text>
+          <Text style={styles.sectionTitle}>Recommended for You</Text>
+          {targetBodyPart && typeof targetBodyPart === 'string' && targetBodyPart.trim().length > 0 && (
+            <Text style={styles.targetPartText}>
+              Today's focus: {targetBodyPart.toUpperCase()}
+            </Text>
           )}
           {loadingRecommendations ? (
             <View style={styles.loadingContainer}>
@@ -129,8 +159,10 @@ export default function ExerciseListPage() {
             </View>
           ) : recommendedExercises.length > 0 ? (
             recommendedExercises.map((rec) => {
-              const exercise = exerciseList.find(ex => ex.id === rec.exercise.id);
+              const validatedRec = validateRecommendedExercise(rec);
+              const exercise = exerciseList.find(ex => ex.id === validatedRec.exercise.id);
               if (!exercise) return null;
+              const validatedExercise = validateExerciseData(exercise);
               
               return (
                 <TouchableOpacity
@@ -143,32 +175,37 @@ export default function ExerciseListPage() {
                   onPress={() => handleExerciseSelect(exercise.id)}
                 >
                   <View style={styles.recommendedBadge}>
-                    <Text style={styles.scoreText}>Score: {rec.score}</Text>
+                    <Text style={styles.scoreText}>
+                      Score: {typeof validatedRec.score === 'number' ? validatedRec.score.toFixed(1) : 'N/A'}
+                    </Text>
                   </View>
                   <Image source={exercise.imageUrl} style={styles.exerciseImage} />
                   <View style={styles.exerciseInfo}>
                     <View style={styles.titleContainer}>
-                      <Text style={styles.exerciseTitle}>{exercise.title}</Text>
-                      {getExerciseOrder(exercise.id) && (
-                        <View style={styles.orderBadge}>
-                          <Text style={styles.orderText}>{getExerciseOrder(exercise.id)}</Text>
-                        </View>
-                      )}
+                      <Text style={styles.exerciseTitle}>{validatedExercise.title}</Text>
+                      {(() => {
+                        const order = getExerciseOrder(exercise.id);
+                        return order !== null && order !== undefined && (
+                          <View style={styles.orderBadge}>
+                            <Text style={styles.orderText}>{String(order)}</Text>
+                          </View>
+                        );
+                      })()}
                     </View>
                     <Text style={styles.exerciseDescription}>
-                      {exercise.description}
+                      {validatedExercise.description}
                     </Text>
                     <View style={styles.exerciseDetails}>
-                      <Text style={styles.exerciseTarget}>{exercise.target}</Text>
-                      <Text style={styles.exerciseDuration}>⏱ {exercise.duration}</Text>
-                      <Text style={styles.exerciseCount}>🔄 {exercise.count} reps</Text>
+                      <Text style={styles.exerciseTarget}>{validatedExercise.target}</Text>
+                      <Text style={styles.exerciseDuration}>⏱ {validatedExercise.duration}</Text>
+                      <Text style={styles.exerciseCount}>🔄 {validatedExercise.count} reps</Text>
                       <Text
                         style={[
                           styles.exerciseDifficulty,
-                          { color: getDifficultyColor(exercise.difficulty) },
+                          { color: getDifficultyColor(validatedExercise.difficulty) },
                         ]}
                       >
-                        Difficulty: {exercise.difficulty}
+                        Difficulty: {validatedExercise.difficulty}
                       </Text>
                     </View>
                   </View>
@@ -183,7 +220,9 @@ export default function ExerciseListPage() {
         {/* All Exercises Section */}
         <View style={styles.allExercisesSection}>
           <Text style={styles.sectionTitle}>All Exercises</Text>
-          {exerciseList.map((exercise) => (
+          {exerciseList.map((exercise) => {
+            const validatedExercise = validateExerciseData(exercise);
+            return (
             <TouchableOpacity
               key={exercise.id}
               style={[
@@ -195,32 +234,36 @@ export default function ExerciseListPage() {
               <Image source={exercise.imageUrl} style={styles.exerciseImage} />
               <View style={styles.exerciseInfo}>
                 <View style={styles.titleContainer}>
-                  <Text style={styles.exerciseTitle}>{exercise.title}</Text>
-                  {getExerciseOrder(exercise.id) && (
-                    <View style={styles.orderBadge}>
-                      <Text style={styles.orderText}>{getExerciseOrder(exercise.id)}</Text>
-                    </View>
-                  )}
+                  <Text style={styles.exerciseTitle}>{validatedExercise.title}</Text>
+                  {(() => {
+                    const order = getExerciseOrder(exercise.id);
+                    return order !== null && order !== undefined && (
+                      <View style={styles.orderBadge}>
+                        <Text style={styles.orderText}>{String(order)}</Text>
+                      </View>
+                    );
+                  })()}
                 </View>
                 <Text style={styles.exerciseDescription}>
-                  {exercise.description}
+                  {validatedExercise.description}
                 </Text>
                 <View style={styles.exerciseDetails}>
-                  <Text style={styles.exerciseTarget}>{exercise.target}</Text>
-                  <Text style={styles.exerciseDuration}>⏱ {exercise.duration}</Text>
-                  <Text style={styles.exerciseCount}>🔄 {exercise.count} reps</Text>
+                  <Text style={styles.exerciseTarget}>{validatedExercise.target}</Text>
+                  <Text style={styles.exerciseDuration}>⏱ {validatedExercise.duration}</Text>
+                  <Text style={styles.exerciseCount}>🔄 {validatedExercise.count} reps</Text>
                   <Text
                     style={[
                       styles.exerciseDifficulty,
-                      { color: getDifficultyColor(exercise.difficulty) },
+                      { color: getDifficultyColor(validatedExercise.difficulty) },
                     ]}
                   >
-                    Difficulty: {exercise.difficulty}
+                    Difficulty: {validatedExercise.difficulty}
                   </Text>
                 </View>
               </View>
             </TouchableOpacity>
-          ))}
+            );
+          })}
         </View>
       </ScrollView>
 
@@ -257,7 +300,7 @@ const styles = StyleSheet.create({
   },
   orderText: {
     color: '#fff',
-    fontSize: 12,
+    fontSize: 18,
     fontWeight: 'bold',
   },
   recommendedSection: {
@@ -267,7 +310,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: 26,
     fontWeight: 'bold',
     color: '#333',
     marginBottom: 15,
@@ -275,7 +318,7 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   exerciseTarget: {
-    fontSize: 14,
+    fontSize: 18,
     color: '#5C7BEE',
     backgroundColor: '#E3F2FD',
     paddingHorizontal: 8,
@@ -296,12 +339,12 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   backButton: {
-    fontSize: 24,
+    fontSize: 28,
     marginRight: 15,
     color: '#333',
   },
   title: {
-    fontSize: 24,
+    fontSize: 30,
     fontWeight: 'bold',
     color: '#333',
   },
@@ -313,8 +356,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     backgroundColor: '#f8f9fa',
     borderRadius: 12,
-    padding: 15,
-    marginBottom: 15,
+    padding: 18,
+    marginBottom: 18,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -330,8 +373,8 @@ const styles = StyleSheet.create({
     borderWidth: 2,
   },
   exerciseImage: {
-    width: 80,
-    height: 80,
+    width: 90,
+    height: 90,
     borderRadius: 8,
     marginRight: 15,
   },
@@ -339,13 +382,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   exerciseTitle: {
-    fontSize: 16,
+    fontSize: 22,
     fontWeight: 'bold',
     color: '#333',
     marginBottom: 5,
   },
   exerciseDescription: {
-    fontSize: 14,
+    fontSize: 18,
     color: '#666',
     marginBottom: 8,
   },
@@ -355,22 +398,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   exerciseDuration: {
-    fontSize: 14,
+    fontSize: 18,
     color: '#5C7BEE',
   },
   exerciseCount: {
-    fontSize: 14,
+    fontSize: 18,
     color: '#FF6B6B',
     fontWeight: '600',
   },
   exerciseDifficulty: {
-    fontSize: 14,
+    fontSize: 18,
     fontWeight: '500',
   },
   startButton: {
     backgroundColor: '#5C7BEE',
     margin: 20,
-    padding: 15,
+    padding: 18,
     borderRadius: 10,
     alignItems: 'center',
   },
@@ -379,7 +422,7 @@ const styles = StyleSheet.create({
   },
   startButtonText: {
     color: '#fff',
-    fontSize: 16,
+    fontSize: 22,
     fontWeight: 'bold',
   },
   recommendedCard: {
@@ -399,11 +442,11 @@ const styles = StyleSheet.create({
   },
   scoreText: {
     color: '#fff',
-    fontSize: 12,
+    fontSize: 18,
     fontWeight: 'bold',
   },
   targetPartText: {
-    fontSize: 14,
+    fontSize: 20,
     color: '#666',
     textAlign: 'center',
     marginBottom: 10,
@@ -415,7 +458,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     marginTop: 10,
-    fontSize: 14,
+    fontSize: 20,
     color: '#666',
   },
   recommendationReason: {
@@ -432,10 +475,13 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
   },
   noRecommendationsText: {
-    fontSize: 14,
+    fontSize: 20,
     color: '#999',
     textAlign: 'center',
     padding: 20,
     fontStyle: 'italic',
+  },
+  spacer: {
+    width: 24,
   },
 });

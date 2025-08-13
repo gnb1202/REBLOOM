@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { useAuth } from '../context/AuthContext';
+import { useProgress } from '../context/ProgressContext';
 
 interface ProfileCardProps {
   onPress: () => void;
@@ -8,21 +9,29 @@ interface ProfileCardProps {
 
 const ProfileCard: React.FC<ProfileCardProps> = ({ onPress }) => {
   const { userProfile, calculateDaysSinceSurgery } = useAuth();
+  const { flowerBadgeLevel, attendanceStreak, exerciseFeedbackCount } = useProgress();
 
-  // 뱃지 이모지 매핑
-  const getBadgeEmoji = (badgeId?: string): string => {
-    const badgeEmojiMap: { [key: string]: string } = {
-      'exercise1': '🎯',
-      'exercise2': '💪',
-      'exercise3': '🏃‍♂️',
-      'exercise4': '🏆',
-      'flower1': '🌸',
-      'flower2': '🌼',
-      'flower3': '🌺',
-      'flower4': '🌻',
-    };
+  // 획득한 뱃지 확인 및 표시할 뱃지 결정
+  const getAcquiredBadge = (): string => {
+    // 꽃 뱃지 (가장 높은 우선순위)
+    if (flowerBadgeLevel >= 4) return '🌻';
+    if (flowerBadgeLevel >= 3) return '🌺';
+    if (flowerBadgeLevel >= 2) return '🌼';
+    if (flowerBadgeLevel >= 1) return '🌸';
     
-    return badgeEmojiMap[badgeId || ''] || '🏅';
+    // 출석 뱃지
+    if (attendanceStreak >= 14) return '📅';
+    if (attendanceStreak >= 7) return '📅';
+    if (attendanceStreak >= 5) return '📅';
+    if (attendanceStreak >= 3) return '📅';
+    
+    // 피드백 뱃지
+    if (exerciseFeedbackCount >= 7) return '🗣️';
+    if (exerciseFeedbackCount >= 5) return '🗣️';
+    if (exerciseFeedbackCount >= 3) return '🗣️';
+    
+    // 획득한 뱃지가 없으면 기본 아이콘
+    return '🏅';
   };
 
   if (!userProfile?.gameData) {
@@ -35,8 +44,11 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ onPress }) => {
 
   // 필수 데이터 검증
   const { level = 1, consecutiveExercises = 0, currency = 0 } = userProfile.gameData;
-  const { nickname: profileNickname, selectedBadge } = userProfile.profile || {};
+  const { nickname: profileNickname } = userProfile.profile || {};
   const nickname = profileNickname || userProfile.nickname || 'User';
+  
+  // 획득한 뱃지 가져오기
+  const displayBadge = getAcquiredBadge();
 
   const daysSinceSurgery = calculateDaysSinceSurgery();
 
@@ -48,7 +60,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ onPress }) => {
           <View style={styles.badgeContainer}>
             <View style={styles.defaultBadge}>
               <Text style={styles.badgeText}>
-                {getBadgeEmoji(selectedBadge)}
+                {displayBadge}
               </Text>
             </View>
           </View>
@@ -127,7 +139,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   badgeText: {
-    fontSize: 12,
+    fontSize: 16,
   },
   levelContainer: {
     backgroundColor: '#5C7BEE',
@@ -137,18 +149,18 @@ const styles = StyleSheet.create({
   },
   levelText: {
     color: '#fff',
-    fontSize: 10,
+    fontSize: 14,
     fontWeight: 'bold',
   },
   nickname: {
-    fontSize: 14,
+    fontSize: 18,
     fontWeight: 'bold',
     color: '#333',
     marginBottom: 4,
     width: '100%',
   },
   daysSince: {
-    fontSize: 16,
+    fontSize: 20,
     fontWeight: 'bold',
     color: '#5C7BEE',
     marginBottom: 6,
@@ -161,11 +173,11 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   exerciseLabel: {
-    fontSize: 10,
+    fontSize: 14,
     color: '#666',
   },
   exerciseCount: {
-    fontSize: 11,
+    fontSize: 15,
     fontWeight: 'bold',
     color: '#333',
   },
@@ -175,16 +187,16 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   coinIcon: {
-    fontSize: 12,
+    fontSize: 16,
     marginRight: 4,
   },
   coinAmount: {
-    fontSize: 11,
+    fontSize: 15,
     fontWeight: 'bold',
     color: '#f39c12',
   },
   loadingText: {
-    fontSize: 12,
+    fontSize: 16,
     color: '#666',
     textAlign: 'center',
   },

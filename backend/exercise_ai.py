@@ -25,6 +25,7 @@ class ExerciseAI:
         }
         self.lock = threading.Lock()
         self.count_simulation = 0  # 시뮬레이션용 카운터
+        self._last_count = -1  # 카운트 변경 감지용
         
         # 운동 설정 파라미터 (기본값)
         self.exercise_config = {
@@ -39,8 +40,8 @@ class ExerciseAI:
             # ARM EXERCISES
             "biceps_curl": {
                 "kpts": [6, 8, 10],  # 왼쪽 어깨-팔꿈치-손목
-                "up_angle": 40,      # 팔을 완전히 구부린 상태
-                "down_angle": 160    # 팔을 편 상태
+                "up_angle": 35,      # 팔을 완전히 구부린 상태
+                "down_angle": 130    # 팔을 편 상태
             },
             
             # NECK EXERCISE
@@ -215,9 +216,9 @@ class ExerciseAI:
                     print("기존 AI Gym 인스턴스 해제")
                     self.gym = None
                     
-                print("AI Gym 초기화 시작...")
+                print("AI Gym 초기화 시작 (단일 사용자 모드)...")
                 print(f"사용 중인 설정: kpts={self.exercise_config['kpts']}, up_angle={self.exercise_config['up_angle']}, down_angle={self.exercise_config['down_angle']}")
-                print("성능 최적화: max_det=1 (최대 1명만 탐지)")
+                print("최적화: max_det=1 (단일 사용자만 추적, 멀티-person 비활성화)")
                 
                 self.gym = solutions.AIGym(
                     line_width=2,
@@ -225,7 +226,7 @@ class ExerciseAI:
                     kpts=self.exercise_config["kpts"],
                     up_angle=self.exercise_config["up_angle"],
                     down_angle=self.exercise_config["down_angle"],
-                    max_det=1,  # 최대 1명만 탐지하여 성능 향상
+                    max_det=1,  # 단일 사용자만 추적 (멀티-person 기능 비활성화)
                     fps=60,
                 )
                 print(f"AI Gym 초기화 완료 - 운동 타입: {self.exercise_config['exercise_type']}")
@@ -264,12 +265,23 @@ class ExerciseAI:
                 "is_detecting": False
             }
             self.count_simulation = 0  # 시뮬레이션 카운터 리셋
-            # AIGym 내부 카운터도 리셋 (가능한 경우)
+            self._last_count = -1  # 카운트 변경 감지 초기화
+            
+            # AI Gym 완전히 재생성하여 확실한 리셋
             if self.gym:
-                # AIGym의 count 속성이 있다면 리셋
-                if hasattr(self.gym, 'count'):
-                    self.gym.count = 0
-        print("운동 세션 리셋 완료")
+                try:
+                    # 기존 AI Gym 정리
+                    self.gym = None
+                    print("🔄 기존 AI Gym 인스턴스 정리")
+                    
+                    # 새로운 AI Gym 생성
+                    if ULTRALYTICS_AVAILABLE:
+                        self.setup_ai_gym(force_rebuild=True)
+                        print("✅ AI Gym 완전 재생성으로 카운터 초기화")
+                except Exception as e:
+                    print(f"❌ AI Gym 재생성 실패: {e}")
+                    
+        print("🚀 운동 세션 완전 리셋 완료")
     
     def get_current_data(self):
         """현재 운동 데이터 반환"""
@@ -283,12 +295,12 @@ class ExerciseAI:
             self.cap = None
     
     def calculate_accuracy(self, results):
-        """운동 정확도 계산 - 실시간 각도 기반"""
+        """운동 정확도 계산 - 단일 사용자 실시간 각도 기반"""
         if results is None or not results.workout_angle:
             return 85.0  # 데이터가 없으면 기본값 반환
 
         try:
-            # AI Gym 결과에서 실시간 각도와 단계 정보 가져오기 (max_det=1 기준)
+            # 단일 사용자(인덱스 0)의 각도와 단계 정보만 사용
             current_angle = results.workout_angle[0]
             current_stage = results.workout_stage[0]
             target_up_angle = self.exercise_config["up_angle"]
@@ -467,15 +479,20 @@ class ExerciseAI:
                         try:
                             results = self.gym(frame)
                             
-                            # workout_count 출력
+                            # 단일 사용자 운동 카운트 처리
                             if hasattr(results, 'workout_count') and results.workout_count is not None:
-                                print(f"Frame {frame_count} - workout_count: {results.workout_count}")
+                                # 첫 번째 사용자의 카운트만 사용 (max_det=1 설정으로 인해 하나만 검출됨)
                                 if len(results.workout_count) > 0:
                                     count = results.workout_count[0]
                                     with self.lock:
                                         self.current_data["count"] = count
                                         self.current_data["accuracy"] = self.calculate_accuracy(results)
                                         self.current_data["is_detecting"] = True
+                                    
+                                    # 카운트가 변경될 때만 로그 출력 (성능 최적화)
+                                    if count != getattr(self, '_last_count', -1):
+                                        print(f"운동 카운트: {count}")
+                                        self._last_count = count
                             
                             # 분석된 프레임 사용 (키포인트, 카운트 등이 그려진 상태)
                             if hasattr(results, 'plot_im'):

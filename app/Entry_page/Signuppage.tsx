@@ -204,7 +204,7 @@ const styles = StyleSheet.create({
     paddingTop: 50,
   },
   header: {
-    fontSize: 20,
+    fontSize: 26,
     fontWeight: 'bold',
     marginBottom: 10,
   },
@@ -217,6 +217,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 12,
     marginBottom: 8,
+    fontSize: 16,
   },
   passwordContainer: {
     flexDirection: 'row',
@@ -229,9 +230,10 @@ const styles = StyleSheet.create({
   passwordInput: {
     flex: 1,
     padding: 12,
+    fontSize: 16,
   },
   eye: {
-    fontSize: 18,
+    fontSize: 22,
     paddingHorizontal: 10,
   },
   button: {
@@ -244,10 +246,11 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: 'bold',
     textAlign: 'center',
+    fontSize: 18,
   },
   error: {
     color: 'red',
-    fontSize: 12,
+    fontSize: 16,
     marginBottom: 6,
     marginLeft: 4,
   },
@@ -255,7 +258,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   dateText: {
-    fontSize: 14,
+    fontSize: 16,
     color: '#000',
   },
   placeholderText: {
@@ -285,12 +288,12 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   modalTitle: {
-    fontSize: 18,
+    fontSize: 22,
     fontWeight: 'bold',
     color: '#333',
   },
   closeButton: {
-    fontSize: 20,
+    fontSize: 24,
     color: '#666',
     fontWeight: 'bold',
   },

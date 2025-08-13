@@ -77,12 +77,12 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   backButtonText: {
-    fontSize: 25,
+    fontSize: 30,
     color: '#4a90e2',
     fontWeight: '500',
   },
   header: {
-    fontSize: 30,
+    fontSize: 34,
     fontWeight: 'bold',
     color: '#333',
     letterSpacing: 1,
@@ -102,7 +102,7 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   menuTitle: {
-    fontSize: 19,
+    fontSize: 23,
     fontWeight: '700',
     letterSpacing: 0.5,
   },

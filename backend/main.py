@@ -144,7 +144,9 @@ async def stop_exercise():
     exercise_session.accuracy = 0
     exercise_session.start_time = None
     
-    # AI 정리
+    # AI 완전 리셋 (다음 운동을 위해)
+    print("🔄 운동 종료 - AI 시스템 완전 리셋 수행")
+    exercise_ai.reset_session()
     exercise_ai.cleanup_session()
     
     return {"status": "stopped", "summary": final_data}

@@ -41,7 +41,9 @@ export default function QuestPage() {
     completedChallenges,
     completeChallenge,
     exerciseFeedbackCount,
-    attendanceStreak, // ✅ Get attendance streak count
+    attendanceStreak,
+    checkDailyAttendance,
+    todayAttended,
   } = useProgress();
 
   const badgeImage = getBadgeImage(flowerBadgeLevel);
@@ -111,6 +113,59 @@ export default function QuestPage() {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Quest</Text>
+
+      {/* Badge Display Section */}
+      <View style={styles.badgeSection}>
+        <Text style={styles.badgeTitle}>Your Badges</Text>
+        <View style={styles.badgeContainer}>
+          {/* Flower Badge */}
+          <View style={styles.badgeItem}>
+            {badgeImage ? (
+              <Image source={badgeImage} style={styles.badgeImage} />
+            ) : (
+              <View style={styles.badgePlaceholder}>
+                <Text style={styles.badgePlaceholderText}>🌸</Text>
+              </View>
+            )}
+            <Text style={styles.badgeLabel}>Flower</Text>
+            <Text style={styles.badgeValue}>Lv.{flowerBadgeLevel}</Text>
+          </View>
+
+          {/* Attendance Badge */}
+          <View style={styles.badgeItem}>
+            <TouchableOpacity
+              onPress={checkDailyAttendance}
+              disabled={todayAttended}
+              style={[styles.attendanceBadge, todayAttended && styles.attendanceBadgeCompleted]}
+            >
+              <Text style={styles.attendanceBadgeEmoji}>📅</Text>
+              <Text style={styles.attendanceBadgeCount}>{attendanceStreak}</Text>
+            </TouchableOpacity>
+            <Text style={styles.badgeLabel}>Attendance</Text>
+            <Text style={styles.badgeValue}>{attendanceStreak} days</Text>
+          </View>
+
+          {/* Exercise Feedback Badge */}
+          <View style={styles.badgeItem}>
+            <View style={styles.feedbackBadge}>
+              <Text style={styles.feedbackBadgeEmoji}>🗣️</Text>
+              <Text style={styles.feedbackBadgeCount}>{exerciseFeedbackCount}</Text>
+            </View>
+            <Text style={styles.badgeLabel}>Feedback</Text>
+            <Text style={styles.badgeValue}>{exerciseFeedbackCount} sessions</Text>
+          </View>
+        </View>
+
+        {/* Daily Attendance Check Button */}
+        {!todayAttended && (
+          <TouchableOpacity
+            style={styles.checkInButton}
+            onPress={checkDailyAttendance}
+          >
+            <Text style={styles.checkInButtonText}>🎯 Daily Check-in</Text>
+          </TouchableOpacity>
+        )}
+      </View>
 
       <View style={styles.tabWrapper}>
         {['Daily', 'Weekly', 'Monthly', 'Challenge'].map((tab, index, array) => {
@@ -195,7 +250,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   title: {
-    fontSize: 22,
+    fontSize: 26,
     fontWeight: '700',
     textAlign: 'center',
     color: '#2F4034',
@@ -227,7 +282,7 @@ const styles = StyleSheet.create({
   tabText: {
     color: '#3F5C45',
     fontWeight: 'bold',
-    fontSize: 14,
+    fontSize: 18,
   },
   activeTabText: {
     color: '#fff',
@@ -251,12 +306,12 @@ const styles = StyleSheet.create({
     borderColor: '#A8C8A0',
   },
   emoji: {
-    fontSize: 20,
+    fontSize: 24,
     marginRight: 12,
   },
   questText: {
     flex: 1,
-    fontSize: 14,
+    fontSize: 18,
     color: '#333',
   },
   questTextDone: {
@@ -274,7 +329,7 @@ const styles = StyleSheet.create({
   },
   completeBtnText: {
     color: '#fff',
-    fontSize: 12,
+    fontSize: 16,
     fontWeight: 'bold',
   },
   closeButton: {
@@ -285,5 +340,125 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 24,
     borderRadius: 10,
+  },
+  // Badge Section Styles
+  badgeSection: {
+    backgroundColor: '#F5F2EB',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#E0DDD4',
+  },
+  badgeTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#2F4034',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  badgeContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginBottom: 16,
+  },
+  badgeItem: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  badgeImage: {
+    width: 40,
+    height: 40,
+    marginBottom: 8,
+  },
+  badgePlaceholder: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#E8E5DE',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  badgePlaceholderText: {
+    fontSize: 20,
+  },
+  attendanceBadge: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#5C7BEE',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  attendanceBadgeCompleted: {
+    backgroundColor: '#4CAF50',
+  },
+  attendanceBadgeEmoji: {
+    fontSize: 20,
+  },
+  attendanceBadgeCount: {
+    position: 'absolute',
+    bottom: -2,
+    right: -2,
+    backgroundColor: '#FF6B6B',
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: 'bold',
+    paddingHorizontal: 4,
+    paddingVertical: 1,
+    borderRadius: 8,
+    minWidth: 16,
+    textAlign: 'center',
+  },
+  feedbackBadge: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#FF8A65',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  feedbackBadgeEmoji: {
+    fontSize: 20,
+  },
+  feedbackBadgeCount: {
+    position: 'absolute',
+    bottom: -2,
+    right: -2,
+    backgroundColor: '#4CAF50',
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: 'bold',
+    paddingHorizontal: 4,
+    paddingVertical: 1,
+    borderRadius: 8,
+    minWidth: 16,
+    textAlign: 'center',
+  },
+  badgeLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#3F5C45',
+    marginBottom: 2,
+  },
+  badgeValue: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
+  },
+  checkInButton: {
+    backgroundColor: '#4CAF50',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    alignSelf: 'center',
+  },
+  checkInButtonText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
   },
 });

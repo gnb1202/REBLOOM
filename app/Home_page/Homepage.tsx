@@ -35,6 +35,7 @@ import ProfileModal from '../../components/ProfileModal';
 
 import { useAuth } from '../../context/AuthContext';
 import { useProgress } from '../../context/ProgressContext';
+import { useMusicPlayer } from '../../context/MusicContext';
 
 import daisy from '../../assets/images/flowers/Display/daisy_display.png';
 import freesia from '../../assets/images/flowers/Display/freesia_display.png';
@@ -122,6 +123,7 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
   } = useProgress();
 
   const { user, userProfile } = useAuth();
+  const { isPlaying, togglePlayPause, currentTheme, switchTheme } = useMusicPlayer();
 
   const minScale = dimensions.height / ORIGINAL_HEIGHT;
   const imageScaledWidth = ORIGINAL_WIDTH * minScale;
@@ -135,6 +137,13 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
     checkHealthCheckStatus();
     checkAutoShowHealthCheck();
     loadShopLikeData();
+    
+    // 홈페이지 진입 시 메인 테마로 전환
+    if (currentTheme !== 'main') {
+      switchTheme('main');
+      console.log('🎵 홈페이지 진입 - 메인 테마 재생');
+    }
+    
     return () => subscription?.remove?.();
   }, [user]);
 
@@ -498,7 +507,7 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
           <Text style={{ fontSize: 24, marginRight: 4 }}>
             {isLiked ? '❤️' : '🤍'}
           </Text>
-          <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#4A4A4A' }}>
+          <Text style={{ fontSize: 22, fontWeight: 'bold', color: '#4A4A4A' }}>
             {likeCount}
           </Text>
         </TouchableOpacity>
@@ -506,6 +515,9 @@ export default function Homepage({ isRoomOnly = false }: { isRoomOnly?: boolean 
 
       {/* 메뉴 버튼 */}
 <View style={styles.leftButtonContainer}>
+  <TouchableOpacity onPress={togglePlayPause} style={styles.button}>
+    <Text style={styles.buttonText}>{isPlaying ? '🔊' : '🔇'}</Text>
+  </TouchableOpacity>
   <TouchableOpacity onPress={() => router.push('/Home_page/HelpPage')} style={styles.button}>
     <Text style={styles.buttonText}>?</Text>
   </TouchableOpacity>
@@ -597,7 +609,7 @@ const styles = StyleSheet.create({
 leftButtonContainer: {
   position: 'absolute',
   top: 40,
-  left: '14%', // ← px 대신 % 사용
+  left: '10%',
   zIndex: 10,
   flexDirection: 'row',
   gap: 10,
@@ -607,7 +619,7 @@ leftButtonContainer: {
 rightButtonContainer: {
   position: 'absolute',
   top: 40,
-  right: '13%', // ← px 대신 % 사용
+  right: '10%',
   zIndex: 10,
   flexDirection: 'row',
   gap: 10,
@@ -635,6 +647,7 @@ rightButtonContainer: {
   },
   buttonText: {
     fontWeight: 'bold',
+    fontSize: 16,
   },
   overlayPartial: {
     position: 'absolute',
@@ -667,7 +680,7 @@ rightButtonContainer: {
   menuItem: {
     paddingVertical: 8,
     paddingHorizontal: 12,
-    fontSize: 14,
+    fontSize: 18,
     color: '#000',
     fontWeight: 'bold',
   },

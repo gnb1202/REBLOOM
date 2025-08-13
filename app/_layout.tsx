@@ -10,6 +10,7 @@ import { ProgressProvider } from '../context/ProgressContext';
 import { CoinProvider } from '../context/CoinContext';
 import { AuthProvider } from '../context/AuthContext';
 import { ExerciseProvider } from '../context/ExerciseContext';
+import { MusicProvider } from '../context/MusicContext';
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
@@ -30,17 +31,19 @@ export default function RootLayout() {
       <ExerciseProvider>
         <CoinProvider>
           <ProgressProvider>
-            <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-              <Stack>
-                <Stack.Screen name="index" options={{ headerShown: false }} />
-                <Stack.Screen name="+not-found" />
-                <Stack.Screen
-                  name="Exercise/ExerciseIntroPage"
-                  options={{ animation: 'none' }}
-                />
-              </Stack>
-              <StatusBar style="auto" />
-            </ThemeProvider>
+            <MusicProvider>
+              <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+                <Stack>
+                  <Stack.Screen name="index" options={{ headerShown: false }} />
+                  <Stack.Screen name="+not-found" />
+                  <Stack.Screen
+                    name="Exercise/ExerciseIntroPage"
+                    options={{ animation: 'none' }}
+                  />
+                </Stack>
+                <StatusBar style="auto" />
+              </ThemeProvider>
+            </MusicProvider>
           </ProgressProvider>
         </CoinProvider>
       </ExerciseProvider>
