@@ -50,6 +50,7 @@ export default function ExerciseDo() {
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const [totalElapsedTime, setTotalElapsedTime] = useState(0);
   const totalTimeIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const [isStoppingExercise, setIsStoppingExercise] = useState(false);
 
   // 서버 연결 및 운동 설정
   useEffect(() => {
@@ -115,7 +116,7 @@ export default function ExerciseDo() {
   };
 
   const pollExerciseData = async () => {
-    if (!isExerciseActive) return;
+    if (!isExerciseActive || isStoppingExercise) return;
     try {
       const response = await fetch(`${BACKEND_URL}/exercise/data`);
       if (response.ok) {
@@ -132,9 +133,10 @@ export default function ExerciseDo() {
             console.log(`🎯 [AUTO-COMPLETE] 조건: ${data.count} >= ${currentExercise.count}`);
             
             // 중복 실행 방지를 위한 상태 체크
-            if (isExerciseActive) {
+            if (isExerciseActive && !isStoppingExercise) {
               console.log(`🎯 [AUTO-COMPLETE] 운동 종료 실행 중...`);
-              await stopExercise(true);
+              setIsStoppingExercise(true);
+              await stopExercise(true, true); // 자동 완료시에는 Alert 표시
               return;
             }
           }
@@ -174,8 +176,9 @@ export default function ExerciseDo() {
     }
   };
 
-  const stopExercise = async (proceedToNext: boolean = true) => {
-    console.log(`🛑 [STOP] 운동 종료 시작... (proceedToNext: ${proceedToNext})`);
+  const stopExercise = async (proceedToNext: boolean = true, showAlert: boolean = true): Promise<void> => {
+    console.log(`🛑 [STOP] 운동 종료 시작... (proceedToNext: ${proceedToNext}, showAlert: ${showAlert})`);
+    console.log(`🛑 [STOP] 현재 운동: ${currentExercise?.title}, 인덱스: ${currentExerciseIndex}/${exerciseQueue.length}`);
     
     // 즉시 상태 변경으로 중복 실행 방지
     if (intervalRef.current) {
@@ -197,18 +200,29 @@ export default function ExerciseDo() {
       Alert.alert('Error', 'Unable to communicate with the server.');
     }
 
+    // 종료 플래그 리셋
+    setIsStoppingExercise(false);
+
     if (proceedToNext) {
-      console.log('➡️ [STOP] 다음 단계로 진행 중...');
-      handleNextStep();
+      console.log('➡️ [STOP] handleNextStep 호출 직전');
+      handleNextStep(showAlert);
+      console.log('➡️ [STOP] handleNextStep 호출 완료');
     } else {
       console.log('🏃‍♂️ [STOP] 운동만 종료, 페이지 유지');
     }
   };
 
-  const handleNextStep = () => {
+  const handleNextStep = (showAlert: boolean = true) => {
+    console.log('🔄 [handleNextStep] 함수 시작');
+    console.log(`🔄 [handleNextStep] 현재 인덱스: ${currentExerciseIndex}, 큐 길이: ${exerciseQueue.length}`);
+    console.log(`🔄 [handleNextStep] showAlert: ${showAlert}`);
+    
     const nextIndex = currentExerciseIndex + 1;
+    console.log(`🔄 [handleNextStep] 다음 인덱스: ${nextIndex}`);
 
     if (nextIndex >= exerciseQueue.length) {
+      console.log('🎉 [handleNextStep] 모든 운동 완료 - Summary 페이지로 이동 예정');
+      
       // 모든 운동이 끝났으므로 종료 시간을 기록하고 요약 페이지로 이동합니다.
       recordExerciseEnd();
       const actualDuration = getActualDuration();
@@ -219,24 +233,45 @@ export default function ExerciseDo() {
       // 운동 완료 시 메인 테마로 전환
       switchTheme('main');
       
-      Alert.alert('Exercise Complete!', `All exercises completed successfully.\nTotal time : ${minutes}min ${seconds}sec`, [
-        {
-          text: 'OK',
-          onPress: () => router.replace('/Exercise/ExerciseSummaryPage')
-        }
-      ]);
+      if (showAlert) {
+        console.log('🎉 [handleNextStep] Alert 표시');
+        Alert.alert('Exercise Complete!', `All exercises completed successfully.\nTotal time : ${minutes}min ${seconds}sec`, [
+          {
+            text: 'OK',
+            onPress: () => {
+              console.log('🎉 [handleNextStep] OK 버튼 클릭 - Summary 페이지로 이동');
+              router.replace('/Exercise/ExerciseSummaryPage');
+            }
+          }
+        ]);
+      } else {
+        console.log('🎉 [handleNextStep] Alert 없이 바로 Summary 페이지로 이동');
+        router.replace('/Exercise/ExerciseSummaryPage');
+      }
     } else {
+      console.log(`➡️ [handleNextStep] 다음 운동으로 이동: ${exerciseQueue[nextIndex]?.title || 'Unknown'}`);
+      
       // 아직 남은 운동이 있으므로 다음 운동으로 상태를 업데이트하고 소개 페이지로 이동합니다.
       advanceToNextExercise();
-      console.log(`➡️ 다음 운동으로 이동: ${exerciseQueue[nextIndex]?.title || 'Unknown'}`);
+      console.log('➡️ [handleNextStep] advanceToNextExercise 호출 완료');
       
-      Alert.alert('Exercise Complete! 🎯', 'Great job! Moving on to the next exercise.', [
-        {
-          text: 'Continue',
-          onPress: () => router.replace('/Exercise/ExerciseIntroPage')
-        }
-      ]);
+      if (showAlert) {
+        console.log('➡️ [handleNextStep] Alert 표시');
+        Alert.alert('Exercise Complete! 🎯', 'Great job! Moving on to the next exercise.', [
+          {
+            text: 'Continue',
+            onPress: () => {
+              console.log('➡️ [handleNextStep] Continue 버튼 클릭 - IntroPage로 이동');
+              router.replace('/Exercise/ExerciseIntroPage');
+            }
+          }
+        ]);
+      } else {
+        console.log('➡️ [handleNextStep] Alert 없이 바로 IntroPage로 이동');
+        router.replace('/Exercise/ExerciseIntroPage');
+      }
     }
+    console.log('🔄 [handleNextStep] 함수 종료');
   };
 
   const formatTime = (seconds: number) => {
@@ -310,11 +345,25 @@ export default function ExerciseDo() {
             <Text style={styles.btnText}>Start</Text>
           </TouchableOpacity>
         ) : (
-          <TouchableOpacity style={[styles.controlBtn, styles.stopBtn]} onPress={() => stopExercise(true)}>
+          <TouchableOpacity style={[styles.controlBtn, styles.stopBtn]} onPress={() => stopExercise(true, true)}>
             <Text style={styles.btnText}>End</Text>
           </TouchableOpacity>
         )}
-         <TouchableOpacity style={styles.nextBtn} onPress={handleNextStep}>
+         <TouchableOpacity 
+            style={styles.nextBtn} 
+            onPress={async () => {
+              if (isExerciseActive) {
+                // 운동 진행 중이면 먼저 종료
+                console.log('🔄 [SKIP] 운동 진행 중 - 먼저 종료 후 다음으로 이동');
+                await stopExercise(true, false); // Alert 없이 바로 이동
+              } else {
+                // 운동이 진행 중이 아니면 바로 다음으로
+                console.log('➡️ [SKIP] 바로 다음 운동으로 이동');
+                handleNextStep(false); // Alert 없이 바로 이동
+              }
+            }}
+            disabled={isStoppingExercise}
+          >
             <Text style={styles.nextBtnText}>Skip</Text>
         </TouchableOpacity>
       </View>
