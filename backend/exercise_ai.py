@@ -22,7 +22,7 @@ class ExerciseAI:
         self.cap = None
         self.current_data = {
             "count": 0,
-            "accuracy": 85,  # 기본 정확도
+            "accuracy": None,  # 아직 측정된 값이 없음 (검출 전)
             "is_detecting": False
         }
         self.lock = threading.Lock()
@@ -272,7 +272,7 @@ class ExerciseAI:
         with self.lock:
             self.current_data = {
                 "count": 0,
-                "accuracy": 85,
+                "accuracy": None,
                 "is_detecting": False
             }
             self.count_simulation = 0  # 시뮬레이션 카운터 리셋
@@ -299,6 +299,11 @@ class ExerciseAI:
         with self.lock:
             return self.current_data.copy()
 
+    def _accuracy_label(self):
+        """오버레이용 정확도 문자열. 측정값이 없으면 '--' 로 표시한다."""
+        accuracy = self.current_data.get("accuracy")
+        return "--" if accuracy is None else f"{accuracy:.0f}%"
+
     def _release_camera(self):
         """카메라 핸들을 해제한다. 이미 해제된 경우 아무 일도 하지 않는다."""
         if self.cap:
@@ -311,9 +316,16 @@ class ExerciseAI:
         self._release_camera()
 
     def calculate_accuracy(self, results):
-        """운동 정확도 계산 - 단일 사용자 실시간 각도 기반"""
-        if results is None or not results.workout_angle:
-            return 85.0  # 데이터가 없으면 기본값 반환
+        """운동 정확도 계산 - 단일 사용자 실시간 각도 기반
+
+        사람이 검출되지 않았으면 None 을 반환한다. 예전에는 85.0 을 반환해서,
+        카메라에 아무도 없어도 화면에 "85%" 가 떠 사용자를 오도했다.
+        '측정값 없음'과 '측정했더니 85%'는 반드시 구분되어야 한다.
+        """
+        # numpy 배열이 올 수도 있으므로 truthiness 대신 길이로 검사한다.
+        workout_angle = getattr(results, "workout_angle", None) if results is not None else None
+        if workout_angle is None or len(workout_angle) == 0:
+            return None
 
         try:
             # 단일 사용자(인덱스 0)의 각도와 단계 정보만 사용
@@ -336,18 +348,17 @@ class ExerciseAI:
                     # 범위를 벗어난 경우, 더 가까운 쪽 경계와의 차이를 계산
                     angle_diff = min(abs(current_angle - target_up_angle), abs(current_angle - target_down_angle))
 
-            # 각도 차이를 정확도로 변환 (0~30도 차이를 70~100% 정확도로 매핑)
+            # 각도 차이를 정확도로 변환 (1도당 1% 감점, 30도 차이면 70%)
+            # 기울기는 그대로 두고 하한 70%만 없앴다. 예전에는 30도를 넘는 편차가
+            # 전부 70%로 뭉개져서, 자세가 아무리 틀려도 70% 아래로는 내려가지 않았다.
             max_angle_error = 30.0
-            if angle_diff <= max_angle_error:
-                accuracy = 100 - (angle_diff / max_angle_error) * 30  # 70~100%
-            else:
-                accuracy = 70.0  # 최소 70%
+            accuracy = 100 - (angle_diff / max_angle_error) * 30
 
-            return max(70, min(100, accuracy))
+            return max(0.0, min(100.0, accuracy))
 
         except (IndexError, TypeError, AttributeError):
             logger.error("정확도 계산 오류", exc_info=True)
-            return 85.0 # 오류 발생 시 기본값
+            return None  # 계산 실패는 '측정값 없음'으로 취급
 
     def get_ai_stream_video(self, exercise_session):
         """AI 분석이 포함된 비디오 스트리밍 생성기"""
@@ -440,13 +451,15 @@ class ExerciseAI:
                     with self.lock:
                         self.count_simulation += 1
                         self.current_data["count"] = self.count_simulation
-                        self.current_data["accuracy"] = self.calculate_accuracy(None)
-                        self.current_data["is_detecting"] = True
+                        # 시뮬레이션 카운트는 실제 검출이 아니다.
+                        # accuracy 는 측정값 없음(None), is_detecting 은 False 로 둔다.
+                        self.current_data["accuracy"] = None
+                        self.current_data["is_detecting"] = False
 
                 # 운동 정보를 프레임에 표시
                 cv2.putText(dummy_frame, f"Count: {self.current_data['count']}",
                            (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0, 255, 0), 3)
-                cv2.putText(dummy_frame, f"Accuracy: {self.current_data['accuracy']}%",
+                cv2.putText(dummy_frame, f"Accuracy: {self._accuracy_label()}",
                            (10, 100), cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0, 255, 0), 3)
                 cv2.putText(dummy_frame, f"Exercise: {self.exercise_config['exercise_type']}",
                            (10, 150), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 255), 2)
@@ -538,10 +551,12 @@ class ExerciseAI:
                                 # 첫 번째 사용자의 카운트만 사용 (max_det=1 설정으로 인해 하나만 검출됨)
                                 if len(results.workout_count) > 0:
                                     count = results.workout_count[0]
+                                    accuracy = self.calculate_accuracy(results)
                                     with self.lock:
                                         self.current_data["count"] = count
-                                        self.current_data["accuracy"] = self.calculate_accuracy(results)
-                                        self.current_data["is_detecting"] = True
+                                        self.current_data["accuracy"] = accuracy
+                                        # 각도를 실제로 뽑아냈을 때만 '검출 중'이다.
+                                        self.current_data["is_detecting"] = accuracy is not None
 
                                     # 카운트가 변경될 때만 로그 출력 (성능 최적화)
                                     if count != getattr(self, '_last_count', -1):
@@ -560,8 +575,9 @@ class ExerciseAI:
                             with self.lock:
                                 self.count_simulation += 1
                                 self.current_data["count"] = self.count_simulation
-                                self.current_data["accuracy"] = self.calculate_accuracy(None)
-                                self.current_data["is_detecting"] = True
+                                # 시뮬레이션이므로 검출된 것이 아니다 (위 더미 스트림과 동일).
+                                self.current_data["accuracy"] = None
+                                self.current_data["is_detecting"] = False
 
 
                 except Exception:

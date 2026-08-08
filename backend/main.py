@@ -45,7 +45,7 @@ class ExerciseSession:
     def __init__(self):
         self.is_active = False
         self.count = 0
-        self.accuracy = 0
+        self.accuracy = None  # None = 아직 측정되지 않음 (0% 와 구분)
         self.start_time = None
         self.exercise_type = "arm_raise"  # 기본값
 
@@ -211,14 +211,17 @@ async def get_exercise_data():
     # AI에서 최신 데이터 가져오기
     ai_data = exercise_ai.get_current_data()
     exercise_session.count = ai_data.get("count", exercise_session.count)
-    exercise_session.accuracy = ai_data.get("accuracy", exercise_session.accuracy)
-    
+    # accuracy 는 None 일 수 있고, 그 None 자체가 '인식되지 않음'이라는 정보다.
+    # 이전 값으로 덮어쓰면 사람이 사라져도 마지막 점수가 계속 남는다.
+    exercise_session.accuracy = ai_data.get("accuracy")
+
     elapsed_time = int(time.time() - exercise_session.start_time) if exercise_session.start_time else 0
-    
+
     return {
         "is_active": exercise_session.is_active,
         "count": exercise_session.count,
-        "accuracy": exercise_session.accuracy,
+        "accuracy": exercise_session.accuracy,  # null 이면 '인식되지 않음'
+        "is_detecting": ai_data.get("is_detecting", False),
         "elapsed_time": elapsed_time,
         "exercise_type": exercise_session.exercise_type
     }
@@ -240,7 +243,7 @@ async def stop_exercise():
     # 세션 리셋
     exercise_session.is_active = False
     exercise_session.count = 0
-    exercise_session.accuracy = 0
+    exercise_session.accuracy = None
     exercise_session.start_time = None
     
     # AI 완전 리셋 (다음 운동을 위해)
