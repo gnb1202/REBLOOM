@@ -212,6 +212,61 @@ def test_camera_backends_are_platform_specific():
 
 
 # --------------------------------------------------------------------------
+# 프레임 인코딩 / 시뮬레이션 카운트 (양쪽 스트림이 공유하는 헬퍼)
+# --------------------------------------------------------------------------
+
+def test_encoded_frame_is_a_wellformed_mjpeg_chunk():
+    import cv2
+
+    frame = np.zeros((480, 640, 3), dtype=np.uint8)
+    for quality in (None, 80):
+        chunk = exercise_ai.ExerciseAI._encode_frame(frame, quality=quality)
+        assert isinstance(chunk, bytes)
+        assert chunk.startswith(b"--frame\r\nContent-Type: image/jpeg\r\n\r\n")
+        assert chunk.endswith(b"\r\n")
+
+        payload = chunk[len(exercise_ai.MJPEG_FRAME_HEADER):-2]
+        assert payload[:2] == b"\xff\xd8", "JPEG SOI 마커가 없다"
+        # 인코딩된 페이로드가 실제로 디코딩 가능한 이미지여야 한다
+        decoded = cv2.imdecode(np.frombuffer(payload, dtype=np.uint8), cv2.IMREAD_COLOR)
+        assert decoded is not None and decoded.shape == (480, 640, 3)
+
+
+def test_simulation_count_does_not_claim_detection():
+    ai = exercise_ai.ExerciseAI()
+    ai._tick_simulation_count()
+    ai._tick_simulation_count()
+
+    data = ai.get_current_data()
+    assert data["count"] == 2
+    # 시뮬레이션은 실제 검출이 아니므로 정확도를 지어내면 안 된다
+    assert data["accuracy"] is None
+    assert data["is_detecting"] is False
+
+
+def test_frame_loop_intervals_are_named_constants():
+    """프레임 루프의 주기가 매직 넘버로 흩어지지 않게 잠근다.
+
+    같은 주기가 여러 경로에 숫자로 박혀 있으면 한쪽만 바뀌어도 아무도 눈치채지 못한다.
+    """
+    import re
+
+    source = open(exercise_ai.__file__, encoding="utf-8").read()
+    hits = re.findall(r"frame_count % (\S+) == 0", source)
+    assert hits, "주기 검사를 찾지 못했다"
+
+    bare_numbers = [h for h in hits if h.isdigit()]
+    assert not bare_numbers, f"이름 없는 주기가 남아있다: {bare_numbers}"
+    assert set(hits) == {
+        "SIMULATION_COUNT_INTERVAL_FRAMES",
+        "AI_GYM_RETRY_INTERVAL_FRAMES",
+    }, f"예상 밖의 주기 상수: {sorted(set(hits))}"
+
+    # 시뮬레이션 주기는 두 스트림 경로가 반드시 공유해야 한다
+    assert hits.count("SIMULATION_COUNT_INTERVAL_FRAMES") == 2
+
+
+# --------------------------------------------------------------------------
 # 세션 격리
 # --------------------------------------------------------------------------
 

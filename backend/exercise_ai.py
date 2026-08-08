@@ -7,6 +7,17 @@ import threading
 
 logger = logging.getLogger(__name__)
 
+# MJPEG 멀티파트 프레임 헤더 (boundary 는 StreamingResponse 의 media_type 과 맞춰야 한다)
+MJPEG_FRAME_HEADER = b'--frame\r\nContent-Type: image/jpeg\r\n\r\n'
+
+# 시뮬레이션 모드에서 카운트를 올리는 주기(프레임 단위).
+# 더미 스트림 기준 150프레임 x 0.03초 = 약 4.5초, 실측 약 4.7초.
+SIMULATION_COUNT_INTERVAL_FRAMES = 150
+
+# AI Gym 지연 초기화를 다시 시도하는 주기(프레임 단위). 30프레임 = 약 1초.
+# 매 프레임 시도하면 실패가 계속되는 환경에서 초당 수십 번 모델 로드를 때린다.
+AI_GYM_RETRY_INTERVAL_FRAMES = 30
+
 
 def _camera_backends_for_platform():
     """현재 OS 에서 의미 있는 OpenCV 캡처 백엔드만 골라 반환한다.
@@ -280,6 +291,27 @@ class ExerciseAI:
         accuracy = self.current_data.get("accuracy")
         return "--" if accuracy is None else f"{accuracy:.0f}%"
 
+    def _tick_simulation_count(self):
+        """시뮬레이션 카운트를 1 올린다.
+
+        실제 검출이 아니므로 accuracy 는 측정값 없음(None), is_detecting 은 False 다.
+        더미 스트림과 '카메라는 있지만 ultralytics 가 없는' 경로 양쪽에서 쓴다.
+        """
+        with self.lock:
+            self.count_simulation += 1
+            self.current_data["count"] = self.count_simulation
+            self.current_data["accuracy"] = None
+            self.current_data["is_detecting"] = False
+
+    @staticmethod
+    def _encode_frame(frame, quality=None):
+        """프레임을 MJPEG 멀티파트 청크로 인코딩한다. 인코딩 실패 시 None."""
+        params = [cv2.IMWRITE_JPEG_QUALITY, quality] if quality is not None else []
+        ok, buffer = cv2.imencode('.jpg', frame, params)
+        if not ok:
+            return None
+        return MJPEG_FRAME_HEADER + buffer.tobytes() + b'\r\n'
+
     def release_camera(self):
         """카메라 핸들을 해제한다. 이미 해제된 경우 아무 일도 하지 않는다."""
         if self.cap:
@@ -420,15 +452,8 @@ class ExerciseAI:
 
             # 운동 세션이 활성화된 경우
             if exercise_session.is_active:
-                # 시뮬레이션 모드 - 5초마다 카운트 증가
-                if frame_count % 150 == 0:  # 5초마다 (30fps 기준)
-                    with self.lock:
-                        self.count_simulation += 1
-                        self.current_data["count"] = self.count_simulation
-                        # 시뮬레이션 카운트는 실제 검출이 아니다.
-                        # accuracy 는 측정값 없음(None), is_detecting 은 False 로 둔다.
-                        self.current_data["accuracy"] = None
-                        self.current_data["is_detecting"] = False
+                if frame_count % SIMULATION_COUNT_INTERVAL_FRAMES == 0:
+                    self._tick_simulation_count()
 
                 # 운동 정보를 프레임에 표시
                 cv2.putText(dummy_frame, f"Count: {self.current_data['count']}",
@@ -450,13 +475,9 @@ class ExerciseAI:
                 cv2.putText(dummy_frame, "Click 'Start Exercise' to begin",
                            (10, 150), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (128, 128, 128), 2)
 
-            # 프레임을 JPEG로 인코딩
-            ret, buffer = cv2.imencode('.jpg', dummy_frame)
-            if ret:
-                frame_bytes = buffer.tobytes()
-                yield (b'--frame\r\n'
-                       b'Content-Type: image/jpeg\r\n\r\n' +
-                       bytearray(frame_bytes) + b'\r\n')
+            chunk = self._encode_frame(dummy_frame)
+            if chunk is not None:
+                yield chunk
 
             time.sleep(0.03)  # 약 33 FPS. 더미 루프는 카메라가 없으므로 이 값이 실제 상한이다.
 
@@ -521,7 +542,7 @@ class ExerciseAI:
                 try:
                     # AI Gym 초기화 시도 (지연 초기화)
                     if self.gym is None and ULTRALYTICS_AVAILABLE:
-                        if frame_count % 30 == 0:  # 1초마다 시도
+                        if frame_count % AI_GYM_RETRY_INTERVAL_FRAMES == 0:
                             logger.info("AI Gym 지연 초기화 시도...")
                             self.setup_ai_gym()
 
@@ -570,25 +591,16 @@ class ExerciseAI:
                                 self.current_data["is_detecting"] = False
                     else:
                         # AI Gym이 없으면 시뮬레이션 모드
-                        if frame_count % 150 == 0:  # 5초마다
-                            with self.lock:
-                                self.count_simulation += 1
-                                self.current_data["count"] = self.count_simulation
-                                # 시뮬레이션이므로 검출된 것이 아니다 (위 더미 스트림과 동일).
-                                self.current_data["accuracy"] = None
-                                self.current_data["is_detecting"] = False
+                        if frame_count % SIMULATION_COUNT_INTERVAL_FRAMES == 0:
+                            self._tick_simulation_count()
 
 
                 except Exception:
                     logger.error("프레임 처리 오류", exc_info=True)
 
-            # 프레임을 JPEG로 인코딩
-            ret, buffer = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 80])
-            if ret:
-                frame_bytes = buffer.tobytes()
-                yield (b'--frame\r\n'
-                       b'Content-Type: image/jpeg\r\n\r\n' +
-                       bytearray(frame_bytes) + b'\r\n')
+            chunk = self._encode_frame(frame, quality=80)
+            if chunk is not None:
+                yield chunk
 
             # 주석에는 "30 FPS 제한"이라고 적혀 있었지만 0.015초는 약 66 FPS 다.
             # 실제 프레임 속도를 정하는 건 이 sleep 이 아니라 카메라
