@@ -211,6 +211,16 @@ LOG_LEVEL=DEBUG python main.py
 uvicorn 의 `--log-level` 은 `uvicorn.*` 로거만 바꾸므로 이 앱의 `logger.debug`
 (카메라 백엔드 시도 내역, 운동 카운트 변화 등)는 나오지 않는다. `LOG_LEVEL` 을 써야 한다.
 
+## 테스트
+
+```bash
+python tests/test_regression.py
+```
+
+pytest 가 설치돼 있으면 `pytest tests/` 도 동작한다. 새 의존성을 만들지 않으려고
+둘 다 되게 써 두었다. 카메라도 ultralytics 도 없는 환경을 전제로 하며, 실제
+카메라가 필요한 경로는 가짜 캡처/추론 객체로 대체한다.
+
 ## 요구사항
 
 - Python 3.8+ (개발/검증은 3.12에서 진행)
@@ -232,8 +242,9 @@ uvicorn 의 `--log-level` 은 `uvicorn.*` 로거만 바꾸므로 이 앱의 `log
   자기 모습을 볼 수 없다. 발표자 노트북 앞 시연이 전제였다.
 - **`app/Entry_page/Loginpage.tsx:82`** 가 존재하지 않는 `/Exercise/ExerciseTestPage`
   로 이동한다. 죽은 라우트다.
-- **`backend/test.py`** 는 테스트 코드가 아니라 독립 카메라 데모 스크립트다.
-  ultralytics 를 모듈 최상단에서 import 하고 카메라가 없으면 즉시 종료한다.
-  이 저장소에 자동화된 테스트는 없다.
+- **`backend/manual_camera_check.py`** 는 테스트가 아니라 독립 카메라 데모
+  스크립트다. ultralytics 를 모듈 최상단에서 import 하고 카메라가 없으면 즉시
+  종료한다. 원래 이름이 `test.py` 였는데, `backend/` 가 `sys.path` 에 들어가면
+  표준 라이브러리의 `test` 패키지를 가려서 이름을 바꿨다.
 - **`yolo11n-pose.pt`** 가 저장소 루트와 `backend/` 에 중복으로 커밋되어 있으나
   (각 6.2MB) 코드에서 참조하지 않는다.

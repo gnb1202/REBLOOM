@@ -246,8 +246,18 @@ curl http://localhost:8888/sessions
 - [ ] 실시간 데이터 수신 확인
 - [ ] 세션 시작/종료 정상 작동
 
-> 이 저장소에는 자동화된 테스트가 없습니다. `backend/test.py` 는 테스트 코드가
-> 아니라 독립 실행용 카메라 데모 스크립트이며, ultralytics 나 카메라가 없으면
-> 바로 종료됩니다.
+### 자동화된 회귀 테스트
+
+위 수동 체크리스트와 별개로, 리팩터링이 고친 동작은 테스트로 잠겨 있습니다.
+
+```bash
+python tests/test_regression.py
+```
+
+pytest 가 있으면 `pytest tests/` 도 됩니다. 카메라나 ultralytics 없이 돌아가므로
+어느 개발 머신에서든 실행할 수 있습니다.
+
+> `backend/manual_camera_check.py` 는 테스트가 아니라 독립 실행용 카메라 데모
+> 스크립트입니다. ultralytics 나 카메라가 없으면 바로 종료됩니다.
 
 모든 체크리스트를 완료하면 본 기능 적용 준비 완료! 🎉
