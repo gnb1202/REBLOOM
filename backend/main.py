@@ -1,6 +1,7 @@
-from fastapi import FastAPI, WebSocket, HTTPException
+from fastapi import FastAPI, Request, WebSocket, HTTPException
 from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.concurrency import run_in_threadpool
 import json
 import asyncio
 import logging
@@ -56,15 +57,59 @@ def video_streaming():
 def ai_video_streaming():
     return exercise_ai.get_ai_stream_video(exercise_session)
 
+
+MJPEG_MEDIA_TYPE = "multipart/x-mixed-replace; boundary=frame"
+
+
+async def stream_until_disconnect(request: Request, sync_stream):
+    """동기 프레임 제너레이터를 async 로 감싸 연결 종료 시 확실히 정리한다.
+
+    - 프레임을 만드는 일(cap.read, YOLO 추론, JPEG 인코딩)은 블로킹이므로
+      run_in_threadpool 로 넘겨 이벤트 루프를 막지 않는다.
+    - 매 프레임마다 request.is_disconnected() 로 클라이언트 연결을 확인한다.
+    - async generator 는 취소될 때 aclose() 가 보장되므로, finally 에서
+      동기 제너레이터의 close() 를 직접 호출한다. 그래야 GeneratorExit 이
+      yield 지점에 전달되어 카메라 해제 finally 가 확정적으로 실행된다.
+      (GC 에 맡기면 언제 정리될지 보장되지 않는다.)
+    """
+    def next_chunk():
+        try:
+            return next(sync_stream)
+        except StopIteration:
+            return None
+
+    try:
+        while True:
+            if await request.is_disconnected():
+                logger.info("클라이언트 연결 종료 감지 - 스트림을 중단합니다.")
+                break
+
+            chunk = await run_in_threadpool(next_chunk)
+            if chunk is None:
+                logger.info("프레임 제너레이터가 정상 종료되었습니다.")
+                break
+
+            yield chunk
+    finally:
+        sync_stream.close()
+        logger.info("스트림 정리 완료")
+
+
 # 기본 비디오 스트리밍 (기존)
 @app.get("/video")
-def video_stream():
-    return StreamingResponse(video_streaming(), media_type="multipart/x-mixed-replace; boundary=frame")
+async def video_stream(request: Request):
+    return StreamingResponse(
+        stream_until_disconnect(request, video_streaming()),
+        media_type=MJPEG_MEDIA_TYPE,
+    )
 
 # AI 운동 분석 비디오 스트리밍
 @app.get("/video/ai")
-def ai_video_stream():
-    return StreamingResponse(ai_video_streaming(), media_type="multipart/x-mixed-replace; boundary=frame")
+async def ai_video_stream(request: Request):
+    return StreamingResponse(
+        stream_until_disconnect(request, ai_video_streaming()),
+        media_type=MJPEG_MEDIA_TYPE,
+    )
 
 # 운동 설정 구성
 @app.post("/exercise/configure")

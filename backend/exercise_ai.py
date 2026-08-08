@@ -293,11 +293,16 @@ class ExerciseAI:
         with self.lock:
             return self.current_data.copy()
 
-    def cleanup_session(self):
-        """세션 정리"""
+    def _release_camera(self):
+        """카메라 핸들을 해제한다. 이미 해제된 경우 아무 일도 하지 않는다."""
         if self.cap:
             self.cap.release()
             self.cap = None
+            logger.info("카메라 핸들 해제 완료")
+
+    def cleanup_session(self):
+        """세션 정리"""
+        self._release_camera()
 
     def calculate_accuracy(self, results):
         """운동 정확도 계산 - 단일 사용자 실시간 각도 기반"""
@@ -396,8 +401,24 @@ class ExerciseAI:
         return None
 
     def _generate_dummy_stream(self, exercise_session):
-        """더미 비디오 스트림 생성 (카메라 없을 때)"""
+        """더미 비디오 스트림 생성 (카메라 없을 때)
+
+        무한 루프이므로 반드시 try/finally 안에서 돌린다. 클라이언트가 연결을 끊으면
+        소비 측에서 close() 가 호출되어 yield 지점에서 GeneratorExit 이 발생하고,
+        finally 로 진입해 루프가 종료된다.
+        """
         logger.warning("더미 비디오 스트림 시작 (카메라 없음)")
+
+        try:
+            yield from self._dummy_frames(exercise_session)
+        except GeneratorExit:
+            logger.info("더미 스트림 종료 요청 수신 (클라이언트 연결 종료)")
+            raise
+        finally:
+            logger.info("더미 비디오 스트림 종료")
+
+    def _dummy_frames(self, exercise_session):
+        """더미 프레임 생성 루프 (_generate_dummy_stream 내부용)"""
         frame_count = 0
 
         while True:
@@ -447,8 +468,26 @@ class ExerciseAI:
             time.sleep(0.03)  # 30 FPS 제한
 
     def _camera_stream_with_ai(self, exercise_session):
-        """실제 카메라를 사용한 AI 스트리밍"""
+        """실제 카메라를 사용한 AI 스트리밍
+
+        무한 루프이므로 반드시 try/finally 안에서 돌린다. 클라이언트가 연결을 끊으면
+        소비 측에서 close() 가 호출되어 yield 지점에서 GeneratorExit 이 발생하고,
+        finally 에서 카메라를 해제한다. 이 정리가 없으면 브라우저 탭을 닫아도
+        루프가 계속 돌며 카메라와 워커 스레드를 붙잡고 있게 된다.
+        """
         logger.info("실제 카메라 AI 스트리밍 시작")
+
+        try:
+            yield from self._camera_frames(exercise_session)
+        except GeneratorExit:
+            logger.info("카메라 스트림 종료 요청 수신 (클라이언트 연결 종료)")
+            raise
+        finally:
+            self._release_camera()
+            logger.info("카메라 AI 스트리밍 종료")
+
+    def _camera_frames(self, exercise_session):
+        """카메라 프레임 처리 루프 (_camera_stream_with_ai 내부용)"""
         frame_count = 0
         retry_count = 0
         max_retries = 3
@@ -461,10 +500,12 @@ class ExerciseAI:
 
                 if retry_count >= max_retries:
                     logger.warning("카메라 접근 실패. 더미 스트림으로 전환합니다.")
-                    if self.cap:
-                        self.cap.release()
-                        self.cap = None
-                    return self._generate_dummy_stream(exercise_session)
+                    self._release_camera()
+                    # 제너레이터 안에서 return 은 값을 돌려주는 게 아니라 StopIteration 이라,
+                    # 원래 코드에서는 폴백이 실행되지 않고 스트림이 그냥 끊겼다.
+                    # yield from 으로 더미 스트림에 위임해야 의도한 3단 폴백이 성립한다.
+                    yield from self._generate_dummy_stream(exercise_session)
+                    return
 
                 time.sleep(0.5)
                 continue
