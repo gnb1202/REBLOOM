@@ -541,7 +541,17 @@ class ExerciseAI:
         max_retries = 3
 
         while True:
-            success, frame = self.cap.read()
+            # 지역 변수로 받아 두고 쓴다. /exercise/stop 이나 세션 삭제가
+            # 다른 스레드에서 cleanup_session() -> self.cap = None 을 하기 때문에,
+            # self.cap.read() 를 바로 호출하면 그 사이에 None 이 되어
+            # AttributeError 로 스트림이 터진다. 앱은 스트림을 띄운 채로
+            # 운동 종료를 호출하므로 매 세션 종료마다 밟는 경로다.
+            cap = self.cap
+            if cap is None:
+                logger.info("카메라가 해제되었습니다. 스트림을 정상 종료합니다.")
+                return
+
+            success, frame = cap.read()
             if not success:
                 retry_count += 1
                 logger.warning("프레임 읽기 실패 (시도 %s/%s)", retry_count, max_retries)
