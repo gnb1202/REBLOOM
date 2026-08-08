@@ -1,12 +1,10 @@
-from fastapi import Body, Depends, FastAPI, Query, Request, WebSocket, HTTPException
+from fastapi import Body, Depends, FastAPI, Query, Request, HTTPException
 from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, model_validator
 from starlette.concurrency import run_in_threadpool
 from contextlib import asynccontextmanager
 from typing import List, Optional
-import json
-import asyncio
 import logging
 import threading
 import time
@@ -235,7 +233,7 @@ def ai_video_streaming(session: UserSession):
 MJPEG_MEDIA_TYPE = "multipart/x-mixed-replace; boundary=frame"
 
 
-async def stream_until_disconnect(request: Request, sync_stream, session: Optional[UserSession] = None):
+async def stream_until_disconnect(request: Request, sync_stream, session: UserSession):
     """동기 프레임 제너레이터를 async 로 감싸 연결 종료 시 확실히 정리한다.
 
     - 프레임을 만드는 일(cap.read, YOLO 추론, JPEG 인코딩)은 블로킹이므로
@@ -264,8 +262,7 @@ async def stream_until_disconnect(request: Request, sync_stream, session: Option
                 break
 
             # 스트리밍 중인 세션은 살아있는 것으로 취급해 유휴 회수 대상에서 제외한다.
-            if session is not None:
-                session.touch()
+            session.touch()
 
             yield chunk
     finally:
