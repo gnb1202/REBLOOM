@@ -1,4 +1,4 @@
-from fastapi import Body, FastAPI, Query, Request, WebSocket, HTTPException
+from fastapi import Body, Depends, FastAPI, Query, Request, WebSocket, HTTPException
 from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, model_validator
@@ -9,6 +9,7 @@ import asyncio
 import logging
 import threading
 import time
+import uuid
 
 # 로깅 설정은 로컬 모듈 import 보다 먼저 수행한다.
 # exercise_ai 는 import 시점에 ultralytics 사용 가능 여부를 로그로 남기는데,
@@ -22,7 +23,7 @@ logger = logging.getLogger(__name__)
 
 # cv3 모듈 import
 from cv3 import get_stream_video
-from exercise_ai import ExerciseAI
+from exercise_ai import ExerciseAI, ULTRALYTICS_AVAILABLE
 
 # FastAPI객체 생성
 app = FastAPI()
@@ -36,10 +37,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# 전역 운동 AI 인스턴스
-exercise_ai = ExerciseAI()
-# exercise_ai = ExerciseAI()
-
 # 운동 세션 상태
 class ExerciseSession:
     def __init__(self):
@@ -49,7 +46,130 @@ class ExerciseSession:
         self.start_time = None
         self.exercise_type = "arm_raise"  # 기본값
 
-exercise_session = ExerciseSession()
+
+DEFAULT_SESSION_ID = "default"
+SESSION_IDLE_TIMEOUT_SECONDS = 600  # 10분간 아무 요청이 없으면 정리
+
+
+class UserSession:
+    """한 사용자의 AI 인스턴스와 운동 상태를 함께 들고 있는 단위."""
+
+    def __init__(self, session_id: str):
+        self.session_id = session_id
+        self.ai = ExerciseAI()
+        self.exercise = ExerciseSession()
+        self.last_seen = time.time()
+
+    def touch(self):
+        self.last_seen = time.time()
+
+    def close(self):
+        self.ai.cleanup_session()
+
+
+class SessionRegistry:
+    """session_id 로 사용자별 인스턴스를 격리한다.
+
+    예전에는 exercise_ai / exercise_session 이 모듈 전역이라, 두 사람이 동시에
+    운동하면 한쪽의 카운트가 다른 쪽 화면에 그대로 찍혔다. 전역 하나를
+    session_id 키의 딕셔너리로 바꿔 상태 혼선을 없앤다.
+
+    다만 카메라는 여전히 서버에 물린 물리 장치 하나다. 세션을 나눠도
+    두 번째 세션의 cv2.VideoCapture 는 장치 점유 실패로 더미 스트림으로
+    떨어진다. 즉 이 레지스트리는 '상태 혼선'을 고치는 것이지 동시 촬영을
+    가능하게 만드는 것이 아니다. 진짜 동시 사용은 클라이언트에서 영상을
+    올려받는 구조로 바꿔야 하며, 그건 이번 범위 밖이다.
+    """
+
+    def __init__(self, idle_timeout: float = SESSION_IDLE_TIMEOUT_SECONDS):
+        self._sessions = {}
+        self._lock = threading.Lock()
+        self._idle_timeout = idle_timeout
+
+    def get_or_create(self, session_id: str) -> UserSession:
+        with self._lock:
+            session = self._sessions.get(session_id)
+            if session is None:
+                session = UserSession(session_id)
+                self._sessions[session_id] = session
+                logger.info("세션 생성: %s (활성 세션 %d개)", session_id, len(self._sessions))
+            # 회수보다 touch 를 먼저 한다. 순서가 반대면 마지막 요청 이후
+            # 타임아웃 직전에 들어온 요청이 자기 세션을 회수해버리고
+            # 빈 상태로 다시 만들어, 카운트가 조용히 0으로 리셋된다.
+            session.touch()
+        self.reap_idle()
+        return session
+
+    def get(self, session_id: str):
+        with self._lock:
+            session = self._sessions.get(session_id)
+            if session is not None:
+                session.touch()
+            return session
+
+    def remove(self, session_id: str) -> bool:
+        with self._lock:
+            session = self._sessions.pop(session_id, None)
+        if session is None:
+            return False
+        session.close()
+        logger.info("세션 삭제: %s", session_id)
+        return True
+
+    def reap_idle(self):
+        """유휴 세션을 정리한다.
+
+        스트리밍 중에는 프레임마다 touch() 되므로 회수 대상이 되지 않는다.
+        별도 백그라운드 타이머 없이 요청 처리 경로에서 정리하므로,
+        정리 자체가 새로운 스레드나 실패 지점을 만들지 않는다.
+        """
+        cutoff = time.time() - self._idle_timeout
+        with self._lock:
+            expired = [sid for sid, s in self._sessions.items() if s.last_seen < cutoff]
+            victims = [self._sessions.pop(sid) for sid in expired]
+        for session in victims:
+            logger.info("유휴 세션 정리: %s", session.session_id)
+            session.close()
+
+    def snapshot(self):
+        now = time.time()
+        with self._lock:
+            return [
+                {
+                    "session_id": s.session_id,
+                    "is_active": s.exercise.is_active,
+                    "idle_seconds": int(now - s.last_seen),
+                }
+                for s in self._sessions.values()
+            ]
+
+    def close_all(self):
+        with self._lock:
+            victims = list(self._sessions.values())
+            self._sessions.clear()
+        for session in victims:
+            session.close()
+        if victims:
+            logger.info("전체 세션 정리 완료 (%d개)", len(victims))
+
+
+registry = SessionRegistry()
+
+
+def resolve_session_id(
+    request: Request,
+    session_id: Optional[str] = Query(default=None),
+) -> str:
+    """세션 식별자 결정: 쿼리 -> X-Session-Id 헤더 -> 기본값.
+
+    기존 앱은 session_id 를 보내지 않으므로 DEFAULT_SESSION_ID 로 묶여
+    지금까지와 똑같이 동작한다 (하위 호환).
+    """
+    return session_id or request.headers.get("X-Session-Id") or DEFAULT_SESSION_ID
+
+
+def get_session(session_id: str = Depends(resolve_session_id)) -> UserSession:
+    return registry.get_or_create(session_id)
 
 
 # 요청 바디 모델
@@ -92,14 +212,14 @@ def video_streaming():
     return get_stream_video()
 
 # AI 운동 분석이 포함된 스트리밍
-def ai_video_streaming():
-    return exercise_ai.get_ai_stream_video(exercise_session)
+def ai_video_streaming(session: UserSession):
+    return session.ai.get_ai_stream_video(session.exercise)
 
 
 MJPEG_MEDIA_TYPE = "multipart/x-mixed-replace; boundary=frame"
 
 
-async def stream_until_disconnect(request: Request, sync_stream):
+async def stream_until_disconnect(request: Request, sync_stream, session: Optional[UserSession] = None):
     """동기 프레임 제너레이터를 async 로 감싸 연결 종료 시 확실히 정리한다.
 
     - 프레임을 만드는 일(cap.read, YOLO 추론, JPEG 인코딩)은 블로킹이므로
@@ -127,6 +247,10 @@ async def stream_until_disconnect(request: Request, sync_stream):
                 logger.info("프레임 제너레이터가 정상 종료되었습니다.")
                 break
 
+            # 스트리밍 중인 세션은 살아있는 것으로 취급해 유휴 회수 대상에서 제외한다.
+            if session is not None:
+                session.touch()
+
             yield chunk
     finally:
         sync_stream.close()
@@ -143,17 +267,43 @@ async def video_stream(request: Request):
 
 # AI 운동 분석 비디오 스트리밍
 @app.get("/video/ai")
-async def ai_video_stream(request: Request):
+async def ai_video_stream(request: Request, session: UserSession = Depends(get_session)):
     return StreamingResponse(
-        stream_until_disconnect(request, ai_video_streaming()),
+        stream_until_disconnect(request, ai_video_streaming(session), session),
         media_type=MJPEG_MEDIA_TYPE,
     )
 
+
+# 세션 관리
+@app.post("/sessions")
+async def create_session():
+    """새 세션을 만들고 식별자를 돌려준다.
+
+    이후 요청에 `?session_id=...` 또는 `X-Session-Id` 헤더로 실어 보내면
+    해당 세션의 인스턴스가 쓰인다.
+    """
+    session_id = uuid.uuid4().hex
+    registry.get_or_create(session_id)
+    return {"session_id": session_id}
+
+
+@app.get("/sessions")
+async def list_sessions():
+    registry.reap_idle()
+    return {"sessions": registry.snapshot()}
+
+
+@app.delete("/sessions/{session_id}")
+async def delete_session(session_id: str):
+    if not registry.remove(session_id):
+        raise HTTPException(status_code=404, detail="Unknown session")
+    return {"status": "deleted", "session_id": session_id}
+
 # 운동 설정 구성
 @app.post("/exercise/configure")
-async def configure_exercise(params: ExerciseParams):
+async def configure_exercise(params: ExerciseParams, session: UserSession = Depends(get_session)):
     try:
-        config = exercise_ai.configure_exercise(
+        config = session.ai.configure_exercise(
             exercise_type=params.exercise_type,
             kpts=params.kpts,
             up_angle=params.up_angle,
@@ -166,9 +316,9 @@ async def configure_exercise(params: ExerciseParams):
 
 # 운동 설정 조회
 @app.get("/exercise/config")
-async def get_exercise_config():
-    config = exercise_ai.get_exercise_config()
-    available_exercises = exercise_ai.get_available_exercises()
+async def get_exercise_config(session: UserSession = Depends(get_session)):
+    config = session.ai.get_exercise_config()
+    available_exercises = session.ai.get_available_exercises()
     return {
         "current_config": config,
         "available_exercises": available_exercises
@@ -179,78 +329,82 @@ async def get_exercise_config():
 async def start_exercise(
     payload: Optional[ExerciseParams] = Body(default=None),
     exercise_type: Optional[str] = Query(default=None),
+    session: UserSession = Depends(get_session),
 ):
     params = _merge_legacy_query(payload, exercise_type)
+    exercise = session.exercise
 
     # 운동 설정 적용
     if params.exercise_type or params.kpts or params.up_angle or params.down_angle:
-        exercise_ai.configure_exercise(
+        session.ai.configure_exercise(
             exercise_type=params.exercise_type,
             kpts=params.kpts,
             up_angle=params.up_angle,
             down_angle=params.down_angle
         )
 
-    exercise_session.is_active = True
-    exercise_session.count = 0
-    exercise_session.accuracy = 0
-    exercise_session.start_time = time.time()
-    exercise_session.exercise_type = params.exercise_type or exercise_ai.get_exercise_config()["exercise_type"]
-    
+    exercise.is_active = True
+    exercise.count = 0
+    exercise.accuracy = None
+    exercise.start_time = time.time()
+    exercise.exercise_type = params.exercise_type or session.ai.get_exercise_config()["exercise_type"]
+
     # AI 모델 초기화
-    exercise_ai.reset_session()
-    
-    return {"status": "started", "exercise_type": exercise_session.exercise_type, "config": exercise_ai.get_exercise_config()}
+    session.ai.reset_session()
+
+    return {"status": "started", "exercise_type": exercise.exercise_type, "config": session.ai.get_exercise_config()}
 
 # 운동 데이터 조회
 @app.get("/exercise/data")
-async def get_exercise_data():
-    if not exercise_session.is_active:
+async def get_exercise_data(session: UserSession = Depends(get_session)):
+    exercise = session.exercise
+    if not exercise.is_active:
         raise HTTPException(status_code=400, detail="No active exercise session")
-    
+
     # AI에서 최신 데이터 가져오기
-    ai_data = exercise_ai.get_current_data()
-    exercise_session.count = ai_data.get("count", exercise_session.count)
+    ai_data = session.ai.get_current_data()
+    exercise.count = ai_data.get("count", exercise.count)
     # accuracy 는 None 일 수 있고, 그 None 자체가 '인식되지 않음'이라는 정보다.
     # 이전 값으로 덮어쓰면 사람이 사라져도 마지막 점수가 계속 남는다.
-    exercise_session.accuracy = ai_data.get("accuracy")
+    exercise.accuracy = ai_data.get("accuracy")
 
-    elapsed_time = int(time.time() - exercise_session.start_time) if exercise_session.start_time else 0
+    elapsed_time = int(time.time() - exercise.start_time) if exercise.start_time else 0
 
     return {
-        "is_active": exercise_session.is_active,
-        "count": exercise_session.count,
-        "accuracy": exercise_session.accuracy,  # null 이면 '인식되지 않음'
+        "is_active": exercise.is_active,
+        "count": exercise.count,
+        "accuracy": exercise.accuracy,  # null 이면 '인식되지 않음'
         "is_detecting": ai_data.get("is_detecting", False),
         "elapsed_time": elapsed_time,
-        "exercise_type": exercise_session.exercise_type
+        "exercise_type": exercise.exercise_type
     }
 
 # 운동 세션 종료
 @app.post("/exercise/stop")
-async def stop_exercise():
-    if not exercise_session.is_active:
+async def stop_exercise(session: UserSession = Depends(get_session)):
+    exercise = session.exercise
+    if not exercise.is_active:
         raise HTTPException(status_code=400, detail="No active exercise session")
-    
+
     # 최종 데이터 수집
     final_data = {
-        "count": exercise_session.count,
-        "accuracy": exercise_session.accuracy,
-        "duration": int(time.time() - exercise_session.start_time) if exercise_session.start_time else 0,
-        "exercise_type": exercise_session.exercise_type
+        "count": exercise.count,
+        "accuracy": exercise.accuracy,
+        "duration": int(time.time() - exercise.start_time) if exercise.start_time else 0,
+        "exercise_type": exercise.exercise_type
     }
-    
+
     # 세션 리셋
-    exercise_session.is_active = False
-    exercise_session.count = 0
-    exercise_session.accuracy = None
-    exercise_session.start_time = None
-    
+    exercise.is_active = False
+    exercise.count = 0
+    exercise.accuracy = None
+    exercise.start_time = None
+
     # AI 완전 리셋 (다음 운동을 위해)
-    logger.info("운동 종료 - AI 시스템 완전 리셋 수행")
-    exercise_ai.reset_session()
-    exercise_ai.cleanup_session()
-    
+    logger.info("운동 종료 - AI 시스템 완전 리셋 수행 (session=%s)", session.session_id)
+    session.ai.reset_session()
+    session.ai.cleanup_session()
+
     return {"status": "stopped", "summary": final_data}
 
 # 운동 준비 (사전 초기화)
@@ -258,24 +412,25 @@ async def stop_exercise():
 async def warmup_exercise(
     payload: Optional[ExerciseParams] = Body(default=None),
     exercise_type: Optional[str] = Query(default=None),
+    session: UserSession = Depends(get_session),
 ):
     """AI 모델과 카메라를 미리 초기화하여 실제 운동 시작 시 지연을 줄입니다."""
     params = _merge_legacy_query(payload, exercise_type)
     try:
         # 운동 타입이 주어졌다면 설정
         if params.exercise_type:
-            exercise_ai.configure_exercise(exercise_type=params.exercise_type)
+            session.ai.configure_exercise(exercise_type=params.exercise_type)
 
         # AI Gym 미리 초기화 (백그라운드)
-        success = exercise_ai.setup_ai_gym()
+        success = session.ai.setup_ai_gym()
 
         # 카메라도 미리 초기화 시도
-        exercise_ai.try_camera_init()
+        session.ai.try_camera_init()
 
         return {
             "status": "warmed_up",
             "ai_ready": success,
-            "exercise_type": params.exercise_type or exercise_ai.get_exercise_config()["exercise_type"]
+            "exercise_type": params.exercise_type or session.ai.get_exercise_config()["exercise_type"]
         }
     except Exception as e:
         # 워밍업 실패해도 운동은 가능하도록 에러를 숨김
@@ -285,7 +440,12 @@ async def warmup_exercise(
 # 헬스체크
 @app.get("/health")
 async def health_check():
-    return {"status": "healthy", "ai_ready": exercise_ai.is_ready()}
+    return {
+        "status": "healthy",
+        "ai_ready": True,  # 시뮬레이션 모드로도 응답은 가능하므로 항상 True (기존 동작 유지)
+        "ultralytics_available": ULTRALYTICS_AVAILABLE,  # 실제 추론 가능 여부
+        "active_sessions": len(registry.snapshot()),
+    }
 
 if __name__ == "__main__":
     import uvicorn
