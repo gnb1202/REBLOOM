@@ -22,8 +22,6 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# cv3 모듈 import
-from cv3 import get_stream_video
 from exercise_ai import ExerciseAI, ULTRALYTICS_AVAILABLE
 
 @asynccontextmanager
@@ -45,10 +43,16 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 
 # CORS 미들웨어 추가
+#
+# allow_origins=["*"] 와 allow_credentials=True 는 함께 쓸 수 없다.
+# 브라우저는 자격증명이 붙은 요청에 대해 Access-Control-Allow-Origin: * 를
+# 거부하기 때문에, 이 조합은 "모두 허용"이 아니라 "브라우저에서 전부 실패"가 된다.
+# 이 API 는 쿠키나 Authorization 헤더를 쓰지 않으므로 credentials 를 끄고
+# 와일드카드 오리진을 유지한다 (앱이 에뮬레이터/실기기 등 여러 오리진에서 접근).
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -223,10 +227,6 @@ def _merge_legacy_query(payload: Optional[ExerciseParams], exercise_type: Option
         return payload.model_copy(update={"exercise_type": exercise_type})
     return payload
 
-# openCV에서 이미지 불러오는 함수
-def video_streaming():
-    return get_stream_video()
-
 # AI 운동 분석이 포함된 스트리밍
 def ai_video_streaming(session: UserSession):
     return session.ai.get_ai_stream_video(session.exercise)
@@ -272,14 +272,6 @@ async def stream_until_disconnect(request: Request, sync_stream, session: Option
         sync_stream.close()
         logger.info("스트림 정리 완료")
 
-
-# 기본 비디오 스트리밍 (기존)
-@app.get("/video")
-async def video_stream(request: Request):
-    return StreamingResponse(
-        stream_until_disconnect(request, video_streaming()),
-        media_type=MJPEG_MEDIA_TYPE,
-    )
 
 # AI 운동 분석 비디오 스트리밍
 @app.get("/video/ai")

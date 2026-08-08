@@ -513,7 +513,7 @@ class ExerciseAI:
                        b'Content-Type: image/jpeg\r\n\r\n' +
                        bytearray(frame_bytes) + b'\r\n')
 
-            time.sleep(0.03)  # 30 FPS 제한
+            time.sleep(0.03)  # 약 33 FPS. 더미 루프는 카메라가 없으므로 이 값이 실제 상한이다.
 
     def _camera_stream_with_ai(self, exercise_session):
         """실제 카메라를 사용한 AI 스트리밍
@@ -620,7 +620,13 @@ class ExerciseAI:
                        b'Content-Type: image/jpeg\r\n\r\n' +
                        bytearray(frame_bytes) + b'\r\n')
 
-            time.sleep(0.015)  # 30 FPS 제한
+            # 주석에는 "30 FPS 제한"이라고 적혀 있었지만 0.015초는 약 66 FPS 다.
+            # 실제 프레임 속도를 정하는 건 이 sleep 이 아니라 카메라
+            # (CAP_PROP_FPS=30) 와 추론 시간이다. 이 sleep 은 카메라가 예상보다
+            # 빨리 프레임을 줄 때 바쁜 루프가 되는 것을 막고 워커 스레드를
+            # 양보하기 위한 것이므로, 값을 0.03 으로 올리면 30 FPS 카메라 위에
+            # 30 FPS 제한을 한 번 더 걸어 오히려 느려진다. 값은 두고 주석을 고친다.
+            time.sleep(0.015)  # 약 66 FPS 상한 (실질 상한은 카메라 30 FPS)
 
     def close(self):
         """카메라와 AI Gym 을 명시적으로 정리한다.
