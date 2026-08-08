@@ -1,10 +1,37 @@
 import cv2
 import logging
 import numpy as np
+import platform
 import time
 import threading
 
 logger = logging.getLogger(__name__)
+
+
+def _camera_backends_for_platform():
+    """현재 OS 에서 의미 있는 OpenCV 캡처 백엔드만 골라 반환한다.
+
+    CAP_DSHOW / CAP_MSMF 는 Windows 전용인데 예전 코드는 OS 와 무관하게
+    무조건 시도했다. Linux/macOS 에서는 매번 실패하면서 초기화만 느려지고
+    로그를 오염시킨다. CAP_ANY 는 OpenCV 가 알아서 고르게 하는 공통 폴백이라
+    항상 마지막에 둔다.
+
+    일부 OpenCV 빌드에는 특정 상수가 없을 수 있어 getattr 로 안전하게 접근한다.
+    """
+    system = platform.system()
+    if system == "Windows":
+        names = ["CAP_DSHOW", "CAP_MSMF"]
+    elif system == "Linux":
+        names = ["CAP_V4L2"]
+    elif system == "Darwin":
+        names = ["CAP_AVFOUNDATION"]
+    else:
+        names = []
+
+    backends = [getattr(cv2, name) for name in names if hasattr(cv2, name)]
+    backends.append(cv2.CAP_ANY)  # 공통 폴백
+    logger.debug("OS=%s 에서 시도할 카메라 백엔드: %s", system, backends)
+    return backends
 
 # ultralytics는 무겁고 설치되지 않은 환경도 있으므로, import 실패를 치명적 오류로
 # 다루지 않고 플래그로 낮춰 시뮬레이션 모드로 계속 동작하게 한다.
@@ -379,10 +406,12 @@ class ExerciseAI:
 
     def _init_camera(self):
         """카메라 안전 초기화"""
-        logger.info("카메라 초기화 시도...")
+        logger.info("카메라 초기화 시도 (OS=%s)...", platform.system())
 
-        # 다양한 백엔드와 인덱스로 시도
-        backends_to_try = [cv2.CAP_DSHOW, cv2.CAP_MSMF, cv2.CAP_ANY]
+        # 현재 OS 에서 유효한 백엔드만 인덱스별로 시도한다.
+        # 여기서 전부 실패하면 호출 측이 더미 스트림 -> 시뮬레이션 모드로 넘어간다
+        # (의도된 3단 폴백이므로 그대로 유지).
+        backends_to_try = _camera_backends_for_platform()
         indices_to_try = [0, 1, -1]
 
         for backend in backends_to_try:
