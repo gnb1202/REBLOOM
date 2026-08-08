@@ -575,29 +575,44 @@ class ExerciseAI:
                         try:
                             results = self.gym(frame)
 
-                            # 단일 사용자 운동 카운트 처리
-                            if hasattr(results, 'workout_count') and results.workout_count is not None:
-                                # 첫 번째 사용자의 카운트만 사용 (max_det=1 설정으로 인해 하나만 검출됨)
-                                if len(results.workout_count) > 0:
-                                    count = results.workout_count[0]
-                                    accuracy = self.calculate_accuracy(results)
-                                    with self.lock:
-                                        self.current_data["count"] = count
-                                        self.current_data["accuracy"] = accuracy
-                                        # 각도를 실제로 뽑아냈을 때만 '검출 중'이다.
-                                        self.current_data["is_detecting"] = accuracy is not None
+                            # 정확도와 검출 여부는 '매 프레임' 갱신해야 한다.
+                            # 검출된 프레임에서만 갱신하면, 사람이 화면 밖으로
+                            # 나가는 순간 마지막 값이 그대로 고정(latch)되어
+                            # 아무도 없는데 계속 그 점수가 표시된다.
+                            # 검출 실패 시 None 을 내려보내는 의미가 사라진다.
+                            accuracy = self.calculate_accuracy(results)
 
-                                    # 카운트가 변경될 때만 로그 출력 (성능 최적화)
-                                    if count != getattr(self, '_last_count', -1):
-                                        logger.debug("운동 카운트: %s", count)
-                                        self._last_count = count
+                            # 단일 사용자 운동 카운트 처리
+                            # (max_det=1 설정으로 인해 하나만 검출됨)
+                            counts = getattr(results, 'workout_count', None)
+                            has_count = counts is not None and len(counts) > 0
+                            count = counts[0] if has_count else None
+
+                            with self.lock:
+                                # 카운트는 누적 횟수라 사람이 잠깐 벗어나도 유지한다.
+                                # 되돌리면 지금까지 한 운동이 사라진다.
+                                if has_count:
+                                    self.current_data["count"] = count
+                                self.current_data["accuracy"] = accuracy
+                                # 각도를 실제로 뽑아냈을 때만 '검출 중'이다.
+                                self.current_data["is_detecting"] = accuracy is not None
+
+                            # 카운트가 변경될 때만 로그 출력 (성능 최적화)
+                            if has_count and count != self._last_count:
+                                logger.debug("운동 카운트: %s", count)
+                                self._last_count = count
 
                             # 분석된 프레임 사용 (키포인트, 카운트 등이 그려진 상태)
                             if hasattr(results, 'plot_im'):
                                 frame = results.plot_im
 
                         except Exception:
+                            # 추론 자체가 실패한 프레임도 '인식되지 않음'이다.
+                            # 여기서 상태를 놔두면 마지막 값이 그대로 남는다.
                             logger.error("AI 분석 오류", exc_info=True)
+                            with self.lock:
+                                self.current_data["accuracy"] = None
+                                self.current_data["is_detecting"] = False
                     else:
                         # AI Gym이 없으면 시뮬레이션 모드
                         if frame_count % 150 == 0:  # 5초마다
