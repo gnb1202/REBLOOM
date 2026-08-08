@@ -3,8 +3,19 @@ from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 import json
 import asyncio
+import logging
 import threading
 import time
+
+# 로깅 설정은 로컬 모듈 import 보다 먼저 수행한다.
+# exercise_ai 는 import 시점에 ultralytics 사용 가능 여부를 로그로 남기는데,
+# 그 시점에 핸들러가 없으면 lastResort 핸들러로 빠져 포맷이 적용되지 않는다.
+# uvicorn 이 이미 핸들러를 붙인 경우 basicConfig 는 아무 일도 하지 않는다.
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)-8s %(name)s: %(message)s",
+)
+logger = logging.getLogger(__name__)
 
 # cv3 모듈 import
 from cv3 import get_stream_video
@@ -145,7 +156,7 @@ async def stop_exercise():
     exercise_session.start_time = None
     
     # AI 완전 리셋 (다음 운동을 위해)
-    print("🔄 운동 종료 - AI 시스템 완전 리셋 수행")
+    logger.info("운동 종료 - AI 시스템 완전 리셋 수행")
     exercise_ai.reset_session()
     exercise_ai.cleanup_session()
     

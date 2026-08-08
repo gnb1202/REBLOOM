@@ -37,4 +37,4 @@ firebase.config.ts
 # typescript
 *.tsbuildinfo
 
-app-example
+app-example.omc/
