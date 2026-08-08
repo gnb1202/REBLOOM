@@ -3,6 +3,7 @@ from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, model_validator
 from starlette.concurrency import run_in_threadpool
+from contextlib import asynccontextmanager
 from typing import List, Optional
 import json
 import asyncio
@@ -25,8 +26,23 @@ logger = logging.getLogger(__name__)
 from cv3 import get_stream_video
 from exercise_ai import ExerciseAI, ULTRALYTICS_AVAILABLE
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """서버 수명주기에 리소스 정리를 연결한다.
+
+    __del__ 에 기대면 종료 시점에 카메라가 해제된다는 보장이 없다.
+    종료 훅에서 모든 세션의 close() 를 명시적으로 호출한다.
+    """
+    logger.info("서버 시작 (ultralytics 사용 가능: %s)", ULTRALYTICS_AVAILABLE)
+    try:
+        yield
+    finally:
+        logger.info("서버 종료 - 모든 세션 리소스를 정리합니다.")
+        registry.close_all()
+
+
 # FastAPI객체 생성
-app = FastAPI()
+app = FastAPI(lifespan=lifespan)
 
 # CORS 미들웨어 추가
 app.add_middleware(
@@ -64,7 +80,7 @@ class UserSession:
         self.last_seen = time.time()
 
     def close(self):
-        self.ai.cleanup_session()
+        self.ai.close()
 
 
 class SessionRegistry:

@@ -622,7 +622,24 @@ class ExerciseAI:
 
             time.sleep(0.015)  # 30 FPS 제한
 
-    def __del__(self):
-        """소멸자 - 리소스 정리"""
-        if self.cap:
-            self.cap.release()
+    def close(self):
+        """카메라와 AI Gym 을 명시적으로 정리한다.
+
+        예전에는 __del__ 에서 카메라를 놓아줬다. __del__ 은 참조가 0이 되는
+        시점에만 불리는데, 스트림 제너레이터나 예외 트레이스백이 인스턴스를
+        붙잡고 있으면 그 시점이 언제인지 알 수 없다. 실제로는 프로세스가
+        끝날 때까지 카메라가 잡혀 있는 경우가 생긴다.
+        정리 시점을 호출자가 정하도록 close() 로 바꾸고,
+        FastAPI 종료 훅과 세션 삭제 경로에 연결했다.
+        """
+        self._release_camera()
+        self.gym = None
+        logger.debug("ExerciseAI 리소스 정리 완료")
+
+    # with 문으로도 쓸 수 있게 해 둔다 (스크립트/테스트에서 유용).
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc, tb):
+        self.close()
+        return False
