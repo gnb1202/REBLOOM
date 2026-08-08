@@ -1,7 +1,9 @@
-from fastapi import FastAPI, Request, WebSocket, HTTPException
+from fastapi import Body, FastAPI, Query, Request, WebSocket, HTTPException
 from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel, model_validator
 from starlette.concurrency import run_in_threadpool
+from typing import List, Optional
 import json
 import asyncio
 import logging
@@ -48,6 +50,42 @@ class ExerciseSession:
         self.exercise_type = "arm_raise"  # 기본값
 
 exercise_session = ExerciseSession()
+
+
+# 요청 바디 모델
+#
+# 기존 코드는 `kpts: list = None` 처럼 엔드포인트 함수 인자로 선언했다.
+# FastAPI 는 BaseModel 이 아닌 스칼라/컬렉션 인자를 쿼리 파라미터로 해석하므로,
+# 프론트엔드가 JSON 바디로 보낸 값은 그대로 무시되고 항상 기본값이 쓰였다.
+# BaseModel 로 선언해야 바디에서 읽는다.
+class ExerciseParams(BaseModel):
+    exercise_type: Optional[str] = None
+    kpts: Optional[List[int]] = None
+    up_angle: Optional[float] = None
+    down_angle: Optional[float] = None
+
+    @model_validator(mode="after")
+    def _validate_angles_and_kpts(self):
+        # 검증 규칙은 ExerciseAI 쪽에 두고 여기서는 호출만 한다 (규칙 중복 방지).
+        errors = ExerciseAI.validate_exercise_params(
+            self.kpts, self.up_angle, self.down_angle
+        )
+        if errors:
+            raise ValueError("; ".join(errors))
+        return self
+
+
+def _merge_legacy_query(payload: Optional[ExerciseParams], exercise_type: Optional[str]) -> ExerciseParams:
+    """바디가 없고 쿼리로만 exercise_type 을 보내는 기존 클라이언트를 지원한다.
+
+    앱의 ExerciseDo.tsx 는 `/exercise/start?exercise_type=...` 형태로 호출하므로
+    바디를 필수로 만들면 깨진다. 바디가 있으면 바디를 우선한다.
+    """
+    if payload is None:
+        return ExerciseParams(exercise_type=exercise_type)
+    if payload.exercise_type is None and exercise_type is not None:
+        return payload.model_copy(update={"exercise_type": exercise_type})
+    return payload
 
 # openCV에서 이미지 불러오는 함수
 def video_streaming():
@@ -113,17 +151,17 @@ async def ai_video_stream(request: Request):
 
 # 운동 설정 구성
 @app.post("/exercise/configure")
-async def configure_exercise(exercise_type: str = None, kpts: list = None, up_angle: int = None, down_angle: int = None):
+async def configure_exercise(params: ExerciseParams):
     try:
         config = exercise_ai.configure_exercise(
-            exercise_type=exercise_type,
-            kpts=kpts,
-            up_angle=up_angle,
-            down_angle=down_angle,
-            #show=False
+            exercise_type=params.exercise_type,
+            kpts=params.kpts,
+            up_angle=params.up_angle,
+            down_angle=params.down_angle,
         )
         return {"status": "configured", "config": config}
     except Exception as e:
+        logger.error("운동 설정 실패", exc_info=True)
         raise HTTPException(status_code=400, detail=f"Configuration error: {str(e)}")
 
 # 운동 설정 조회
@@ -138,21 +176,26 @@ async def get_exercise_config():
 
 # 운동 세션 시작
 @app.post("/exercise/start")
-async def start_exercise(exercise_type: str = "arm_raise", kpts: list = None, up_angle: int = None, down_angle: int = None):
+async def start_exercise(
+    payload: Optional[ExerciseParams] = Body(default=None),
+    exercise_type: Optional[str] = Query(default=None),
+):
+    params = _merge_legacy_query(payload, exercise_type)
+
     # 운동 설정 적용
-    if exercise_type or kpts or up_angle or down_angle:
+    if params.exercise_type or params.kpts or params.up_angle or params.down_angle:
         exercise_ai.configure_exercise(
-            exercise_type=exercise_type,
-            kpts=kpts,
-            up_angle=up_angle,
-            down_angle=down_angle
+            exercise_type=params.exercise_type,
+            kpts=params.kpts,
+            up_angle=params.up_angle,
+            down_angle=params.down_angle
         )
-    
+
     exercise_session.is_active = True
     exercise_session.count = 0
     exercise_session.accuracy = 0
     exercise_session.start_time = time.time()
-    exercise_session.exercise_type = exercise_type or exercise_ai.get_exercise_config()["exercise_type"]
+    exercise_session.exercise_type = params.exercise_type or exercise_ai.get_exercise_config()["exercise_type"]
     
     # AI 모델 초기화
     exercise_ai.reset_session()
@@ -209,26 +252,31 @@ async def stop_exercise():
 
 # 운동 준비 (사전 초기화)
 @app.post("/exercise/warmup")
-async def warmup_exercise(exercise_type: str = None):
+async def warmup_exercise(
+    payload: Optional[ExerciseParams] = Body(default=None),
+    exercise_type: Optional[str] = Query(default=None),
+):
     """AI 모델과 카메라를 미리 초기화하여 실제 운동 시작 시 지연을 줄입니다."""
+    params = _merge_legacy_query(payload, exercise_type)
     try:
         # 운동 타입이 주어졌다면 설정
-        if exercise_type:
-            exercise_ai.configure_exercise(exercise_type=exercise_type)
-        
+        if params.exercise_type:
+            exercise_ai.configure_exercise(exercise_type=params.exercise_type)
+
         # AI Gym 미리 초기화 (백그라운드)
         success = exercise_ai.setup_ai_gym()
-        
+
         # 카메라도 미리 초기화 시도
         exercise_ai.try_camera_init()
-        
+
         return {
             "status": "warmed_up",
             "ai_ready": success,
-            "exercise_type": exercise_type or exercise_ai.get_exercise_config()["exercise_type"]
+            "exercise_type": params.exercise_type or exercise_ai.get_exercise_config()["exercise_type"]
         }
     except Exception as e:
         # 워밍업 실패해도 운동은 가능하도록 에러를 숨김
+        logger.warning("워밍업 실패 (운동 진행에는 영향 없음)", exc_info=True)
         return {"status": "warmup_failed", "ai_ready": False, "detail": str(e)}
 
 # 헬스체크

@@ -177,8 +177,14 @@ class ExerciseAI:
                 "config": self.exercise_config.copy()
             }
 
-    def validate_exercise_params(self, kpts=None, up_angle=None, down_angle=None):
-        """운동 파라미터 유효성 검사"""
+    @staticmethod
+    def validate_exercise_params(kpts=None, up_angle=None, down_angle=None):
+        """운동 파라미터 유효성 검사
+
+        API 경계의 Pydantic 모델(main.ExerciseParams)이 이 함수를 그대로 호출하므로,
+        검증 규칙의 단일 출처 역할을 한다. staticmethod 이기 때문에 인스턴스 없이도
+        재사용할 수 있다.
+        """
         errors = []
 
         if kpts is not None:
