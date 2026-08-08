@@ -267,6 +267,74 @@ def test_frame_loop_intervals_are_named_constants():
 
 
 # --------------------------------------------------------------------------
+# 락 분리: 모델 로딩이 프레임 루프를 막지 않는다
+# --------------------------------------------------------------------------
+
+def test_reset_does_not_hold_the_state_lock_while_rebuilding_the_model():
+    """AIGym 재생성은 수 초가 걸릴 수 있다.
+
+    그동안 상태 락을 쥐고 있으면 프레임 루프가 current_data 를 쓰지 못해
+    영상이 멈춘다. 운동 시작 순간이라 사용자에게 그대로 보인다.
+    """
+    ai = exercise_ai.ExerciseAI()
+    ai.gym = object()  # 재생성이 필요한 상태
+    observed = {}
+
+    def fake_setup(force_rebuild=False):
+        # 모델 로딩 중 다른 스레드가 상태 락을 잡을 수 있어야 한다
+        acquired = ai.lock.acquire(blocking=False)
+        observed["lock_was_free"] = acquired
+        if acquired:
+            ai.lock.release()
+        return True
+
+    original = exercise_ai.ULTRALYTICS_AVAILABLE
+    exercise_ai.ULTRALYTICS_AVAILABLE = True
+    ai.setup_ai_gym = fake_setup
+    try:
+        ai.reset_session()
+    finally:
+        exercise_ai.ULTRALYTICS_AVAILABLE = original
+
+    assert observed.get("lock_was_free"), "모델 로딩 내내 상태 락을 쥐고 있다"
+    assert ai.get_current_data()["count"] == 0
+
+
+def test_concurrent_setup_does_not_build_the_model_twice():
+    """프레임 루프의 지연 초기화와 reset_session 재생성이 겹칠 수 있다."""
+    import threading
+    import time
+
+    ai = exercise_ai.ExerciseAI()
+    builds = []
+
+    def slow_build(force_rebuild):
+        # 실제 _build_ai_gym 과 같은 스킵 조건을 지켜야 락의 효과를 잰다.
+        # (이 조건을 빼면 스텁 자신을 측정하게 된다)
+        if ai.gym is not None and not force_rebuild:
+            return True
+        builds.append(1)
+        time.sleep(0.15)  # 모델 로딩을 흉내
+        ai.gym = object()
+        return True
+
+    original = exercise_ai.ULTRALYTICS_AVAILABLE
+    exercise_ai.ULTRALYTICS_AVAILABLE = True
+    ai._build_ai_gym = slow_build
+    try:
+        threads = [threading.Thread(target=ai.setup_ai_gym) for _ in range(4)]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()
+    finally:
+        exercise_ai.ULTRALYTICS_AVAILABLE = original
+
+    # 직렬화되지 않으면 4개가 동시에 진입해 모델을 네 벌 로딩한다
+    assert len(builds) == 1, f"AIGym 이 {len(builds)}번 생성됨 (직렬화 실패)"
+
+
+# --------------------------------------------------------------------------
 # 세션 격리
 # --------------------------------------------------------------------------
 

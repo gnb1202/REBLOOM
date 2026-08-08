@@ -63,7 +63,12 @@ class ExerciseAI:
             "accuracy": None,  # 아직 측정된 값이 없음 (검출 전)
             "is_detecting": False
         }
+        # 락이 두 개인 이유:
+        #   lock      - current_data 등 짧은 상태 갱신용. 절대 오래 쥐지 않는다.
+        #   _gym_lock - AIGym 생성용. 모델 로딩이라 수 초가 걸릴 수 있다.
+        # 하나로 합치면 모델을 로딩하는 동안 프레임 루프가 막혀 영상이 멈춘다.
         self.lock = threading.Lock()
+        self._gym_lock = threading.Lock()
         self.count_simulation = 0  # 시뮬레이션용 카운터
         self._last_count = -1  # 카운트 변경 감지용
 
@@ -203,11 +208,21 @@ class ExerciseAI:
         return list(self.predefined_configs.keys())
 
     def setup_ai_gym(self, force_rebuild=False):
-        """AI Gym 인스턴스 설정 - 지연 초기화"""
+        """AI Gym 인스턴스 설정 - 지연 초기화
+
+        _gym_lock 으로 직렬화한다. 프레임 루프의 지연 초기화 재시도와
+        reset_session 의 재생성이 동시에 들어오면 AIGym 이 두 번 만들어져
+        모델을 두 벌 로딩하게 된다.
+        """
         if not ULTRALYTICS_AVAILABLE:
             logger.warning("Ultralytics가 사용 불가능합니다. 시뮬레이션 모드로 실행됩니다.")
             return False
 
+        with self._gym_lock:
+            return self._build_ai_gym(force_rebuild)
+
+    def _build_ai_gym(self, force_rebuild):
+        """AIGym 실제 생성 (_gym_lock 을 쥔 상태에서만 호출한다)."""
         try:
             # 기존 인스턴스를 강제로 재구성하거나, 인스턴스가 없는 경우 생성
             if self.gym is None or force_rebuild:
@@ -265,19 +280,18 @@ class ExerciseAI:
             self.count_simulation = 0  # 시뮬레이션 카운터 리셋
             self._last_count = -1  # 카운트 변경 감지 초기화
 
-            # AI Gym 완전히 재생성하여 확실한 리셋
-            if self.gym:
-                try:
-                    # 기존 AI Gym 정리
-                    self.gym = None
-                    logger.debug("기존 AI Gym 인스턴스 정리")
+            # AI Gym 을 먼저 떨궈 카운터를 확실히 리셋한다.
+            needs_rebuild = self.gym is not None
+            self.gym = None
 
-                    # 새로운 AI Gym 생성
-                    if ULTRALYTICS_AVAILABLE:
-                        self.setup_ai_gym(force_rebuild=True)
-                        logger.info("AI Gym 완전 재생성으로 카운터 초기화")
-                except Exception:
-                    logger.error("AI Gym 재생성 실패", exc_info=True)
+        # 여기서부터는 상태 락을 놓은 상태다.
+        # AIGym 생성은 모델 로딩을 동반해 수 초가 걸릴 수 있는데, 프레임 루프도
+        # 같은 락으로 current_data 를 쓰기 때문에 락을 쥔 채 로딩하면 그동안
+        # 영상이 통째로 멈춘다. 운동 시작 버튼을 누르는 순간이라 가장 티가 난다.
+        if needs_rebuild:
+            logger.debug("기존 AI Gym 인스턴스 정리")
+            if ULTRALYTICS_AVAILABLE and self.setup_ai_gym(force_rebuild=True):
+                logger.info("AI Gym 완전 재생성으로 카운터 초기화")
 
         logger.info("운동 세션 완전 리셋 완료")
 
