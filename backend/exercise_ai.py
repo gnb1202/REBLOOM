@@ -157,53 +157,6 @@ class ExerciseAI:
         logger.info("최종 운동 설정: %s", self.exercise_config)
         return self.exercise_config.copy()
 
-    def update_exercise_settings(self, frontend_data):
-        """프론트엔드에서 전달받은 데이터로 운동 설정 업데이트"""
-        try:
-            # 프론트엔드 데이터에서 필요한 정보 추출
-            exercise_type = frontend_data.get('exercise_type')
-            custom_kpts = frontend_data.get('kpts')
-            custom_up_angle = frontend_data.get('up_angle')
-            custom_down_angle = frontend_data.get('down_angle')
-
-            # 파라미터 유효성 검사
-            validation_errors = self.validate_exercise_params(custom_kpts, custom_up_angle, custom_down_angle)
-            if validation_errors:
-                return {
-                    "success": False,
-                    "message": "; ".join(validation_errors),
-                    "config": self.exercise_config.copy()
-                }
-
-            # 운동 설정 업데이트
-            updated_config = self.configure_exercise(
-                exercise_type=exercise_type,
-                kpts=custom_kpts,
-                up_angle=custom_up_angle,
-                down_angle=custom_down_angle
-            )
-
-            # AI Gym 재구성 (새로운 설정 적용)
-            if ULTRALYTICS_AVAILABLE:
-                self.setup_ai_gym(force_rebuild=True)
-
-            # 세션 리셋 (새로운 설정으로 운동 시작)
-            self.reset_session()
-
-            return {
-                "success": True,
-                "message": "운동 설정이 성공적으로 업데이트되었습니다.",
-                "config": updated_config
-            }
-
-        except Exception as e:
-            logger.error("운동 설정 업데이트 오류", exc_info=True)
-            return {
-                "success": False,
-                "message": f"운동 설정 업데이트 실패: {str(e)}",
-                "config": self.exercise_config.copy()
-            }
-
     @staticmethod
     def validate_exercise_params(kpts=None, up_angle=None, down_angle=None):
         """운동 파라미터 유효성 검사
@@ -290,10 +243,6 @@ class ExerciseAI:
             logger.warning("카메라 사전 초기화 실패 - 운동 시작 시 재시도합니다.")
             return False
 
-    def is_ready(self):
-        """AI 모델이 준비되었는지 확인"""
-        return ULTRALYTICS_AVAILABLE or True  # 시뮬레이션 모드도 준비 완료로 처리
-
     def reset_session(self):
         """새로운 운동 세션을 위한 리셋"""
         with self.lock:
@@ -331,16 +280,12 @@ class ExerciseAI:
         accuracy = self.current_data.get("accuracy")
         return "--" if accuracy is None else f"{accuracy:.0f}%"
 
-    def _release_camera(self):
+    def release_camera(self):
         """카메라 핸들을 해제한다. 이미 해제된 경우 아무 일도 하지 않는다."""
         if self.cap:
             self.cap.release()
             self.cap = None
             logger.info("카메라 핸들 해제 완료")
-
-    def cleanup_session(self):
-        """세션 정리"""
-        self._release_camera()
 
     def calculate_accuracy(self, results):
         """운동 정확도 계산 - 단일 사용자 실시간 각도 기반
@@ -531,7 +476,7 @@ class ExerciseAI:
             logger.info("카메라 스트림 종료 요청 수신 (클라이언트 연결 종료)")
             raise
         finally:
-            self._release_camera()
+            self.release_camera()
             logger.info("카메라 AI 스트리밍 종료")
 
     def _camera_frames(self, exercise_session):
@@ -542,7 +487,7 @@ class ExerciseAI:
 
         while True:
             # 지역 변수로 받아 두고 쓴다. /exercise/stop 이나 세션 삭제가
-            # 다른 스레드에서 cleanup_session() -> self.cap = None 을 하기 때문에,
+            # 다른 스레드에서 release_camera() -> self.cap = None 을 하기 때문에,
             # self.cap.read() 를 바로 호출하면 그 사이에 None 이 되어
             # AttributeError 로 스트림이 터진다. 앱은 스트림을 띄운 채로
             # 운동 종료를 호출하므로 매 세션 종료마다 밟는 경로다.
@@ -558,7 +503,7 @@ class ExerciseAI:
 
                 if retry_count >= max_retries:
                     logger.warning("카메라 접근 실패. 더미 스트림으로 전환합니다.")
-                    self._release_camera()
+                    self.release_camera()
                     # 제너레이터 안에서 return 은 값을 돌려주는 게 아니라 StopIteration 이라,
                     # 원래 코드에서는 폴백이 실행되지 않고 스트림이 그냥 끊겼다.
                     # yield from 으로 더미 스트림에 위임해야 의도한 3단 폴백이 성립한다.
@@ -663,7 +608,7 @@ class ExerciseAI:
         정리 시점을 호출자가 정하도록 close() 로 바꾸고,
         FastAPI 종료 훅과 세션 삭제 경로에 연결했다.
         """
-        self._release_camera()
+        self.release_camera()
         self.gym = None
         logger.debug("ExerciseAI 리소스 정리 완료")
 

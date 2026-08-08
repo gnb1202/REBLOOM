@@ -166,7 +166,7 @@ def test_stream_ends_cleanly_when_camera_released_mid_stream():
     stream = ai.get_ai_stream_video(FakeSession())
     next(stream)
 
-    ai.cleanup_session()  # /exercise/stop 이 하는 일
+    ai.release_camera()  # /exercise/stop 이 하는 일
 
     try:
         next(stream)
