@@ -6,6 +6,7 @@ from starlette.concurrency import run_in_threadpool
 from contextlib import asynccontextmanager
 from typing import List, Optional
 import logging
+import os
 import threading
 import time
 import uuid
@@ -14,8 +15,12 @@ import uuid
 # exercise_ai 는 import 시점에 ultralytics 사용 가능 여부를 로그로 남기는데,
 # 그 시점에 핸들러가 없으면 lastResort 핸들러로 빠져 포맷이 적용되지 않는다.
 # uvicorn 이 이미 핸들러를 붙인 경우 basicConfig 는 아무 일도 하지 않는다.
+#
+# 레벨은 LOG_LEVEL 환경변수로 조절한다. uvicorn 의 --log-level 은 uvicorn.*
+# 로거만 건드리기 때문에, 여기서 root 를 INFO 로 고정해 버리면 이 앱의
+# logger.debug (카메라 백엔드 시도 내역, 운동 카운트 변화 등)를 볼 방법이 없다.
 logging.basicConfig(
-    level=logging.INFO,
+    level=os.getenv("LOG_LEVEL", "INFO").upper(),
     format="%(asctime)s %(levelname)-8s %(name)s: %(message)s",
 )
 logger = logging.getLogger(__name__)
