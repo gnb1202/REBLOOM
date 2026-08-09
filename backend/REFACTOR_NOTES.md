@@ -181,7 +181,7 @@ macOS 는 AVFOUNDATION 만 시도하고, 공통 폴백 `CAP_ANY` 를 항상 마�
 
 **검증** `python -c "import main"` 으로 두 줄 모두 타임스탬프+레벨이 붙어
 나오는지 확인했고, `grep -rn "print(" *.py` 로 남은 `print` 가 없는지 확인했다
-(실험 스크립트인 `test.py` 제외).
+(카메라 데모 스크립트 제외).
 
 ---
 
@@ -253,7 +253,9 @@ macOS 는 AVFOUNDATION 만 시도하고, 공통 폴백 `CAP_ANY` 를 항상 마�
 맞지만 `validate_exercise_params` 유지가 요구 사항이었고 이 함수가 그 유일한
 호출자라, 이번엔 남겨 뒀다. 다음 정리 때 후보다.
 
-**`test.py`** 독립 실험 스크립트라 서버와 무관하다. 그대로 뒀다.
+**`manual_camera_check.py`** 독립 카메라 데모라 서버와 무관해 내용은 그대로
+뒀다. 다만 원래 이름 `test.py` 가 표준 라이브러리의 `test` 패키지를 가려서
+이름만 바꿨다.
 
 ---
 

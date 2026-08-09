@@ -7,6 +7,17 @@ import threading
 
 logger = logging.getLogger(__name__)
 
+# MJPEG 멀티파트 프레임 헤더 (boundary 는 StreamingResponse 의 media_type 과 맞춰야 한다)
+MJPEG_FRAME_HEADER = b'--frame\r\nContent-Type: image/jpeg\r\n\r\n'
+
+# 시뮬레이션 모드에서 카운트를 올리는 주기(프레임 단위).
+# 더미 스트림 기준 150프레임 x 0.03초 = 약 4.5초, 실측 약 4.7초.
+SIMULATION_COUNT_INTERVAL_FRAMES = 150
+
+# AI Gym 지연 초기화를 다시 시도하는 주기(프레임 단위). 30프레임 = 약 1초.
+# 매 프레임 시도하면 실패가 계속되는 환경에서 초당 수십 번 모델 로드를 때린다.
+AI_GYM_RETRY_INTERVAL_FRAMES = 30
+
 
 def _camera_backends_for_platform():
     """현재 OS 에서 의미 있는 OpenCV 캡처 백엔드만 골라 반환한다.
@@ -52,7 +63,12 @@ class ExerciseAI:
             "accuracy": None,  # 아직 측정된 값이 없음 (검출 전)
             "is_detecting": False
         }
+        # 락이 두 개인 이유:
+        #   lock      - current_data 등 짧은 상태 갱신용. 절대 오래 쥐지 않는다.
+        #   _gym_lock - AIGym 생성용. 모델 로딩이라 수 초가 걸릴 수 있다.
+        # 하나로 합치면 모델을 로딩하는 동안 프레임 루프가 막혀 영상이 멈춘다.
         self.lock = threading.Lock()
+        self._gym_lock = threading.Lock()
         self.count_simulation = 0  # 시뮬레이션용 카운터
         self._last_count = -1  # 카운트 변경 감지용
 
@@ -157,53 +173,6 @@ class ExerciseAI:
         logger.info("최종 운동 설정: %s", self.exercise_config)
         return self.exercise_config.copy()
 
-    def update_exercise_settings(self, frontend_data):
-        """프론트엔드에서 전달받은 데이터로 운동 설정 업데이트"""
-        try:
-            # 프론트엔드 데이터에서 필요한 정보 추출
-            exercise_type = frontend_data.get('exercise_type')
-            custom_kpts = frontend_data.get('kpts')
-            custom_up_angle = frontend_data.get('up_angle')
-            custom_down_angle = frontend_data.get('down_angle')
-
-            # 파라미터 유효성 검사
-            validation_errors = self.validate_exercise_params(custom_kpts, custom_up_angle, custom_down_angle)
-            if validation_errors:
-                return {
-                    "success": False,
-                    "message": "; ".join(validation_errors),
-                    "config": self.exercise_config.copy()
-                }
-
-            # 운동 설정 업데이트
-            updated_config = self.configure_exercise(
-                exercise_type=exercise_type,
-                kpts=custom_kpts,
-                up_angle=custom_up_angle,
-                down_angle=custom_down_angle
-            )
-
-            # AI Gym 재구성 (새로운 설정 적용)
-            if ULTRALYTICS_AVAILABLE:
-                self.setup_ai_gym(force_rebuild=True)
-
-            # 세션 리셋 (새로운 설정으로 운동 시작)
-            self.reset_session()
-
-            return {
-                "success": True,
-                "message": "운동 설정이 성공적으로 업데이트되었습니다.",
-                "config": updated_config
-            }
-
-        except Exception as e:
-            logger.error("운동 설정 업데이트 오류", exc_info=True)
-            return {
-                "success": False,
-                "message": f"운동 설정 업데이트 실패: {str(e)}",
-                "config": self.exercise_config.copy()
-            }
-
     @staticmethod
     def validate_exercise_params(kpts=None, up_angle=None, down_angle=None):
         """운동 파라미터 유효성 검사
@@ -238,12 +207,33 @@ class ExerciseAI:
         """사용 가능한 운동 타입 목록 반환"""
         return list(self.predefined_configs.keys())
 
-    def setup_ai_gym(self, force_rebuild=False):
-        """AI Gym 인스턴스 설정 - 지연 초기화"""
+    def setup_ai_gym(self, force_rebuild=False, wait=True):
+        """AI Gym 인스턴스 설정 - 지연 초기화
+
+        _gym_lock 으로 직렬화한다. 프레임 루프의 지연 초기화 재시도와
+        reset_session 의 재생성이 동시에 들어오면 AIGym 이 두 번 만들어져
+        모델을 두 벌 로딩하게 된다.
+
+        wait=False 는 프레임 루프 전용이다. 다른 스레드가 이미 모델을 만들고
+        있으면 기다리지 않고 곧바로 돌아온다. 스트리밍 스레드가 모델 로딩을
+        기다리면 그동안 프레임이 나오지 않아 영상이 멈추는데, 락을 옮기는 것만
+        으로는 이 정지가 사라지지 않는다 (기다리는 대상만 바뀔 뿐이다).
+        어차피 다음 재시도 주기에 다시 시도하므로 건너뛰어도 손해가 없다.
+        """
         if not ULTRALYTICS_AVAILABLE:
             logger.warning("Ultralytics가 사용 불가능합니다. 시뮬레이션 모드로 실행됩니다.")
             return False
 
+        if not self._gym_lock.acquire(blocking=wait):
+            logger.debug("다른 스레드가 AI Gym 을 생성 중 - 이번 시도는 건너뛴다")
+            return False
+        try:
+            return self._build_ai_gym(force_rebuild)
+        finally:
+            self._gym_lock.release()
+
+    def _build_ai_gym(self, force_rebuild):
+        """AIGym 실제 생성 (_gym_lock 을 쥔 상태에서만 호출한다)."""
         try:
             # 기존 인스턴스를 강제로 재구성하거나, 인스턴스가 없는 경우 생성
             if self.gym is None or force_rebuild:
@@ -290,10 +280,6 @@ class ExerciseAI:
             logger.warning("카메라 사전 초기화 실패 - 운동 시작 시 재시도합니다.")
             return False
 
-    def is_ready(self):
-        """AI 모델이 준비되었는지 확인"""
-        return ULTRALYTICS_AVAILABLE or True  # 시뮬레이션 모드도 준비 완료로 처리
-
     def reset_session(self):
         """새로운 운동 세션을 위한 리셋"""
         with self.lock:
@@ -305,19 +291,18 @@ class ExerciseAI:
             self.count_simulation = 0  # 시뮬레이션 카운터 리셋
             self._last_count = -1  # 카운트 변경 감지 초기화
 
-            # AI Gym 완전히 재생성하여 확실한 리셋
-            if self.gym:
-                try:
-                    # 기존 AI Gym 정리
-                    self.gym = None
-                    logger.debug("기존 AI Gym 인스턴스 정리")
+            # AI Gym 을 먼저 떨궈 카운터를 확실히 리셋한다.
+            needs_rebuild = self.gym is not None
+            self.gym = None
 
-                    # 새로운 AI Gym 생성
-                    if ULTRALYTICS_AVAILABLE:
-                        self.setup_ai_gym(force_rebuild=True)
-                        logger.info("AI Gym 완전 재생성으로 카운터 초기화")
-                except Exception:
-                    logger.error("AI Gym 재생성 실패", exc_info=True)
+        # 여기서부터는 상태 락을 놓은 상태다.
+        # AIGym 생성은 모델 로딩을 동반해 수 초가 걸릴 수 있는데, 프레임 루프도
+        # 같은 락으로 current_data 를 쓰기 때문에 락을 쥔 채 로딩하면 그동안
+        # 영상이 통째로 멈춘다. 운동 시작 버튼을 누르는 순간이라 가장 티가 난다.
+        if needs_rebuild:
+            logger.debug("기존 AI Gym 인스턴스 정리")
+            if ULTRALYTICS_AVAILABLE and self.setup_ai_gym(force_rebuild=True):
+                logger.info("AI Gym 완전 재생성으로 카운터 초기화")
 
         logger.info("운동 세션 완전 리셋 완료")
 
@@ -331,16 +316,33 @@ class ExerciseAI:
         accuracy = self.current_data.get("accuracy")
         return "--" if accuracy is None else f"{accuracy:.0f}%"
 
-    def _release_camera(self):
+    def _tick_simulation_count(self):
+        """시뮬레이션 카운트를 1 올린다.
+
+        실제 검출이 아니므로 accuracy 는 측정값 없음(None), is_detecting 은 False 다.
+        더미 스트림과 '카메라는 있지만 ultralytics 가 없는' 경로 양쪽에서 쓴다.
+        """
+        with self.lock:
+            self.count_simulation += 1
+            self.current_data["count"] = self.count_simulation
+            self.current_data["accuracy"] = None
+            self.current_data["is_detecting"] = False
+
+    @staticmethod
+    def _encode_frame(frame, quality=None):
+        """프레임을 MJPEG 멀티파트 청크로 인코딩한다. 인코딩 실패 시 None."""
+        params = [cv2.IMWRITE_JPEG_QUALITY, quality] if quality is not None else []
+        ok, buffer = cv2.imencode('.jpg', frame, params)
+        if not ok:
+            return None
+        return MJPEG_FRAME_HEADER + buffer.tobytes() + b'\r\n'
+
+    def release_camera(self):
         """카메라 핸들을 해제한다. 이미 해제된 경우 아무 일도 하지 않는다."""
         if self.cap:
             self.cap.release()
             self.cap = None
             logger.info("카메라 핸들 해제 완료")
-
-    def cleanup_session(self):
-        """세션 정리"""
-        self._release_camera()
 
     def calculate_accuracy(self, results):
         """운동 정확도 계산 - 단일 사용자 실시간 각도 기반
@@ -475,15 +477,8 @@ class ExerciseAI:
 
             # 운동 세션이 활성화된 경우
             if exercise_session.is_active:
-                # 시뮬레이션 모드 - 5초마다 카운트 증가
-                if frame_count % 150 == 0:  # 5초마다 (30fps 기준)
-                    with self.lock:
-                        self.count_simulation += 1
-                        self.current_data["count"] = self.count_simulation
-                        # 시뮬레이션 카운트는 실제 검출이 아니다.
-                        # accuracy 는 측정값 없음(None), is_detecting 은 False 로 둔다.
-                        self.current_data["accuracy"] = None
-                        self.current_data["is_detecting"] = False
+                if frame_count % SIMULATION_COUNT_INTERVAL_FRAMES == 0:
+                    self._tick_simulation_count()
 
                 # 운동 정보를 프레임에 표시
                 cv2.putText(dummy_frame, f"Count: {self.current_data['count']}",
@@ -505,13 +500,9 @@ class ExerciseAI:
                 cv2.putText(dummy_frame, "Click 'Start Exercise' to begin",
                            (10, 150), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (128, 128, 128), 2)
 
-            # 프레임을 JPEG로 인코딩
-            ret, buffer = cv2.imencode('.jpg', dummy_frame)
-            if ret:
-                frame_bytes = buffer.tobytes()
-                yield (b'--frame\r\n'
-                       b'Content-Type: image/jpeg\r\n\r\n' +
-                       bytearray(frame_bytes) + b'\r\n')
+            chunk = self._encode_frame(dummy_frame)
+            if chunk is not None:
+                yield chunk
 
             time.sleep(0.03)  # 약 33 FPS. 더미 루프는 카메라가 없으므로 이 값이 실제 상한이다.
 
@@ -531,7 +522,7 @@ class ExerciseAI:
             logger.info("카메라 스트림 종료 요청 수신 (클라이언트 연결 종료)")
             raise
         finally:
-            self._release_camera()
+            self.release_camera()
             logger.info("카메라 AI 스트리밍 종료")
 
     def _camera_frames(self, exercise_session):
@@ -542,7 +533,7 @@ class ExerciseAI:
 
         while True:
             # 지역 변수로 받아 두고 쓴다. /exercise/stop 이나 세션 삭제가
-            # 다른 스레드에서 cleanup_session() -> self.cap = None 을 하기 때문에,
+            # 다른 스레드에서 release_camera() -> self.cap = None 을 하기 때문에,
             # self.cap.read() 를 바로 호출하면 그 사이에 None 이 되어
             # AttributeError 로 스트림이 터진다. 앱은 스트림을 띄운 채로
             # 운동 종료를 호출하므로 매 세션 종료마다 밟는 경로다.
@@ -558,7 +549,7 @@ class ExerciseAI:
 
                 if retry_count >= max_retries:
                     logger.warning("카메라 접근 실패. 더미 스트림으로 전환합니다.")
-                    self._release_camera()
+                    self.release_camera()
                     # 제너레이터 안에서 return 은 값을 돌려주는 게 아니라 StopIteration 이라,
                     # 원래 코드에서는 폴백이 실행되지 않고 스트림이 그냥 끊겼다.
                     # yield from 으로 더미 스트림에 위임해야 의도한 3단 폴백이 성립한다.
@@ -576,9 +567,11 @@ class ExerciseAI:
                 try:
                     # AI Gym 초기화 시도 (지연 초기화)
                     if self.gym is None and ULTRALYTICS_AVAILABLE:
-                        if frame_count % 30 == 0:  # 1초마다 시도
+                        if frame_count % AI_GYM_RETRY_INTERVAL_FRAMES == 0:
                             logger.info("AI Gym 지연 초기화 시도...")
-                            self.setup_ai_gym()
+                            # wait=False: 여기는 스트리밍 스레드다. 모델 로딩을
+                            # 기다리면 그 시간만큼 영상이 그대로 멈춘다.
+                            self.setup_ai_gym(wait=False)
 
                     # AI 분석 수행
                     if self.gym is not None:
@@ -625,25 +618,16 @@ class ExerciseAI:
                                 self.current_data["is_detecting"] = False
                     else:
                         # AI Gym이 없으면 시뮬레이션 모드
-                        if frame_count % 150 == 0:  # 5초마다
-                            with self.lock:
-                                self.count_simulation += 1
-                                self.current_data["count"] = self.count_simulation
-                                # 시뮬레이션이므로 검출된 것이 아니다 (위 더미 스트림과 동일).
-                                self.current_data["accuracy"] = None
-                                self.current_data["is_detecting"] = False
+                        if frame_count % SIMULATION_COUNT_INTERVAL_FRAMES == 0:
+                            self._tick_simulation_count()
 
 
                 except Exception:
                     logger.error("프레임 처리 오류", exc_info=True)
 
-            # 프레임을 JPEG로 인코딩
-            ret, buffer = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 80])
-            if ret:
-                frame_bytes = buffer.tobytes()
-                yield (b'--frame\r\n'
-                       b'Content-Type: image/jpeg\r\n\r\n' +
-                       bytearray(frame_bytes) + b'\r\n')
+            chunk = self._encode_frame(frame, quality=80)
+            if chunk is not None:
+                yield chunk
 
             # 주석에는 "30 FPS 제한"이라고 적혀 있었지만 0.015초는 약 66 FPS 다.
             # 실제 프레임 속도를 정하는 건 이 sleep 이 아니라 카메라
@@ -663,7 +647,7 @@ class ExerciseAI:
         정리 시점을 호출자가 정하도록 close() 로 바꾸고,
         FastAPI 종료 훅과 세션 삭제 경로에 연결했다.
         """
-        self._release_camera()
+        self.release_camera()
         self.gym = None
         logger.debug("ExerciseAI 리소스 정리 완료")
 

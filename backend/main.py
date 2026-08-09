@@ -123,13 +123,6 @@ class SessionRegistry:
         self.reap_idle()
         return session
 
-    def get(self, session_id: str):
-        with self._lock:
-            session = self._sessions.get(session_id)
-            if session is not None:
-                session.touch()
-            return session
-
     def remove(self, session_id: str) -> bool:
         with self._lock:
             session = self._sessions.pop(session_id, None)
@@ -230,11 +223,6 @@ def _merge_legacy_query(payload: Optional[ExerciseParams], exercise_type: Option
         return payload.model_copy(update={"exercise_type": exercise_type})
     return payload
 
-# AI 운동 분석이 포함된 스트리밍
-def ai_video_streaming(session: UserSession):
-    return session.ai.get_ai_stream_video(session.exercise)
-
-
 MJPEG_MEDIA_TYPE = "multipart/x-mixed-replace; boundary=frame"
 
 
@@ -279,7 +267,7 @@ async def stream_until_disconnect(request: Request, sync_stream, session: UserSe
 @app.get("/video/ai")
 async def ai_video_stream(request: Request, session: UserSession = Depends(get_session)):
     return StreamingResponse(
-        stream_until_disconnect(request, ai_video_streaming(session), session),
+        stream_until_disconnect(request, session.ai.get_ai_stream_video(session.exercise), session),
         media_type=MJPEG_MEDIA_TYPE,
     )
 
@@ -413,7 +401,7 @@ async def stop_exercise(session: UserSession = Depends(get_session)):
     # AI 완전 리셋 (다음 운동을 위해)
     logger.info("운동 종료 - AI 시스템 완전 리셋 수행 (session=%s)", session.session_id)
     session.ai.reset_session()
-    session.ai.cleanup_session()
+    session.ai.release_camera()
 
     return {"status": "stopped", "summary": final_data}
 
