@@ -1,48 +1,170 @@
-// Collection.tsx
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useState } from 'react';
+import {
+    Image,
+    Modal,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
+} from 'react-native';
+import { useProgress } from '../../context/ProgressContext';
+
+const silhouetteImage = require('../../assets/images/flowers/silhouette.png');
+
+const flowerList = [
+  {
+    id: 'daisy',
+    name: 'Daisy',
+    desc: 'Purity and bright energy',
+    image: require('../../assets/images/flowers/daisy/daisystep3.png'),
+  },
+  {
+    id: 'hydrangea',
+    name: 'Hydrangea',
+    desc: 'Sincerity and gratitude',
+    image: require('../../assets/images/flowers/hydrangea/hydrangeastep3.png'),
+  },
+  {
+    id: 'lavender',
+    name: 'Lavender',
+    desc: 'Serenity and healing',
+    image: require('../../assets/images/flowers/lavender/lavenderstep3.png'),
+  },
+  {
+    id: 'lily',
+    name: 'Lily',
+    desc: 'Purity and nobility',
+    image: require('../../assets/images/flowers/lily/lilystep3.png'),
+  },
+  {
+    id: 'rose',
+    name: 'Rose',
+    desc: 'Love and passion',
+    image: require('../../assets/images/flowers/rose/rosestep3.png'),
+  },
+  {
+    id: 'sunflower',
+    name: 'Sunflower',
+    desc: 'Hope and loyalty',
+    image: require('../../assets/images/flowers/sunflower/sunflowerstep3.png'),
+  },
+  {
+    id: 'freesia',
+    name: 'freesia',
+    desc: "I'm rooting for your start",
+    image: require('../../assets/images/flowers/freesia/freesiastep3.png'),
+  },
+  {
+    id: 'tulip',
+    name: 'Tulip',
+    desc: 'Declaration of love',
+    image: require('../../assets/images/flowers/tulip/tulipstep3.png'),
+  },
+];
 
 export default function Collection() {
   const router = useRouter();
+  const { obtainedFlowers } = useProgress();
+
+  const [selectedFlower, setSelectedFlower] = useState<{
+    flower: typeof flowerList[0];
+    isCollected: boolean;
+  } | null>(null);
+
+  const handlePress = (flower) => {
+    const isCollected = obtainedFlowers.includes(flower.id);
+    setSelectedFlower({ flower, isCollected });
+  };
+
+  // Row alignment adjustment
+  const remainder = flowerList.length % 3;
+  const dummyCount = remainder === 0 ? 0 : 3 - remainder;
 
   return (
     <View style={styles.container}>
-      {/* 상단 타이틀 */}
+      {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
+        <TouchableOpacity onPress={() => router.replace('/Menu/Menupage')}>
           <Text style={styles.back}>{'←'}</Text>
         </TouchableOpacity>
-        <Text style={styles.title}>수집 도감</Text>
+        <Text style={styles.title}>Flower Collection</Text>
+        <View style={{ width: 32 }} />
       </View>
 
-      {/* 꽃 목록 */}
+      {/* Flower Grid */}
       <ScrollView contentContainerStyle={styles.grid}>
-        {/*
-          {[
-            ['튤립', require('../assets/tulip.png')],
-            ['해바라기', require('../assets/sunflower.png')],
-            ['양귀비', require('../assets/poppy.png')],
-            ['데이지', require('../assets/daisy.png')],
-            ['벚꽃', require('../assets/cherryblossom.png')],
-            ['장미', require('../assets/rose.png')],
-            ['무궁화', require('../assets/hibiscus.png')],
-            ['수레국화', require('../assets/cornflower.png')],
-          ].map(([label, image], index) => (
-            <View key={index} style={styles.item}>
-              <Image source={image} style={styles.image} resizeMode="contain" />
-              <Text style={styles.label}>{label}</Text>
-            </View>
-          ))}
-        */}
+        {flowerList.map((flower, index) => {
+          const isCollected = obtainedFlowers.includes(flower.id);
+          return (
+            <TouchableOpacity
+              key={index}
+              style={styles.item}
+              onPress={() => handlePress(flower)}
+            >
+              <Image
+                source={isCollected ? flower.image : silhouetteImage}
+                style={[styles.image, !isCollected && styles.silhouette]}
+                resizeMode="contain"
+              />
+              <Text style={styles.label}>{isCollected ? flower.name : '???'}</Text>
+            </TouchableOpacity>
+          );
+        })}
+
+        {/* Transparent items for alignment */}
+        {Array.from({ length: dummyCount }).map((_, idx) => (
+          <View key={`dummy-${idx}`} style={styles.item} />
+        ))}
       </ScrollView>
 
-      {/* 하단 탭 */}
+      {/* Flower Detail Popup */}
+      <Modal
+        visible={!!selectedFlower}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setSelectedFlower(null)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalBox}>
+            <Image
+              source={
+                selectedFlower?.isCollected
+                  ? selectedFlower.flower.image
+                  : silhouetteImage
+              }
+              style={{ width: 100, height: 100, marginBottom: 10 }}
+              resizeMode="contain"
+            />
+            {selectedFlower?.isCollected && (
+              <Text style={styles.modalTitle}>{selectedFlower.flower.name}</Text>
+            )}
+            <Text style={styles.modalDesc}>{selectedFlower?.flower.desc}</Text>
+            <TouchableOpacity
+              onPress={() => setSelectedFlower(null)}
+              style={styles.modalClose}
+            >
+              <Text style={styles.modalCloseText}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Tab Bar */}
       <View style={styles.tabBar}>
-        <Text style={styles.tab}>배경</Text>
-        <Text style={[styles.tab, styles.activeTab]}>꽃</Text>
-        <Text style={styles.tab}>가구</Text>
+        <TouchableOpacity onPress={() => router.push('/Menu/BackgroundCollection')}>
+          <Text style={styles.tab}>Background</Text>
+        </TouchableOpacity>
+        <Text style={[styles.tab, styles.activeTab]}>Flower</Text>
+        <TouchableOpacity onPress={() => router.push('/Menu/FurnitureCollection')}>
+          <Text style={styles.tab}>Furniture</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => router.push('/Menu/BadgeCollection')}>
+          <Text style={styles.tab}>Decoration</Text>
+        </TouchableOpacity>
       </View>
+
     </View>
   );
 }
@@ -58,33 +180,40 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#000',
   },
-  back: {
-    fontSize: 22,
-    marginRight: 10,
-  },
+  back: { fontSize: 22, marginRight: 10 },
   title: {
-    fontSize: 18,
+    flex: 1,
+    fontSize: 24,
     fontWeight: 'bold',
+    textAlign: 'center',
   },
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-around',
     paddingVertical: 20,
+    paddingBottom: 80,
   },
   item: {
-    width: '25%',
+    width: '30%',
+    aspectRatio: 1,
     alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: 24,
   },
   image: {
-    width: 50,
-    height: 50,
+    width: '100%',
+    height: '100%',
+    maxWidth: 80,
+    maxHeight: 80,
     marginBottom: 6,
+    resizeMode: 'contain',
   },
-  label: {
-    fontSize: 12,
+  silhouette: {
+    opacity: 0.3,
   },
+  label: { fontSize: 16, fontWeight: 'bold' },
+
   tabBar: {
     flexDirection: 'row',
     justifyContent: 'space-around',
@@ -94,10 +223,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     width: '100%',
   },
-  tab: {
-    color: '#444',
-    fontSize: 14,
-  },
+  tab: { color: '#444', fontSize: 14 },
   activeTab: {
     fontWeight: 'bold',
     color: '#000',
@@ -105,4 +231,34 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     borderRadius: 4,
   },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: '#00000088',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalBox: {
+    backgroundColor: 'white',
+    padding: 20,
+    borderRadius: 12,
+    alignItems: 'center',
+    width: '70%',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  modalDesc: {
+    fontSize: 14,
+    textAlign: 'center',
+    marginBottom: 12,
+  },
+  modalClose: {
+    backgroundColor: '#5C7BEE',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  modalCloseText: { color: '#fff', fontWeight: 'bold' },
 });

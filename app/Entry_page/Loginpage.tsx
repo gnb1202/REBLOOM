@@ -1,38 +1,93 @@
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useAuth } from '../../context/AuthContext';
 
 export default function Loginpage() {
   const router = useRouter();
+  const { signIn, user } = useAuth();
+  const [userId, setUserId] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      router.replace('/Home_page/Homepage');
+    }
+  }, [user, router]);
+
+  const handleLogin = async () => {
+    if (!userId.trim()) {
+      Alert.alert('Error', 'Please enter your ID.');
+      return;
+    }
+    
+    if (!password.trim()) {
+      Alert.alert('Error', 'Please enter your password.');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await signIn(userId.trim(), password);
+      router.replace('/Home_page/Homepage');
+    } catch (error: any) {
+      Alert.alert('Login Failed', error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <View style={styles.container}>
       {/* 상단 타이틀 */}
-      <Text style={styles.title}>로그인</Text>
+      <Text style={styles.title}>Login</Text>
 
       {/* 입력창 */}
-      <TextInput placeholder="아이디를 입력해주세요" style={styles.input} />
-      <TextInput placeholder="비밀번호를 입력해주세요" secureTextEntry style={styles.input} />
+      <TextInput
+        placeholder="Enter your ID"
+        placeholderTextColor="#999"
+        style={styles.input}
+        value={userId}
+        onChangeText={setUserId}
+        autoCapitalize="none"
+        editable={!loading}
+      />
+      <TextInput
+        placeholder="Enter your password"
+        placeholderTextColor="#999"
+        secureTextEntry
+        style={styles.input}
+        value={password}
+        onChangeText={setPassword}
+        editable={!loading}
+      />
 
       {/* 로그인 버튼 */}
       <TouchableOpacity
-        style={styles.loginButton}
-        onPress={() => router.push('/Home_page/Homepage')}
+        style={[styles.loginButton, loading && styles.loginButtonDisabled]}
+        onPress={handleLogin}
+        disabled={loading}
       >
-        <Text style={styles.loginButtonText}>로그인</Text>
+        {loading ? (
+          <ActivityIndicator color="#fff" />
+        ) : (
+          <Text style={styles.loginButtonText}>Login</Text>
+        )}
+      </TouchableOpacity>
+
+      {/* 테스트 버튼 */}
+      <TouchableOpacity
+        style={styles.testButton}
+        onPress={() => router.push('/Exercise/ExerciseTestPage')}
+      >
+        <Text style={styles.testButtonText}>🧪 AI 운동 테스트</Text>
       </TouchableOpacity>
 
       {/* 하단 메뉴 */}
       <View style={styles.linkContainer}>
-        <TouchableOpacity onPress={() => alert('ID 찾기 준비 중')}>
-          <Text style={styles.linkText}>ID 찾기</Text>
-        </TouchableOpacity>
-        <Text style={styles.divider}>|</Text>
-        <TouchableOpacity onPress={() => alert('PW 찾기 준비 중')}>
-          <Text style={styles.linkText}>PW 찾기</Text>
-        </TouchableOpacity>
-        <Text style={styles.divider}>|</Text>
         <TouchableOpacity onPress={() => router.push('/Entry_page/Signuppage')}>
-          <Text style={styles.linkText}>회원가입</Text>
+          <Text style={styles.linkText}>Sign Up</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -47,7 +102,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   title: {
-    fontSize: 20,
+    fontSize: 26,
     fontWeight: 'bold',
     marginBottom: 32,
   },
@@ -57,6 +112,8 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     padding: 12,
     marginBottom: 12,
+    color: '#222',
+    fontSize: 16,
   },
   loginButton: {
     backgroundColor: '#4F73FF',
@@ -68,7 +125,24 @@ const styles = StyleSheet.create({
   },
   loginButtonText: {
     color: '#fff',
-    fontSize: 16,
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  loginButtonDisabled: {
+    backgroundColor: '#ccc',
+  },
+  testButton: {
+    backgroundColor: '#FF6B35',
+    paddingVertical: 12,
+    borderRadius: 6,
+    alignItems: 'center',
+    marginBottom: 20,
+    borderWidth: 2,
+    borderColor: '#FF6B35',
+  },
+  testButtonText: {
+    color: '#fff',
+    fontSize: 18,
     fontWeight: 'bold',
   },
   linkContainer: {
@@ -78,7 +152,7 @@ const styles = StyleSheet.create({
   },
   linkText: {
     color: '#222',
-    fontSize: 13,
+    fontSize: 16,
   },
   divider: {
     marginHorizontal: 6,

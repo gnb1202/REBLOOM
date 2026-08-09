@@ -1,57 +1,182 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View, ActivityIndicator, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useExercise } from '../../context/ExerciseContext';
+import { useEffect } from 'react';
+import { getExerciseInstruction } from '../../utils/exerciseInstructions';
 
 export default function ExerciseIntroPage() {
   const router = useRouter();
+  const { getCurrentExercise, exerciseQueue, currentExerciseIndex } = useExercise();
+
+  const currentExercise = getCurrentExercise();
+
+  // 현재 운동 정보가 없으면 로딩 중 또는 이전 페이지로 이동
+  useEffect(() => {
+    // 컨텍스트가 로드되었지만 큐가 비어있다면 리스트 페이지로 돌려보냄
+    if (!currentExercise) {
+      // 잠시 후 실행하여 무한 루프 방지
+      setTimeout(() => router.replace('/Exercise/ExerciseListPage'), 100);
+    }
+  }, [currentExercise, router]);
+
+  if (!currentExercise) {
+    return (
+      <View style={[styles.container, styles.centered]}>
+        <ActivityIndicator size="large" color="#5C7BEE" />
+        <Text style={{marginTop: 10}}>Loading exercise...</Text>
+      </View>
+    );
+  }
+
+  const exerciseInstruction = getExerciseInstruction(currentExercise.id);
 
   return (
-    <TouchableOpacity
-      style={styles.container}
-      onPress={() => router.push('/Exercise/ExerciseVideoPage')}
-    >
-      <View style={styles.box}>
-        <Text style={styles.title}>1. 심호흡 운동</Text>
-        <View style={styles.bullets}>
-          <Text style={styles.bullet}>• 어떤걸 위한 운동인지</Text>
-          <Text style={styles.bullet}>• 해당 운동 시 주의사항</Text>
-          <Text style={styles.bullet}>  • 격려문구</Text>
-          <Text style={styles.bullet}>    • etc</Text>
-        </View>
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.progressText}>
+          {`Exercise ${currentExerciseIndex + 1} of ${exerciseQueue.length}`}
+        </Text>
       </View>
-      <Text style={styles.bottomText}>화면 터치 시 운동 시작</Text>
-    </TouchableOpacity>
+
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        <View style={styles.contentBox}>
+          <Text style={styles.title}>{`${currentExerciseIndex + 1}. ${currentExercise.title}`}</Text>
+          <View style={styles.bulletList}>
+            <Text style={styles.bullet}>🎯 Target: {currentExercise.target}</Text>
+            <Text style={styles.bullet}>💪 Difficulty: {currentExercise.difficulty}</Text>
+            <Text style={styles.bullet}>⏱️ Duration: {currentExercise.duration}</Text>
+            <Text style={styles.bullet}>🔄 Repetitions: {currentExercise.count} reps</Text>
+            {exerciseInstruction?.holdTime && (
+              <Text style={styles.bullet}>⏳ Hold Time: {exerciseInstruction.holdTime} seconds</Text>
+            )}
+          </View>
+          
+          <View style={styles.instructionsSection}>
+            <Text style={styles.instructionsTitle}>Instructions:</Text>
+            {exerciseInstruction?.instructions.map((instruction, index) => (
+              <View key={index} style={styles.instructionItem}>
+                <Text style={styles.instructionNumber}>{index + 1}.</Text>
+                <Text style={styles.instructionText}>{instruction}</Text>
+              </View>
+            ))}
+          </View>
+        </View>
+      </ScrollView>
+
+      {/* 하단 버튼 */}
+      <TouchableOpacity
+        style={styles.nextButton}
+        onPress={() => router.push('/Exercise/ExerciseVideoPage')}
+      >
+        <Text style={styles.nextButtonText}>Start</Text>
+      </TouchableOpacity>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  box: {
-    backgroundColor: '#ddd',
-    width: '80%',
+    backgroundColor: '#f8f9fa',
     padding: 20,
-    borderRadius: 12,
   },
-  title: {
+  centered: {
+    justifyContent: 'center',
+  },
+  header: {
+    position: 'absolute',
+    top: 60,
+    alignItems: 'center',
+    width: '100%',
+  },
+  progressText: {
     fontSize: 18,
     fontWeight: 'bold',
-    marginBottom: 12,
-    textAlign: 'center',
+    color: '#5C7BEE',
   },
-  bullets: {
-    marginLeft: 8,
+  scrollContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingBottom: 100,
+  },
+  contentBox: {
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    padding: 24,
+    width: '90%',
+    alignItems: 'flex-start',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 20,
+    color: '#333',
+  },
+  bulletList: {
+    gap: 12,
+    width: '100%',
   },
   bullet: {
-    fontSize: 14,
-    marginBottom: 6,
-  },
-  bottomText: {
-    marginTop: 50,
     fontSize: 16,
+    color: '#555',
+  },
+  bulletDescription: {
+    fontSize: 16,
+    color: '#555',
+    marginTop: 10,
+    lineHeight: 24,
+    borderTopWidth: 1,
+    borderColor: '#eee',
+    paddingTop: 15,
+  },
+  instructionsSection: {
+    marginTop: 20,
+    width: '100%',
+  },
+  instructionsTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 12,
+  },
+  instructionItem: {
+    flexDirection: 'row',
+    marginBottom: 10,
+    paddingRight: 10,
+  },
+  instructionNumber: {
+    fontSize: 15,
+    fontWeight: 'bold',
+    color: '#5C7BEE',
+    marginRight: 8,
+    minWidth: 20,
+  },
+  instructionText: {
+    fontSize: 15,
+    color: '#555',
+    lineHeight: 22,
+    flex: 1,
+  },
+  nextButton: {
+    position: 'absolute',
+    bottom: 50,
+    backgroundColor: '#5C7BEE',
+    paddingVertical: 16,
+    paddingHorizontal: 40,
+    borderRadius: 30,
+    elevation: 3,
+  },
+  nextButtonText: {
+    color: 'white',
+    fontSize: 18,
+    fontWeight: 'bold',
   },
 });

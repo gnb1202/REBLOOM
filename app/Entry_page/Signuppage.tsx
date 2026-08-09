@@ -6,17 +6,25 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
+  Alert,
+  ActivityIndicator,
+  Modal,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Calendar } from 'react-native-calendars';
+import { useAuth } from '../../context/AuthContext';
 
 export default function Signuppage() {
   const router = useRouter();
+  const { signUp } = useAuth();
 
   const [id, setId] = useState('');
   const [password, setPassword] = useState('');
   const [nickname, setNickname] = useState('');
   const [surgeryDate, setSurgeryDate] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const [idError, setIdError] = useState('');
   const [passwordError, setPasswordError] = useState('');
@@ -24,67 +32,83 @@ export default function Signuppage() {
   const [dateError, setDateError] = useState('');
 
   const validateId = (value: string) => /^[a-z0-9]+$/.test(value);
-  const validatePassword = (value: string) =>
-    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,20}$/.test(value);
-  const validateNickname = (value: string) => value.length <= 6;
+  const validatePassword = (value: string) => value.length >= 6;
+  const validateNickname = (value: string) => value.length <= 15;
   const validateDate = (value: string) =>
     /^\d{4}-\d{1,2}-\d{1,2}$/.test(value);
 
-  const handleSignUp = () => {
+  const handleDateSelect = (day: any) => {
+    setSurgeryDate(day.dateString);
+    setShowDatePicker(false);
+    setDateError('');
+  };
+
+  const handleSignUp = async () => {
     let hasError = false;
     setIdError('');
     setPasswordError('');
     setNicknameError('');
     setDateError('');
 
-    if (!id) {
-      setIdError('아이디를 입력해주세요.');
+    if (!id.trim()) {
+      setIdError('Please enter your ID.');
       hasError = true;
-    } else if (!validateId(id)) {
-      setIdError('영소문자와 숫자만 사용할 수 있습니다.');
+    } else if (!validateId(id.trim())) {
+      setIdError('Only lowercase letters and numbers are allowed.');
       hasError = true;
     }
 
     if (!password) {
-      setPasswordError('비밀번호를 입력해주세요.');
+      setPasswordError('Please enter your password.');
       hasError = true;
     } else if (!validatePassword(password)) {
-      setPasswordError(
-        '8~20자, 영문 대소문자+숫자+특수기호를 모두 포함해야 합니다.'
-      );
+      setPasswordError('Password must be at least 15 characters.');
       hasError = true;
     }
 
-    if (!nickname) {
-      setNicknameError('닉네임을 입력해주세요.');
+    if (!nickname.trim()) {
+      setNicknameError('Please enter your nickname.');
       hasError = true;
-    } else if (!validateNickname(nickname)) {
-      setNicknameError('닉네임은 6자 이하여야 합니다.');
+    } else if (!validateNickname(nickname.trim())) {
+      setNicknameError('Nickname must be 6 characters or less.');
       hasError = true;
     }
 
     if (!surgeryDate) {
-      setDateError('수술 날짜를 입력해주세요.');
-      hasError = true;
-    } else if (!validateDate(surgeryDate)) {
-      setDateError('날짜 형식은 YYYY-MM-DD입니다.');
+      setDateError('Please select surgery date.');
       hasError = true;
     }
 
-    if (!hasError) {
-      console.log({ id, password, nickname, surgeryDate });
-      router.replace('/Entry_page/Signupconfirm'); // ✅ 완료 페이지로 이동
+    if (hasError) return;
+
+    setLoading(true);
+    try {
+      await signUp(id.trim(), password, nickname.trim(), surgeryDate);
+      Alert.alert(
+        'Sign Up Complete',
+        'Sign up completed successfully!',
+        [
+          {
+            text: 'OK',
+            onPress: () => router.replace('/Home_page/Homepage')
+          }
+        ]
+      );
+    } catch (error: any) {
+      Alert.alert('Sign Up Failed', error.message);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>회원가입</Text>
+      <Text style={styles.header}>Sign Up</Text>
       <ScrollView contentContainerStyle={styles.formContainer}>
 
         <TextInput
           style={styles.input}
-          placeholder="닉네임을 입력해주세요"
+          placeholder="Enter your nickname"
           value={nickname}
           onChangeText={setNickname}
         />
@@ -92,7 +116,7 @@ export default function Signuppage() {
 
         <TextInput
           style={styles.input}
-          placeholder="아이디를 입력해주세요"
+          placeholder="Enter your ID"
           value={id}
           onChangeText={setId}
           autoCapitalize="none"
@@ -102,7 +126,7 @@ export default function Signuppage() {
         <View style={styles.passwordContainer}>
           <TextInput
             style={styles.passwordInput}
-            placeholder="비밀번호를 입력해주세요"
+            placeholder="Enter your password"
             secureTextEntry={!showPassword}
             value={password}
             onChangeText={setPassword}
@@ -114,18 +138,60 @@ export default function Signuppage() {
         </View>
         {passwordError ? <Text style={styles.error}>{passwordError}</Text> : null}
 
-        <TextInput
-          style={styles.input}
-          placeholder="수술 날짜를 입력해주세요 (YYYY-MM-DD)"
-          value={surgeryDate}
-          onChangeText={setSurgeryDate}
-        />
+        <TouchableOpacity
+          style={[styles.input, styles.dateInput]}
+          onPress={() => setShowDatePicker(true)}
+          disabled={loading}
+        >
+          <Text style={[styles.dateText, !surgeryDate && styles.placeholderText]}>
+            {surgeryDate || 'Select surgery date'}
+          </Text>
+        </TouchableOpacity>
         {dateError ? <Text style={styles.error}>{dateError}</Text> : null}
 
-        <TouchableOpacity style={styles.button} onPress={handleSignUp}>
-          <Text style={styles.buttonText}>회원가입</Text>
+        <TouchableOpacity 
+          style={[styles.button, loading && styles.buttonDisabled]} 
+          onPress={handleSignUp}
+          disabled={loading}
+        >
+          {loading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.buttonText}>Sign Up</Text>
+          )}
         </TouchableOpacity>
       </ScrollView>
+
+      {/* 날짜 선택 모달 */}
+      <Modal
+        visible={showDatePicker}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowDatePicker(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.calendarContainer}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Select Surgery Date</Text>
+              <TouchableOpacity onPress={() => setShowDatePicker(false)}>
+                <Text style={styles.closeButton}>✕</Text>
+              </TouchableOpacity>
+            </View>
+            <Calendar
+              onDayPress={handleDateSelect}
+              markedDates={{
+                [surgeryDate]: { selected: true, selectedColor: '#3B63F2' }
+              }}
+              maxDate={new Date().toISOString().split('T')[0]}
+              theme={{
+                selectedDayBackgroundColor: '#3B63F2',
+                todayTextColor: '#3B63F2',
+                arrowColor: '#3B63F2',
+              }}
+            />
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -138,7 +204,7 @@ const styles = StyleSheet.create({
     paddingTop: 50,
   },
   header: {
-    fontSize: 20,
+    fontSize: 26,
     fontWeight: 'bold',
     marginBottom: 10,
   },
@@ -151,6 +217,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 12,
     marginBottom: 8,
+    fontSize: 16,
   },
   passwordContainer: {
     flexDirection: 'row',
@@ -163,9 +230,10 @@ const styles = StyleSheet.create({
   passwordInput: {
     flex: 1,
     padding: 12,
+    fontSize: 16,
   },
   eye: {
-    fontSize: 18,
+    fontSize: 22,
     paddingHorizontal: 10,
   },
   button: {
@@ -178,11 +246,55 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: 'bold',
     textAlign: 'center',
+    fontSize: 18,
   },
   error: {
     color: 'red',
-    fontSize: 12,
+    fontSize: 16,
     marginBottom: 6,
     marginLeft: 4,
+  },
+  dateInput: {
+    justifyContent: 'center',
+  },
+  dateText: {
+    fontSize: 16,
+    color: '#000',
+  },
+  placeholderText: {
+    color: '#999',
+  },
+  buttonDisabled: {
+    backgroundColor: '#ccc',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  calendarContainer: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 20,
+    margin: 20,
+    maxWidth: 350,
+    width: '90%',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  modalTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  closeButton: {
+    fontSize: 24,
+    color: '#666',
+    fontWeight: 'bold',
   },
 });

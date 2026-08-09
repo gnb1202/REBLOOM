@@ -1,39 +1,147 @@
-import React from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
+import { useEffect, useState } from 'react';
+import { Alert, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useProgress } from '../../context/ProgressContext';
 
-export default function FlowerDetail() {
+const flowerData = {
+  daisy: { name: 'Daisy', desc: 'Purity and bright energy' },
+  hydrangea: { name: 'Hydrangea', desc: 'Sincerity and gratitude' },
+  lavender: { name: 'Lavender', desc: 'Healing and serenity' },
+  lily: { name: 'Lily', desc: 'Purity and serenity' },
+  rose: { name: 'Rose', desc: 'Love and passion' },
+  sunflower: { name: 'Sunflower', desc: 'Hope and loyalty' },
+  tulip: { name: 'Tulip', desc: 'Declaration of love' },
+  freesia: { name: 'Freesia', desc: "I'm rooting for your start" },
+};
+
+const flowerImages = {
+  daisy_step1: require('../../assets/images/flowers/daisy/daisystep1.png'),
+  daisy_step2: require('../../assets/images/flowers/daisy/daisystep2.png'),
+  daisy_step3: require('../../assets/images/flowers/daisy/daisystep3.png'),
+
+  hydrangea_step1: require('../../assets/images/flowers/hydrangea/hydrangeastep1.png'),
+  hydrangea_step2: require('../../assets/images/flowers/hydrangea/hydrangeastep2.png'),
+  hydrangea_step3: require('../../assets/images/flowers/hydrangea/hydrangeastep3.png'),
+
+  lavender_step1: require('../../assets/images/flowers/lavender/lavenderstep1.png'),
+  lavender_step2: require('../../assets/images/flowers/lavender/lavenderstep2.png'),
+  lavender_step3: require('../../assets/images/flowers/lavender/lavenderstep3.png'),
+
+  lily_step1: require('../../assets/images/flowers/lily/lilystep1.png'),
+  lily_step2: require('../../assets/images/flowers/lily/lilystep2.png'),
+  lily_step3: require('../../assets/images/flowers/lily/lilystep3.png'),
+
+  rose_step1: require('../../assets/images/flowers/rose/rosestep1.png'),
+  rose_step2: require('../../assets/images/flowers/rose/rosestep2.png'),
+  rose_step3: require('../../assets/images/flowers/rose/rosestep3.png'),
+
+  sunflower_step1: require('../../assets/images/flowers/sunflower/sunflowerstep1.png'),
+  sunflower_step2: require('../../assets/images/flowers/sunflower/sunflowerstep2.png'),
+  sunflower_step3: require('../../assets/images/flowers/sunflower/sunflowerstep3.png'),
+
+  tulip_step1: require('../../assets/images/flowers/tulip/tulipstep1.png'),
+  tulip_step2: require('../../assets/images/flowers/tulip/tulipstep2.png'),
+  tulip_step3: require('../../assets/images/flowers/tulip/tulipstep3.png'),
+
+  freesia_step1: require('../../assets/images/flowers/freesia/freesiastep1.png'),
+  freesia_step2: require('../../assets/images/flowers/freesia/freesiastep2.png'),
+  freesia_step3: require('../../assets/images/flowers/freesia/freesiastep3.png'),
+};
+
+const flowerSequence = [
+  'daisy',
+  'hydrangea',
+  'lavender',
+  'lily',
+  'rose',
+  'sunflower',
+  'tulip',
+  'freesia',
+];
+
+function getStepImageName(flowerId: string, progress: number): string {
+  if (progress >= 80) return `${flowerId}_step3`;
+  if (progress >= 40) return `${flowerId}_step2`;
+  return `${flowerId}_step1`;
+}
+
+function getFlowerMessage(progress: number): string {
+  if (progress >= 100) return '🌼 Bloomed beautifully!';
+  if (progress >= 80) return '🌸 Almost fully bloomed!';
+  if (progress >= 40) return '🌿 Flower is growing!';
+  return '🌱 Still a sprout!';
+}
+
+export default function Flowermanage() {
   const router = useRouter();
-  const progress = 60;
+  const {
+    currentFlowerId,
+    progress,
+    setProgress,
+    setCurrentFlowerId,
+    addObtainedFlower,
+    completeChallenge,
+    obtainedFlowers,
+  } = useProgress();
+  const [hasAwarded, setHasAwarded] = useState(false);
+
+  const flower = flowerData[currentFlowerId];
+  const imageKey = getStepImageName(currentFlowerId, progress);
+  const image = flowerImages[imageKey];
+
+  useEffect(() => {
+    if (progress >= 100 && !hasAwarded) {
+      Alert.alert('🎉 Flower obtained!', 'The flower has fully bloomed!');
+      addObtainedFlower(currentFlowerId);
+
+      const count = obtainedFlowers.length + 1;
+      if (count <= 4) {
+        const challengeId = `flower-${count}`;
+        completeChallenge(challengeId);
+      }
+
+      const currentIndex = flowerSequence.indexOf(currentFlowerId);
+      const nextFlower = flowerSequence[currentIndex + 1] || '';
+
+      setCurrentFlowerId(nextFlower);
+      setProgress(0);
+      setHasAwarded(true);
+    }
+
+    if (progress < 100 && hasAwarded) {
+      setHasAwarded(false);
+    }
+  }, [progress]);
+
+  if (!flower) {
+    return (
+      <View style={styles.container}>
+        <Text style={{ marginTop: 100 }}>🌸 No flowers currently being managed.</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
-      {/* 상단 타이틀 + 뒤로가기 */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <Text style={styles.back}>{'←'}</Text>
         </TouchableOpacity>
-        <Text style={styles.title}>꽃 관리</Text>
+        <Text style={styles.title}>Flower Management</Text>
+        <View style={{ width: 32 }} />
       </View>
 
-      {/* 진행률 바 */}
       <View style={styles.progressContainer}>
-        <View style={[styles.progressBar, { width: `${progress}%` }]}>
-          <Text style={styles.progressText}>{progress}%</Text>
-        </View>
         <View style={styles.progressBackground} />
+        <View style={[styles.progressBar, { width: `${progress}%` }]} />
+        <Text style={styles.progressTextLeft}>{progress}%</Text>
       </View>
 
-      {/* 꽃 이미지 */}
-      <Image
-        source={require('../../assets/images/flowers/tulip.png')} // 이미지 경로 조정 필요
-        style={styles.image}
-        resizeMode="contain"
-      />
+      <Image source={image} style={styles.image} resizeMode="contain" />
 
-      {/* 꽃 이름 & 설명 */}
-      <Text style={styles.name}>튤립</Text>
-      <Text style={styles.desc}>사랑의 시작, 사랑의 고백</Text>
+      <Text style={styles.name}>{flower.name}</Text>
+      <Text style={styles.desc}>{flower.desc}</Text>
+      <Text style={styles.statusMessage}>{getFlowerMessage(progress)}</Text>
     </View>
   );
 }
@@ -46,31 +154,37 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
     position: 'absolute',
     top: 40,
     left: 16,
     right: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
     paddingBottom: 10,
     borderBottomWidth: 1,
     borderBottomColor: '#000',
   },
   backButton: {
     paddingRight: 10,
+    minWidth: 32, // 최소 너비로 타이틀 중앙정렬 유지
+    alignItems: 'flex-start',
   },
   back: {
     fontSize: 20,
   },
   title: {
-    fontSize: 18,
+    flex: 1,
+    fontSize: 24,
     fontWeight: 'bold',
+    textAlign: 'center',
   },
   progressContainer: {
     width: '80%',
     height: 20,
     marginTop: 80,
     justifyContent: 'center',
+    position: 'relative',
   },
   progressBackground: {
     position: 'absolute',
@@ -84,27 +198,35 @@ const styles = StyleSheet.create({
     height: 20,
     backgroundColor: '#B2B8FF',
     borderRadius: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
+    zIndex: 1,
   },
-  progressText: {
+  progressTextLeft: {
+    position: 'absolute',
+    left: 8,
+    zIndex: 2,
     color: '#000',
     fontWeight: 'bold',
     fontSize: 12,
   },
   image: {
-    width: 120,
-    height: 120,
+    width: 320,
+    height: 320,
     marginTop: 40,
   },
   name: {
-    fontSize: 20,
+    fontSize: 30,
     fontWeight: 'bold',
     marginTop: 24,
   },
   desc: {
-    fontSize: 14,
+    fontSize: 20,
     color: '#444',
     marginTop: 8,
+  },
+  statusMessage: {
+    marginTop: 12,
+    fontSize: 20,
+    fontWeight: '500',
+    color: '#4A4A4A',
   },
 });

@@ -1,18 +1,46 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, Image, Alert } from 'react-native';
-import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
+import { useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
+import {
+    Alert,
+    Image,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
+} from 'react-native';
+import { useProgress } from '../../context/ProgressContext';
+import { useAuth } from '../../context/AuthContext';
+import { updateUserProfile } from '../../firebase.config';
 
 export default function ProfileModified() {
   const router = useRouter();
+  const { completedChallenges, selectedBadges, setSelectedBadges } = useProgress();
+  const { user, userProfile, refreshProfile } = useAuth();
+
   const [image, setImage] = useState<string | null>(null);
+  const [bio, setBio] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [selected, setSelected] = useState<string[]>(selectedBadges || []);
+  const [saving, setSaving] = useState(false);
+
+  // 사용자 프로필 데이터로 초기값 설정
+  useEffect(() => {
+    if (userProfile) {
+      setBio(userProfile.profile?.bio || '');
+      if (userProfile.profile?.avatar) {
+        setImage(userProfile.profile.avatar);
+      }
+    }
+  }, [userProfile]);
 
   const pickImage = async () => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) {
-      alert('이미지 접근 권한이 필요합니다.');
+      alert('Image access permission is required.');
       return;
     }
 
@@ -28,29 +56,77 @@ export default function ProfileModified() {
     }
   };
 
-  // ✅ 저장 버튼 처리
-  const handleSave = () => {
+  const toggleBadge = (id: string) => {
+    if (selected.includes(id)) {
+      setSelected(selected.filter(b => b !== id));
+    } else {
+      setSelected([...selected, id]);
+    }
+  };
+
+  const handleSave = async () => {
+    if (!user) {
+      Alert.alert('Error', 'User not authenticated.');
+      return;
+    }
+
+
     if (!password || !confirmPassword) {
-      Alert.alert('알림', '비밀번호를 입력해주세요.');
+      Alert.alert('Notice', 'Please enter your password.');
       return;
     }
     if (password !== confirmPassword) {
-      Alert.alert('알림', '비밀번호가 일치하지 않습니다.');
+      Alert.alert('Notice', 'Passwords do not match.');
       return;
     }
 
-    Alert.alert('성공', '개인정보가 저장되었습니다.');
-    router.back(); // 저장 후 이전 페이지로 이동
+    setSaving(true);
+
+    try {
+      // Firebase에 프로필 업데이트
+      const profileUpdates = {
+        profile: {
+          bio: bio.trim(),
+          selectedBadge: selected[0] || null, // 첫 번째 선택한 뱃지를 대표 뱃지로 설정
+          avatar: image || null,
+        }
+      };
+
+      await updateUserProfile(user.uid, profileUpdates);
+      setSelectedBadges(selected); // 로컬 상태도 업데이트
+      
+      // 프로필 새로고침
+      await refreshProfile();
+
+      Alert.alert('Success', 'Profile information has been saved.');
+      router.back();
+    } catch (error) {
+      console.error('Profile update error:', error);
+      Alert.alert('Error', 'Failed to save profile. Please try again.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const badgeImages = {
+    'flower-1': require('../../assets/images/badge/getflowerstep1.png'),
+    'flower-2': require('../../assets/images/badge/getflowerstep2.png'),
+    'flower-3': require('../../assets/images/badge/getflowerstep3.png'),
+    'flower-4': require('../../assets/images/badge/getflowerstep4.png'),
+    'attend-3': require('../../assets/images/badge/exercisestep1.png'),
+    'attend-5': require('../../assets/images/badge/exercisestep2.png'),
+    'attend-7': require('../../assets/images/badge/exercisestep3.png'),
+    'attend-14': require('../../assets/images/badge/exercisestep4.png'),
   };
 
   return (
-    <View style={styles.container}>
+    <ScrollView contentContainerStyle={styles.container}>
       {/* 상단 바 */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
           <Text style={styles.back}>{'←'}</Text>
         </TouchableOpacity>
-        <Text style={styles.title}>개인정보 수정</Text>
+        <Text style={styles.title}>Edit Profile</Text>
       </View>
 
       {/* 프로필 박스 */}
@@ -65,67 +141,104 @@ export default function ProfileModified() {
 
         <View style={styles.profileRight}>
           <View style={styles.nicknameRow}>
-            <Text style={styles.nickname}>닉네임</Text>
-            <Text style={styles.dot}>🟣</Text>
-            <Text style={styles.star}>⭐</Text>
+            <Text style={styles.nicknameLabel}>Nickname:</Text>
+            <Text style={styles.nicknameDisplay}>
+              {userProfile?.profile?.nickname || userProfile?.nickname || 'No nickname set'}
+            </Text>
           </View>
-          <Text style={styles.bio}>자기소개자기소개자기소개자기소개</Text>
-          <Text style={styles.bio}>자기소개자기소개자기소개자기소개</Text>
+          <View style={styles.badgeRow}>
+            {selected.map(id => (
+              <Image
+                key={id}
+                source={badgeImages[id]}
+                style={styles.badgeIcon}
+              />
+            ))}
+          </View>
+          <TextInput
+            style={styles.bioInput}
+            value={bio}
+            onChangeText={setBio}
+            placeholder="Tell us about yourself"
+            multiline
+            numberOfLines={2}
+            maxLength={100}
+          />
         </View>
       </View>
 
       {/* 비밀번호 입력 */}
       <TextInput
         style={styles.input}
-        placeholder="비밀번호를 입력해주세요"
+        placeholder="Enter your password"
         secureTextEntry
         value={password}
         onChangeText={setPassword}
       />
       <TextInput
         style={styles.input}
-        placeholder="비밀번호를 한 번 더 입력해주세요"
+        placeholder="Confirm your password"
         secureTextEntry
         value={confirmPassword}
         onChangeText={setConfirmPassword}
       />
 
+      {/* 뱃지 선택 */}
+      <Text style={styles.selectTitle}>Select badges to display</Text>
+      <View style={styles.badgeSelectContainer}>
+        {completedChallenges.map(id => (
+          <TouchableOpacity
+            key={id}
+            onPress={() => toggleBadge(id)}
+            style={[
+              styles.selectableBadge,
+              selected.includes(id) && styles.selectedBadge,
+            ]}
+          >
+            <Image source={badgeImages[id]} style={styles.selectBadgeIcon} />
+          </TouchableOpacity>
+        ))}
+      </View>
+
       {/* 저장 버튼 */}
-      <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
-        <Text style={styles.saveText}>저장</Text>
+      <TouchableOpacity 
+        style={[styles.saveButton, saving && styles.saveButtonDisabled]} 
+        onPress={handleSave}
+        disabled={saving}
+      >
+        <Text style={styles.saveText}>{saving ? 'Saving...' : 'Save'}</Text>
       </TouchableOpacity>
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
     backgroundColor: '#fff',
     paddingTop: 60,
     alignItems: 'center',
+    paddingBottom: 80,
   },
-    header: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      width: '100%',
-      paddingHorizontal: 16,
-      paddingBottom: 10,
-      borderBottomWidth: 1,
-      borderBottomColor: '#000',
-    },
-    back: {
-      fontSize: 20,
-    },
-    title: {
-      flex: 1,
-      textAlign: 'center',
-      fontSize: 18,
-      fontWeight: 'bold',
-      marginRight: 36,
-    },
-
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '100%',
+    paddingHorizontal: 16,
+    paddingBottom: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#000',
+  },
+  back: {
+    fontSize: 20,
+  },
+  title: {
+    flex: 1,
+    textAlign: 'center',
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginRight: 36,
+  },
   profileBox: {
     flexDirection: 'row',
     borderWidth: 1,
@@ -150,23 +263,39 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 6,
+    flexWrap: 'wrap',
   },
-  nickname: {
-    fontSize: 16,
+  nicknameLabel: {
+    fontSize: 14,
     fontWeight: 'bold',
     marginRight: 6,
+    width: 70,
   },
-  dot: {
+  nicknameDisplay: {
+    flex: 1,
     fontSize: 14,
-    marginRight: 4,
+    color: '#333',
+    fontWeight: '600',
   },
-  star: {
-    fontSize: 16,
+  badgeRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
   },
-  bio: {
+  badgeIcon: {
+    width: 20,
+    height: 20,
+    marginLeft: 4,
+  },
+  bioInput: {
     fontSize: 12,
     color: '#333',
-    textDecorationLine: 'underline',
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 4,
+    padding: 8,
+    backgroundColor: '#fff',
+    marginTop: 6,
+    textAlignVertical: 'top',
   },
   input: {
     width: '85%',
@@ -176,15 +305,45 @@ const styles = StyleSheet.create({
     padding: 12,
     marginTop: 20,
   },
+  selectTitle: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    marginTop: 30,
+    marginBottom: 10,
+  },
+  badgeSelectContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    width: '85%',
+  },
+  selectableBadge: {
+    margin: 6,
+    borderWidth: 2,
+    borderColor: 'transparent',
+    borderRadius: 6,
+    padding: 4,
+  },
+  selectedBadge: {
+    borderColor: '#5C7BEE',
+  },
+  selectBadgeIcon: {
+    width: 40,
+    height: 40,
+  },
   saveButton: {
-    backgroundColor: '#ddd',
+    backgroundColor: '#5C7BEE',
     paddingVertical: 12,
     paddingHorizontal: 50,
     borderRadius: 6,
     marginTop: 40,
   },
+  saveButtonDisabled: {
+    backgroundColor: '#ddd',
+  },
   saveText: {
     fontSize: 16,
     fontWeight: 'bold',
+    color: '#fff',
   },
 });

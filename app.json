@@ -25,7 +25,8 @@
         "CAMERA",
         "READ_EXTERNAL_STORAGE",
         "WRITE_EXTERNAL_STORAGE"
-      ]
+      ],
+      "package": "com.anonymous.ICCAS_2025"
     },
     "web": {
       "bundler": "metro",
@@ -42,10 +43,21 @@
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
         }
-      ]
+      ],
+      "expo-video",
+      "expo-audio",
+      "expo-camera",
+      "expo-font"
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "964e5e08-d556-4356-874b-55dd0d9ec149"
+      }
+    },
+    "owner": "hyoungwoo"
   }
 }

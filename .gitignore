@@ -32,8 +32,16 @@ yarn-error.*
 
 # local env files
 .env*.local
+firebase.config.ts
 
 # typescript
 *.tsbuildinfo
 
 app-example
+
+# oh-my-claudecode 작업 상태 (로컬 전용)
+.omc/
+
+# Python
+__pycache__/
+*.pyc

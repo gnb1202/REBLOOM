@@ -1,0 +1,273 @@
+// Body parts and their initial weights (균형 있는 운동을 위한 초기값)
+export const INITIAL_BODY_PART_WEIGHTS = {
+  shoulder: 1.0,
+  arm: 1.0,
+  neck: 1.0,
+};
+
+// Score calculation weights (건강 설문 데이터 기반)
+export const SCORE_WEIGHTS = {
+  CONDITION: 0.25,    // 25% - Overall body condition (bodyCondition)
+  PAIN: 0.25,         // 25% - Pain level impact (armShoulderPain)
+  SWELLING: 0.15,     // 15% - Swelling impact (swellingLevel)
+  STIFFNESS: 0.15,    // 15% - Stiffness impact (stiffnessLevel)
+  VARIETY: 0.10,      // 10% - Exercise variety (균형 운동)
+  FEEDBACK: 0.10,     // 10% - Past exercise feedback (운동 결과)
+};
+
+// Exercise metadata with rehabilitation considerations
+export interface ExerciseMetadata {
+  id: string;
+  name: string;
+  targetParts: string[];
+  difficulty: 1 | 2 | 3; // 1=EASY, 2=MEDIUM, 3=HARD
+  minConditionRequired: number; // 1-5 scale
+  contraindicatedFor: {
+    highPain: boolean;      // Not recommended for pain level >= 4
+    highSwelling: boolean;  // Not recommended for swelling level = 2
+    highStiffness: boolean; // Not recommended for stiffness level >= 4
+  };
+  recommendedFor: {
+    lowCondition: boolean;   // Good for condition <= 2
+    mediumCondition: boolean; // Good for condition 3
+    highCondition: boolean;  // Good for condition >= 4
+  };
+  baseScore: number; // Base score for recommendation (0-100)
+}
+
+// Convert difficulty string to number
+export const DIFFICULTY_MAP = {
+  'EASY': 1,
+  'MEDIUM': 2,
+  'HARD': 3,
+} as const;
+
+// Exercise database with rehabilitation metadata
+export const EXERCISE_DATABASE: ExerciseMetadata[] = [
+  // ARM EXERCISES
+  {
+    id: 'biceps_curl',
+    name: 'Biceps Curl',
+    targetParts: ['arm'],
+    difficulty: 3, // Hard
+    minConditionRequired: 4,
+    contraindicatedFor: {
+      highPain: true,
+      highSwelling: true,
+      highStiffness: true,
+    },
+    recommendedFor: {
+      lowCondition: false,
+      mediumCondition: false,
+      highCondition: true,
+    },
+    baseScore: 65,
+  },
+  {
+    id: 'shoulder_flexion',
+    name: 'Shoulder Flexion',
+    targetParts: ['arm'],
+    difficulty: 1, // Easy
+    minConditionRequired: 2,
+    contraindicatedFor: {
+      highPain: false,
+      highSwelling: false,
+      highStiffness: false,
+    },
+    recommendedFor: {
+      lowCondition: true,
+      mediumCondition: true,
+      highCondition: true,
+    },
+    baseScore: 85,
+  },
+  
+  // NECK EXERCISES
+  {
+    id: 'neck_stretch',
+    name: 'Neck Stretch',
+    targetParts: ['neck'],
+    difficulty: 1, // Easy
+    minConditionRequired: 1,
+    contraindicatedFor: {
+      highPain: false,
+      highSwelling: false,
+      highStiffness: false,
+    },
+    recommendedFor: {
+      lowCondition: true,
+      mediumCondition: true,
+      highCondition: true,
+    },
+    baseScore: 90,
+  },
+  
+  // SHOULDER EXERCISES
+  {
+    id: 'lateral_raise',
+    name: 'Lateral Raise',
+    targetParts: ['shoulder'],
+    difficulty: 3, // Hard
+    minConditionRequired: 4,
+    contraindicatedFor: {
+      highPain: true,
+      highSwelling: true,
+      highStiffness: true,
+    },
+    recommendedFor: {
+      lowCondition: false,
+      mediumCondition: false,
+      highCondition: true,
+    },
+    baseScore: 65,
+  },
+  {
+    id: 'shoulder_abduction_1',
+    name: 'Shoulder Abduction 1',
+    targetParts: ['shoulder'],
+    difficulty: 1, // Easy
+    minConditionRequired: 2,
+    contraindicatedFor: {
+      highPain: false,
+      highSwelling: false,
+      highStiffness: false,
+    },
+    recommendedFor: {
+      lowCondition: true,
+      mediumCondition: true,
+      highCondition: true,
+    },
+    baseScore: 85,
+  },
+  {
+    id: 'shoulder_abduction_2',
+    name: 'Shoulder Abduction 2',
+    targetParts: ['shoulder'],
+    difficulty: 1, // Easy
+    minConditionRequired: 2,
+    contraindicatedFor: {
+      highPain: false,
+      highSwelling: false,
+      highStiffness: false,
+    },
+    recommendedFor: {
+      lowCondition: true,
+      mediumCondition: true,
+      highCondition: true,
+    },
+    baseScore: 80,
+  },
+  {
+    id: 'shoulder_external_rotation_2',
+    name: 'Shoulder External Rotation 2',
+    targetParts: ['shoulder'],
+    difficulty: 2, // Medium
+    minConditionRequired: 3,
+    contraindicatedFor: {
+      highPain: true,
+      highSwelling: false,
+      highStiffness: false,
+    },
+    recommendedFor: {
+      lowCondition: false,
+      mediumCondition: true,
+      highCondition: true,
+    },
+    baseScore: 75,
+  },
+  {
+    id: 'shoulder_external_rotation_3',
+    name: 'Shoulder External Rotation 3',
+    targetParts: ['shoulder'],
+    difficulty: 2, // Medium
+    minConditionRequired: 3,
+    contraindicatedFor: {
+      highPain: true,
+      highSwelling: false,
+      highStiffness: true,
+    },
+    recommendedFor: {
+      lowCondition: false,
+      mediumCondition: true,
+      highCondition: true,
+    },
+    baseScore: 70,
+  },
+];
+
+// Helper function to get exercise by ID
+export function getExerciseById(id: string): ExerciseMetadata | undefined {
+  return EXERCISE_DATABASE.find(ex => ex.id === id);
+}
+
+// Helper function to get exercises by target part
+export function getExercisesByTargetPart(targetPart: string): ExerciseMetadata[] {
+  return EXERCISE_DATABASE.filter(ex => 
+    ex.targetParts.includes(targetPart.toLowerCase())
+  );
+}
+
+// 부위별 운동 빈도 계산
+export function calculatePartFrequency(recentExercises: string[]): Record<string, number> {
+  const frequency: Record<string, number> = {
+    shoulder: 0,
+    arm: 0,
+    neck: 0,
+  };
+  
+  recentExercises.forEach(exerciseId => {
+    const exercise = getExerciseById(exerciseId);
+    if (exercise) {
+      exercise.targetParts.forEach(part => {
+        if (frequency[part] !== undefined) {
+          frequency[part]++;
+        }
+      });
+    }
+  });
+  
+  return frequency;
+}
+
+// Pain thresholds
+export const PAIN_THRESHOLDS = {
+  HIGH: 4,     // Pain level >= 4 is considered high
+  MEDIUM: 3,   // Pain level 3 is medium
+  LOW: 2,      // Pain level <= 2 is low
+};
+
+// Swelling levels
+export const SWELLING_LEVELS = {
+  NONE: 0,
+  MILD: 1,
+  SEVERE: 2,
+};
+
+// Stiffness thresholds  
+export const STIFFNESS_THRESHOLDS = {
+  HIGH: 4,     // Stiffness >= 4 is high
+  MEDIUM: 3,   // Stiffness 3 is medium
+  LOW: 2,      // Stiffness <= 2 is low
+};
+
+// Condition thresholds
+export const CONDITION_THRESHOLDS = {
+  POOR: 2,     // Condition <= 2 is poor
+  FAIR: 3,     // Condition 3 is fair
+  GOOD: 4,     // Condition >= 4 is good
+};
+
+// Weight update factors (균형 운동을 위한 가중치 조정)
+export const WEIGHT_UPDATE_FACTORS = {
+  DECREASE_FACTOR: 0.15,  // 운동한 부위 가중치 감소량 (더 강하게)
+  INCREASE_FACTOR: 0.05,  // 다른 부위 가중치 증가량 (더 빠른 균형)
+  MIN_WEIGHT: 0.2,        // 최소 가중치 (더 낮게 설정)
+  MAX_WEIGHT: 1.5,        // 최대 가중치 (오래 안한 부위 우선순위 높임)
+};
+
+// 운동 균형 추적을 위한 상수
+export const BALANCE_TRACKING = {
+  DAYS_TO_TRACK: 7,       // 최근 7일간 운동 추적
+  MIN_EXERCISES_PER_PART: 1,  // 각 부위별 최소 운동 횟수
+  BALANCE_BONUS: 20,      // 균형 운동시 보너스 점수
+};
