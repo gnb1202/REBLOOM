@@ -21,6 +21,8 @@ from fastapi.testclient import TestClient
 import exercise_ai
 import main
 
+AI_GYM_RETRY_FRAMES = exercise_ai.AI_GYM_RETRY_INTERVAL_FRAMES
+
 
 # --------------------------------------------------------------------------
 # 테스트용 대역 (stub)
@@ -298,6 +300,44 @@ def test_reset_does_not_hold_the_state_lock_while_rebuilding_the_model():
 
     assert observed.get("lock_was_free"), "모델 로딩 내내 상태 락을 쥐고 있다"
     assert ai.get_current_data()["count"] == 0
+
+
+def test_frame_loop_does_not_wait_for_a_model_build_in_progress():
+    """스트리밍 스레드는 모델 로딩을 절대 기다리면 안 된다.
+
+    락을 lock -> _gym_lock 으로 옮기기만 하면 기다리는 대상만 바뀔 뿐
+    영상은 똑같이 멈춘다. 프레임 루프는 wait=False 로 건너뛰어야 한다.
+    """
+    import threading
+    import time
+
+    ai = exercise_ai.ExerciseAI()
+    ai.cap = FakeCapture()
+    ai.gym = None  # 지연 초기화가 트리거되는 상태
+
+    original = exercise_ai.ULTRALYTICS_AVAILABLE
+    exercise_ai.ULTRALYTICS_AVAILABLE = True
+
+    # 다른 스레드가 모델을 만들고 있는 상황을 흉내낸다.
+    # 영원히 잡고 있으면 버그가 있을 때 테스트가 끝나지 않으므로 타이머로 놓아준다.
+    ai._gym_lock.acquire()
+    releaser = threading.Timer(1.5, ai._gym_lock.release)
+    releaser.start()
+
+    try:
+        stream = ai._camera_frames(FakeSession())
+        started = time.time()
+        for _ in range(AI_GYM_RETRY_FRAMES + 5):  # 재시도 주기를 반드시 넘긴다
+            next(stream)
+        elapsed = time.time() - started
+        stream.close()
+    finally:
+        releaser.cancel()
+        if ai._gym_lock.locked():
+            ai._gym_lock.release()
+        exercise_ai.ULTRALYTICS_AVAILABLE = original
+
+    assert elapsed < 1.0, f"모델 로딩을 기다리느라 프레임이 멈췄다 ({elapsed:.2f}초)"
 
 
 def test_concurrent_setup_does_not_build_the_model_twice():

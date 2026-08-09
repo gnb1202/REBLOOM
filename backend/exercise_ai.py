@@ -207,19 +207,30 @@ class ExerciseAI:
         """사용 가능한 운동 타입 목록 반환"""
         return list(self.predefined_configs.keys())
 
-    def setup_ai_gym(self, force_rebuild=False):
+    def setup_ai_gym(self, force_rebuild=False, wait=True):
         """AI Gym 인스턴스 설정 - 지연 초기화
 
         _gym_lock 으로 직렬화한다. 프레임 루프의 지연 초기화 재시도와
         reset_session 의 재생성이 동시에 들어오면 AIGym 이 두 번 만들어져
         모델을 두 벌 로딩하게 된다.
+
+        wait=False 는 프레임 루프 전용이다. 다른 스레드가 이미 모델을 만들고
+        있으면 기다리지 않고 곧바로 돌아온다. 스트리밍 스레드가 모델 로딩을
+        기다리면 그동안 프레임이 나오지 않아 영상이 멈추는데, 락을 옮기는 것만
+        으로는 이 정지가 사라지지 않는다 (기다리는 대상만 바뀔 뿐이다).
+        어차피 다음 재시도 주기에 다시 시도하므로 건너뛰어도 손해가 없다.
         """
         if not ULTRALYTICS_AVAILABLE:
             logger.warning("Ultralytics가 사용 불가능합니다. 시뮬레이션 모드로 실행됩니다.")
             return False
 
-        with self._gym_lock:
+        if not self._gym_lock.acquire(blocking=wait):
+            logger.debug("다른 스레드가 AI Gym 을 생성 중 - 이번 시도는 건너뛴다")
+            return False
+        try:
             return self._build_ai_gym(force_rebuild)
+        finally:
+            self._gym_lock.release()
 
     def _build_ai_gym(self, force_rebuild):
         """AIGym 실제 생성 (_gym_lock 을 쥔 상태에서만 호출한다)."""
@@ -558,7 +569,9 @@ class ExerciseAI:
                     if self.gym is None and ULTRALYTICS_AVAILABLE:
                         if frame_count % AI_GYM_RETRY_INTERVAL_FRAMES == 0:
                             logger.info("AI Gym 지연 초기화 시도...")
-                            self.setup_ai_gym()
+                            # wait=False: 여기는 스트리밍 스레드다. 모델 로딩을
+                            # 기다리면 그 시간만큼 영상이 그대로 멈춘다.
+                            self.setup_ai_gym(wait=False)
 
                     # AI 분석 수행
                     if self.gym is not None:
